@@ -61,9 +61,11 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+    ports:
+      - "3001:3001"
     networks:
       - nexos_internal
-      - proxy_network
+      - nginx-proxy
 
   frontend:
     build:
@@ -81,16 +83,18 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+    ports:
+      - "3000:3000"
     networks:
       - nexos_internal
-      - proxy_network
+      - nginx-proxy
 
 networks:
   nexos_internal:
+    driver: bridge
     internal: true
-  proxy_network:
+  nginx-proxy:
     external: true
-    name: proxy_network
 
 volumes:
   postgres_data:
