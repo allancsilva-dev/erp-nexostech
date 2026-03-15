@@ -32,4 +32,8 @@ export class AuditService {
       content: [header, rows].filter(Boolean).join('\n'),
     };
   }
+
+  async getById(id: string) {
+    return this.auditRepository.getById(id);
+  }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -12,11 +12,22 @@ import { PaymentResponse } from '../../../modules/financial/payments/dto/payment
 import { RefundPaymentDto } from '../../../modules/financial/payments/dto/refund-payment.dto';
 import { RegisterPaymentDto } from '../../../modules/financial/payments/dto/register-payment.dto';
 import { PaymentsService } from '../../../modules/financial/payments/payments.service';
+import { BatchPayDto } from '../../../modules/financial/payments/dto/batch-pay.dto';
 
 @Controller('entries')
 @UseGuards(JwtGuard, BranchGuard, RbacGuard)
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
+
+  @Get(':id/payments')
+  @RequirePermission('financial.entries.view')
+  async listByEntry(
+    @Param('id') entryId: string,
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<PaymentResponse[]>> {
+    const payments = await this.paymentsService.listByEntry(entryId, branchId);
+    return ApiResponse.ok(payments.map((payment) => PaymentResponse.from(payment)));
+  }
 
   @Post(':id/pay')
   @Idempotent()
@@ -42,5 +53,17 @@ export class PaymentsController {
   ): Promise<ApiResponse<PaymentResponse | null>> {
     const payment = await this.paymentsService.refund(entryId, dto, user, branchId);
     return ApiResponse.ok(payment ? PaymentResponse.from(payment) : null);
+  }
+
+  @Post('batch-pay')
+  @Idempotent()
+  @RequirePermission('financial.entries.pay')
+  async batchPay(
+    @Body() dto: BatchPayDto,
+    @CurrentUser() user: AuthUser,
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<PaymentResponse[]>> {
+    const payments = await this.paymentsService.batchPay(dto, user, branchId);
+    return ApiResponse.created(payments.map((payment) => PaymentResponse.from(payment)));
   }
 }

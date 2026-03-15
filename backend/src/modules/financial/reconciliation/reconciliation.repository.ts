@@ -113,4 +113,64 @@ export class ReconciliationRepository {
         AND deleted_at IS NULL
     `));
   }
+
+  async getBatchItems(batchId: string, branchId: string) {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT
+        id,
+        batch_id,
+        payment_id,
+        entry_id,
+        amount,
+        payment_date,
+        reconciled,
+        created_at
+      FROM ${schema}.reconciliation_items
+      WHERE batch_id = ${quoteLiteral(batchId)}
+        AND branch_id = ${quoteLiteral(branchId)}
+        AND deleted_at IS NULL
+      ORDER BY payment_date DESC, created_at DESC
+    `));
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      id: String(row.id),
+      batchId: String(row.batch_id),
+      paymentId: String(row.payment_id),
+      entryId: String(row.entry_id),
+      amount: String(row.amount),
+      paymentDate: String(row.payment_date),
+      reconciled: Boolean(row.reconciled),
+      createdAt: new Date(String(row.created_at)).toISOString(),
+    }));
+  }
+
+  async matchItem(itemId: string, entryId: string | undefined, branchId: string) {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const entryClause =
+      entryId !== undefined ? `entry_id = ${quoteLiteral(entryId)},` : '';
+
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      UPDATE ${schema}.reconciliation_items
+      SET ${entryClause}
+          reconciled = true,
+          updated_at = NOW()
+      WHERE id = ${quoteLiteral(itemId)}
+        AND branch_id = ${quoteLiteral(branchId)}
+        AND deleted_at IS NULL
+      RETURNING id, batch_id, payment_id, entry_id, amount, payment_date, reconciled, updated_at
+    `));
+
+    const row = result.rows[0] as Record<string, unknown>;
+    return {
+      id: String(row.id),
+      batchId: String(row.batch_id),
+      paymentId: String(row.payment_id),
+      entryId: String(row.entry_id),
+      amount: String(row.amount),
+      paymentDate: String(row.payment_date),
+      reconciled: Boolean(row.reconciled),
+      updatedAt: new Date(String(row.updated_at)).toISOString(),
+    };
+  }
 }

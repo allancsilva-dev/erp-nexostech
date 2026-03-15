@@ -136,6 +136,32 @@ export class RolesRepository {
     `));
   }
 
+  async listUserRoles(userId: string): Promise<Array<{ roleId: string; roleName: string }>> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT r.id AS role_id, r.name AS role_name
+      FROM ${schema}.user_roles ur
+      JOIN ${schema}.roles r ON r.id = ur.role_id
+      WHERE ur.user_id = ${quoteLiteral(userId)}
+        AND r.deleted_at IS NULL
+      ORDER BY r.name ASC
+    `));
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      roleId: String(row.role_id),
+      roleName: String(row.role_name),
+    }));
+  }
+
+  async assignRoleToUser(userId: string, roleId: string): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    await this.drizzleService.getClient().execute(sql.raw(`
+      INSERT INTO ${schema}.user_roles (user_id, role_id)
+      VALUES (${quoteLiteral(userId)}, ${quoteLiteral(roleId)})
+      ON CONFLICT (user_id, role_id) DO NOTHING
+    `));
+  }
+
   private async getPermissionsMap(roleIds: string[]): Promise<Map<string, string[]>> {
     const map = new Map<string, string[]>();
     if (roleIds.length === 0) {

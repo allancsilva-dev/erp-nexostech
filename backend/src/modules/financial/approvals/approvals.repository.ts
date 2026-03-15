@@ -84,4 +84,26 @@ export class ApprovalsRepository {
       createdAt: new Date(String(row.created_at)).toISOString(),
     };
   }
+
+  async history(branchId: string) {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const branchLiteral = quoteLiteral(branchId);
+
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT id, entry_id, approved_by, action, notes, created_at
+      FROM ${schema}.entry_approvals
+      WHERE branch_id = ${branchLiteral}
+      ORDER BY created_at DESC
+      LIMIT 300
+    `));
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      id: String(row.id),
+      entryId: String(row.entry_id),
+      userId: String(row.approved_by),
+      action: String(row.action),
+      notes: row.notes ? String(row.notes) : null,
+      createdAt: new Date(String(row.created_at)).toISOString(),
+    }));
+  }
 }

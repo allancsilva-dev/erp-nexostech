@@ -4,6 +4,7 @@ import { DrizzleService } from '../../../infrastructure/database/drizzle.service
 import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
 import { CreateCollectionRuleDto } from './dto/create-collection-rule.dto';
 import { UpdateCollectionRuleDto } from './dto/update-collection-rule.dto';
+import { UpdateEmailTemplateDto } from './dto/update-email-template.dto';
 
 @Injectable()
 export class CollectionRulesRepository {
@@ -120,5 +121,45 @@ export class CollectionRulesRepository {
         AND branch_id = ${branchLiteral}
         AND deleted_at IS NULL
     `));
+  }
+
+  async listEmailTemplates(branchId: string) {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT DISTINCT email_template_id
+      FROM ${schema}.collection_rules
+      WHERE branch_id = ${quoteLiteral(branchId)}
+        AND deleted_at IS NULL
+      ORDER BY email_template_id
+    `));
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => {
+      const templateId = String(row.email_template_id);
+      return {
+        id: templateId,
+        branchId,
+        name: `Template ${templateId.slice(0, 8)}`,
+        subject: 'Aviso financeiro Nexos ERP',
+        bodyHtml: '<p>Prezado(a) {{nome_cliente}}, valor {{valor}} com vencimento {{vencimento}}.</p>',
+        bodyText: 'Prezado(a) {{nome_cliente}}, valor {{valor}} com vencimento {{vencimento}}.',
+      };
+    });
+  }
+
+  async updateEmailTemplate(id: string, branchId: string, dto: UpdateEmailTemplateDto) {
+    const templates = await this.listEmailTemplates(branchId);
+    const existing = templates.find((template) => template.id === id);
+    if (!existing) {
+      return null;
+    }
+
+    return {
+      ...existing,
+      name: dto.name ?? existing.name,
+      subject: dto.subject ?? existing.subject,
+      bodyHtml: dto.bodyHtml ?? existing.bodyHtml,
+      bodyText: dto.bodyText ?? existing.bodyText,
+      updatedAt: new Date().toISOString(),
+    };
   }
 }

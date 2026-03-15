@@ -9,6 +9,7 @@ import { RbacGuard } from '../../../common/guards/rbac.guard';
 import { CollectionRulesService } from '../../../modules/financial/collection-rules/collection-rules.service';
 import { CreateCollectionRuleDto } from '../../../modules/financial/collection-rules/dto/create-collection-rule.dto';
 import { UpdateCollectionRuleDto } from '../../../modules/financial/collection-rules/dto/update-collection-rule.dto';
+import { UpdateEmailTemplateDto } from '../../../modules/financial/collection-rules/dto/update-email-template.dto';
 
 @Controller()
 @UseGuards(JwtGuard, BranchGuard, RbacGuard)
@@ -67,5 +68,22 @@ export class CollectionRulesController {
         vencimento,
       }),
     );
+  }
+
+  @Get('email-templates')
+  @RequirePermission('financial.settings.manage')
+  async listEmailTemplates(@BranchId() branchId: string): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.collectionRulesService.listEmailTemplates(branchId));
+  }
+
+  @Put('email-templates/:id')
+  @Idempotent()
+  @RequirePermission('financial.settings.manage')
+  async updateEmailTemplate(
+    @Param('id') id: string,
+    @BranchId() branchId: string,
+    @Body() dto: UpdateEmailTemplateDto,
+  ): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.collectionRulesService.updateEmailTemplate(id, branchId, dto));
   }
 }

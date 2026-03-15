@@ -9,6 +9,7 @@ import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
 import type { AuthUser } from '../../../common/types/auth-user.type';
 import { ImportReconciliationDto } from '../../../modules/financial/reconciliation/dto/import-reconciliation.dto';
+import { MatchReconciliationDto } from '../../../modules/financial/reconciliation/dto/match-reconciliation.dto';
 import { ReconciliationService } from '../../../modules/financial/reconciliation/reconciliation.service';
 
 @Controller('reconciliation')
@@ -24,13 +25,33 @@ export class ReconciliationController {
 
   @Post('import')
   @Idempotent()
-  @RequirePermission('admin.users.manage')
+  @RequirePermission('financial.reconciliation.execute')
   async import(
     @BranchId() branchId: string,
     @CurrentUser() user: AuthUser,
     @Body() dto: ImportReconciliationDto,
   ): Promise<ApiResponse<unknown>> {
     return ApiResponse.created(await this.reconciliationService.importBatch(branchId, user, dto));
+  }
+
+  @Get(':batchId')
+  @RequirePermission('financial.reconciliation.execute')
+  async batchItems(
+    @Param('batchId') batchId: string,
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.reconciliationService.getBatchItems(batchId, branchId));
+  }
+
+  @Post('match')
+  @Idempotent()
+  @RequirePermission('financial.reconciliation.execute')
+  async match(
+    @Body() dto: MatchReconciliationDto,
+    @BranchId() branchId: string,
+    @CurrentUser() user: AuthUser,
+  ): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.reconciliationService.match(dto.itemId, dto.entryId, branchId, user));
   }
 
   @Delete(':batchId')

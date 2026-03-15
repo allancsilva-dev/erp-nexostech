@@ -149,4 +149,28 @@ export class PaymentsRepository {
       WHERE id = ${entry}
     `));
   }
+
+  async listByEntry(entryId: string): Promise<PaymentEntity[]> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const entry = quoteLiteral(entryId);
+
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT id, entry_id, amount, payment_date, payment_method, bank_account_id, notes, created_by, created_at
+      FROM ${schema}.financial_entry_payments
+      WHERE entry_id = ${entry}
+      ORDER BY payment_date DESC, created_at DESC
+    `));
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      id: String(row.id),
+      entryId: String(row.entry_id),
+      amount: String(row.amount),
+      paymentDate: String(row.payment_date),
+      paymentMethod: row.payment_method ? String(row.payment_method) : null,
+      bankAccountId: row.bank_account_id ? String(row.bank_account_id) : null,
+      notes: row.notes ? String(row.notes) : null,
+      createdBy: String(row.created_by),
+      createdAt: new Date(String(row.created_at)).toISOString(),
+    }));
+  }
 }

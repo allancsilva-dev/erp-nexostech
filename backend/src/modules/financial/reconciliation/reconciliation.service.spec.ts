@@ -18,13 +18,23 @@ describe('ReconciliationService', () => {
       }),
       importFromPayments: jest.fn().mockResolvedValue(7),
       undoBatch: jest.fn(),
+      getBatchItems: jest.fn(),
+      matchItem: jest.fn(),
     } as unknown as jest.Mocked<ReconciliationRepository>;
 
     const txHelper = {
       run: jest.fn(async (cb: () => Promise<unknown>) => cb()),
     } as unknown as TransactionHelper;
 
-    const service = new ReconciliationService(repository, txHelper);
+    const eventBus = {
+      emit: jest.fn(),
+    };
+
+    const service = new ReconciliationService(
+      repository,
+      txHelper,
+      eventBus as { emit: (event: string, payload: unknown) => void },
+    );
 
     const dto: ImportReconciliationDto = {
       bankAccountId: 'acc-1',

@@ -20,13 +20,15 @@ import { LockPeriodsController } from './controllers/lock-periods.controller';
 import { ApprovalsController } from './controllers/approvals.controller';
 import { ApprovalRulesController } from './controllers/approval-rules.controller';
 import { ReconciliationController } from './controllers/reconciliation.controller';
+import { UsersController } from './controllers/users.controller';
 import { FinancialModule } from '../../modules/financial/financial.module';
 import { RbacModule } from '../../modules/rbac/rbac.module';
 import { BranchGuard } from '../../common/guards/branch.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
+import { DatabaseModule } from '../../infrastructure/database/database.module';
 
 @Module({
-  imports: [FinancialModule, BranchesModule, RbacModule, ContactsModule],
+  imports: [FinancialModule, BranchesModule, RbacModule, ContactsModule, DatabaseModule],
   controllers: [
     HealthController,
     EntriesController,
@@ -47,6 +49,7 @@ import { RbacGuard } from '../../common/guards/rbac.guard';
     ApprovalsController,
     ApprovalRulesController,
     ReconciliationController,
+    UsersController,
   ],
   providers: [BranchGuard, RbacGuard],
 })

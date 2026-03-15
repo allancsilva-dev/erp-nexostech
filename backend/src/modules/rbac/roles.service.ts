@@ -46,4 +46,13 @@ export class RolesService {
   async unlinkRoleFromUser(userId: string, roleId: string): Promise<void> {
     await this.rolesRepository.unlinkRoleFromUser(userId, roleId);
   }
+
+  async listUserRoles(userId: string): Promise<Array<{ roleId: string; roleName: string }>> {
+    return this.rolesRepository.listUserRoles(userId);
+  }
+
+  async assignRoleToUser(userId: string, roleId: string): Promise<{ userId: string; roleId: string }> {
+    await this.rolesRepository.assignRoleToUser(userId, roleId);
+    return { userId, roleId };
+  }
 }

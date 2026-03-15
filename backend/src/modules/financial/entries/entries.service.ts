@@ -134,4 +134,25 @@ export class EntriesService {
 
     return restored;
   }
+
+  async cancel(entryId: string, reason: string | undefined, user: AuthUser, branchId: string) {
+    const entry = await this.getById(entryId, branchId);
+    if (entry.status === 'CANCELLED') {
+      return entry;
+    }
+
+    const cancelled = await this.txHelper.run(async () => {
+      return this.entriesRepository.cancel(entryId, branchId);
+    });
+
+    this.eventBus.emit('entry.cancelled', {
+      tenantId: user.tenantId,
+      branchId,
+      entryId,
+      cancelledBy: user.sub,
+      reason: reason ?? null,
+    });
+
+    return cancelled;
+  }
 }

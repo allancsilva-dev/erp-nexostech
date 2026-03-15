@@ -21,6 +21,7 @@ import { EntriesService } from '../../../modules/financial/entries/entries.servi
 import { CreateEntryDto } from '../../../modules/financial/entries/dto/create-entry.dto';
 import { EntryResponse } from '../../../modules/financial/entries/dto/entry.response';
 import { UpdateEntryDto } from '../../../modules/financial/entries/dto/update-entry.dto';
+import { CancelEntryDto } from '../../../modules/financial/entries/dto/cancel-entry.dto';
 
 @Controller('entries')
 @UseGuards(JwtGuard)
@@ -80,6 +81,19 @@ export class EntriesController {
   ): Promise<ApiResponse<{ deleted: boolean }>> {
     await this.entriesService.softDelete(entryId, user, branchId);
     return ApiResponse.ok({ deleted: true });
+  }
+
+  @Post(':entryId/cancel')
+  @Idempotent()
+  @RequirePermission('financial.entries.cancel')
+  async cancel(
+    @Param('entryId') entryId: string,
+    @Body() dto: CancelEntryDto,
+    @CurrentUser() user: AuthUser,
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<EntryResponse>> {
+    const cancelled = await this.entriesService.cancel(entryId, dto.reason, user, branchId);
+    return ApiResponse.ok(EntryResponse.from(cancelled));
   }
 
   @Post(':entryId/restore')

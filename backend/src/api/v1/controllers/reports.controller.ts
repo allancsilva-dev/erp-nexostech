@@ -49,6 +49,38 @@ export class ReportsController {
     return ApiResponse.ok(data);
   }
 
+  @Get('balance-sheet')
+  @RequirePermission('financial.reports.view')
+  async balanceSheet(
+    @CurrentUser() user: AuthUser,
+    @BranchId() branchId: string,
+    @Query() query: ReportPeriodDto,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.reportsService.getBalanceSheet(
+      user.tenantId,
+      branchId,
+      query.startDate,
+      query.endDate,
+    );
+    return ApiResponse.ok(data);
+  }
+
+  @Get('aging')
+  @RequirePermission('financial.reports.view')
+  async aging(
+    @CurrentUser() user: AuthUser,
+    @BranchId() branchId: string,
+    @Query() query: ReportPeriodDto,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.reportsService.getAging(
+      user.tenantId,
+      branchId,
+      query.startDate,
+      query.endDate,
+    );
+    return ApiResponse.ok(data);
+  }
+
   @Get('dre/export')
   @RequirePermission('financial.reports.view')
   async exportDre(

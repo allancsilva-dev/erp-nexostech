@@ -1,8 +1,8 @@
 import { IsDateString, IsIn } from 'class-validator';
 
 export class ReportExportDto {
-  @IsIn(['dre', 'cashflow'])
-  report!: 'dre' | 'cashflow';
+  @IsIn(['dre', 'cashflow', 'balance-sheet', 'aging'])
+  report!: 'dre' | 'cashflow' | 'balance-sheet' | 'aging';
 
   @IsDateString()
   startDate!: string;

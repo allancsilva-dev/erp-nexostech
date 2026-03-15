@@ -4,6 +4,7 @@ import { BusinessException } from '../../common/exceptions/business.exception';
 import { BranchesRepository } from './branches.repository';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
+import type { AuthUser } from '../../common/types/auth-user.type';
 
 @Injectable()
 export class BranchesService {
@@ -11,6 +12,14 @@ export class BranchesService {
 
   async list() {
     return this.branchesRepository.list();
+  }
+
+  async listForUser(user: AuthUser) {
+    if (user.roles.includes('ADMIN')) {
+      return this.list();
+    }
+
+    return this.branchesRepository.listByUser(user.sub);
   }
 
   async create(dto: CreateBranchDto) {
@@ -37,5 +46,14 @@ export class BranchesService {
 
   async unlinkUser(branchId: string, userId: string): Promise<void> {
     await this.branchesRepository.unlinkUser(branchId, userId);
+  }
+
+  async listUsers(branchId: string): Promise<Array<{ userId: string }>> {
+    return this.branchesRepository.listUsers(branchId);
+  }
+
+  async assignUser(branchId: string, userId: string): Promise<{ branchId: string; userId: string }> {
+    await this.branchesRepository.assignUser(branchId, userId);
+    return { branchId, userId };
   }
 }

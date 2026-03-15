@@ -34,7 +34,7 @@ export class LockPeriodsController {
 
   @Delete(':id')
   @Idempotent()
-  @RequirePermission('financial.settings.manage')
+  @RequirePermission('admin.users.manage')
   async remove(
     @Param('id') id: string,
     @BranchId() branchId: string,

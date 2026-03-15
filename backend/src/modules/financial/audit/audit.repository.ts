@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import { quoteIdent } from '../../../infrastructure/database/sql-builder.util';
+import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
 
 export type AuditLogEntity = {
   id: string;
@@ -52,6 +52,32 @@ export class AuditRepository {
     return {
       items,
       total: totalRow?.total ? Number(totalRow.total) : 0,
+    };
+  }
+
+  async getById(id: string): Promise<AuditLogEntity | null> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT id, branch_id, user_id, action, entity, entity_id, request_id, created_at
+      FROM ${schema}.audit_logs
+      WHERE id = ${quoteLiteral(id)}
+      LIMIT 1
+    `));
+
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: String(row.id),
+      branchId: row.branch_id ? String(row.branch_id) : null,
+      userId: String(row.user_id),
+      action: String(row.action),
+      entity: String(row.entity),
+      entityId: String(row.entity_id),
+      requestId: row.request_id ? String(row.request_id) : null,
+      createdAt: new Date(String(row.created_at)).toISOString(),
     };
   }
 }

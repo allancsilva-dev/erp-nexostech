@@ -41,6 +41,23 @@ export class BranchesRepository {
     return (result.rows as Array<Record<string, unknown>>).map((row) => this.mapRow(row));
   }
 
+  async listByUser(userId: string): Promise<BranchEntity[]> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT
+        b.id, b.name, b.legal_name, b.document, b.phone, b.email,
+        b.address_city, b.address_state, b.address_zip,
+        b.is_headquarters, b.active
+      FROM ${schema}.branches b
+      JOIN ${schema}.user_branches ub ON ub.branch_id = b.id
+      WHERE ub.user_id = ${quoteLiteral(userId)}
+        AND b.deleted_at IS NULL
+      ORDER BY b.created_at ASC
+    `));
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => this.mapRow(row));
+  }
+
   async create(dto: CreateBranchDto): Promise<BranchEntity> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const name = quoteLiteral(dto.name);
@@ -140,6 +157,29 @@ export class BranchesRepository {
       DELETE FROM ${schema}.user_branches
       WHERE branch_id = ${branchLiteral}
         AND user_id = ${userLiteral}
+    `));
+  }
+
+  async listUsers(branchId: string): Promise<Array<{ userId: string }>> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT user_id
+      FROM ${schema}.user_branches
+      WHERE branch_id = ${quoteLiteral(branchId)}
+      ORDER BY user_id ASC
+    `));
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      userId: String(row.user_id),
+    }));
+  }
+
+  async assignUser(branchId: string, userId: string): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    await this.drizzleService.getClient().execute(sql.raw(`
+      INSERT INTO ${schema}.user_branches (user_id, branch_id)
+      VALUES (${quoteLiteral(userId)}, ${quoteLiteral(branchId)})
+      ON CONFLICT (user_id, branch_id) DO NOTHING
     `));
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { PaginationDto } from '../../../common/dtos/pagination.dto';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
@@ -29,5 +29,11 @@ export class AuditLogsController {
   async export(@Query() query: PaginationDto): Promise<ApiResponse<{ filename: string; content: string }>> {
     const data = await this.auditService.exportCsv(query.page, query.pageSize);
     return ApiResponse.ok(data);
+  }
+
+  @Get(':id')
+  @RequirePermission('financial.audit.view')
+  async detail(@Param('id') id: string): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.auditService.getById(id));
   }
 }

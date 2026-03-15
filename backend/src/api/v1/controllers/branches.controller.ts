@@ -1,14 +1,17 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { BranchGuard } from '../../../common/guards/branch.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
 import { BranchesService } from '../../../modules/branches/branches.service';
+import { AssignBranchUserDto } from '../../../modules/branches/dto/assign-branch-user.dto';
 import { CreateBranchDto } from '../../../modules/branches/dto/create-branch.dto';
 import { BranchResponse } from '../../../modules/branches/dto/branch.response';
 import { UpdateBranchDto } from '../../../modules/branches/dto/update-branch.dto';
+import type { AuthUser } from '../../../common/types/auth-user.type';
 
 @Controller('branches')
 @UseGuards(JwtGuard, BranchGuard, RbacGuard)
@@ -19,6 +22,12 @@ export class BranchesController {
   @RequirePermission('admin.branches.manage')
   async list(): Promise<ApiResponse<BranchResponse[]>> {
     const branches = await this.branchesService.list();
+    return ApiResponse.ok(branches.map((branch) => BranchResponse.from(branch)));
+  }
+
+  @Get('my')
+  async myBranches(@CurrentUser() user: AuthUser): Promise<ApiResponse<BranchResponse[]>> {
+    const branches = await this.branchesService.listForUser(user);
     return ApiResponse.ok(branches.map((branch) => BranchResponse.from(branch)));
   }
 
@@ -57,5 +66,21 @@ export class BranchesController {
   ): Promise<ApiResponse<{ deleted: boolean }>> {
     await this.branchesService.unlinkUser(id, userId);
     return ApiResponse.ok({ deleted: true });
+  }
+
+  @Get(':id/users')
+  @RequirePermission('admin.users.manage')
+  async listUsers(@Param('id') id: string): Promise<ApiResponse<{ userId: string }[]>> {
+    return ApiResponse.ok(await this.branchesService.listUsers(id));
+  }
+
+  @Post(':id/users')
+  @Idempotent()
+  @RequirePermission('admin.users.manage')
+  async assignUser(
+    @Param('id') id: string,
+    @Body() dto: AssignBranchUserDto,
+  ): Promise<ApiResponse<{ branchId: string; userId: string }>> {
+    return ApiResponse.created(await this.branchesService.assignUser(id, dto.userId));
   }
 }

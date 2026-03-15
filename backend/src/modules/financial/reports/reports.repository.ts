@@ -73,4 +73,81 @@ export class ReportsRepository {
       })),
     };
   }
+
+  async getBalanceSheet(branchId: string, startDate: string, endDate: string) {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const branchLiteral = quoteLiteral(branchId);
+    const startLiteral = quoteLiteral(startDate);
+    const endLiteral = quoteLiteral(endDate);
+
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT
+        COALESCE(c.name, 'Sem categoria') AS category_name,
+        COALESCE(SUM(CASE WHEN e.type = 'RECEIVABLE' THEN e.amount ELSE 0 END), 0)::text AS inflow,
+        COALESCE(SUM(CASE WHEN e.type = 'PAYABLE' THEN e.amount ELSE 0 END), 0)::text AS outflow,
+        COALESCE(SUM(CASE WHEN e.type = 'RECEIVABLE' THEN e.amount ELSE -e.amount END), 0)::text AS net
+      FROM ${schema}.financial_entries e
+      LEFT JOIN ${schema}.categories c ON c.id = e.category_id
+      WHERE e.branch_id = ${branchLiteral}
+        AND e.due_date >= ${startLiteral}
+        AND e.due_date <= ${endLiteral}
+        AND e.deleted_at IS NULL
+      GROUP BY COALESCE(c.name, 'Sem categoria')
+      ORDER BY category_name ASC
+    `));
+
+    const rows = (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      categoryName: String(row.category_name),
+      inflow: String(row.inflow),
+      outflow: String(row.outflow),
+      net: String(row.net),
+    }));
+
+    const totals = rows.reduce(
+      (acc, row) => ({
+        inflow: (Number(acc.inflow) + Number(row.inflow)).toFixed(2),
+        outflow: (Number(acc.outflow) + Number(row.outflow)).toFixed(2),
+        net: (Number(acc.net) + Number(row.net)).toFixed(2),
+      }),
+      { inflow: '0.00', outflow: '0.00', net: '0.00' },
+    );
+
+    return { byCategory: rows, totals };
+  }
+
+  async getAging(branchId: string, startDate: string, endDate: string) {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const branchLiteral = quoteLiteral(branchId);
+    const startLiteral = quoteLiteral(startDate);
+    const endLiteral = quoteLiteral(endDate);
+
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT
+        CASE
+          WHEN CURRENT_DATE - e.due_date <= 15 THEN '1-15'
+          WHEN CURRENT_DATE - e.due_date <= 30 THEN '16-30'
+          WHEN CURRENT_DATE - e.due_date <= 60 THEN '31-60'
+          ELSE '60+'
+        END AS aging_range,
+        COALESCE(SUM(e.amount - COALESCE(e.paid_amount, 0)), 0)::text AS total,
+        COUNT(*)::int AS count
+      FROM ${schema}.financial_entries e
+      WHERE e.branch_id = ${branchLiteral}
+        AND e.type = 'RECEIVABLE'
+        AND e.status IN ('PENDING', 'PARTIAL', 'OVERDUE')
+        AND e.due_date >= ${startLiteral}
+        AND e.due_date <= ${endLiteral}
+        AND e.deleted_at IS NULL
+      GROUP BY aging_range
+      ORDER BY aging_range
+    `));
+
+    return {
+      ranges: (result.rows as Array<Record<string, unknown>>).map((row) => ({
+        range: String(row.aging_range),
+        total: String(row.total),
+        count: Number(row.count),
+      })),
+    };
+  }
 }

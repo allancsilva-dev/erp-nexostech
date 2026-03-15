@@ -9,6 +9,7 @@ import { RbacGuard } from '../../../common/guards/rbac.guard';
 import type { AuthUser } from '../../../common/types/auth-user.type';
 import { RejectApprovalDto } from '../../../modules/financial/approvals/dto/reject-approval.dto';
 import { ApprovalsService } from '../../../modules/financial/approvals/approvals.service';
+import { BatchApproveDto } from '../../../modules/financial/approvals/dto/batch-approve.dto';
 
 @Controller('approvals')
 @UseGuards(JwtGuard, BranchGuard, RbacGuard)
@@ -40,5 +41,21 @@ export class ApprovalsController {
     @BranchId() branchId: string,
   ): Promise<ApiResponse<unknown>> {
     return ApiResponse.ok(await this.approvalsService.reject(entryId, branchId, dto.reason, user));
+  }
+
+  @Post('batch-approve')
+  @RequirePermission('financial.entries.approve')
+  async batchApprove(
+    @Body() dto: BatchApproveDto,
+    @CurrentUser() user: AuthUser,
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.approvalsService.batchApprove(dto.entryIds, branchId, user));
+  }
+
+  @Get('history')
+  @RequirePermission('financial.entries.approve')
+  async history(@BranchId() branchId: string): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.approvalsService.history(branchId));
   }
 }

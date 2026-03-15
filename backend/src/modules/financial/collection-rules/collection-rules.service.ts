@@ -4,6 +4,7 @@ import { BusinessException } from '../../../common/exceptions/business.exception
 import { CollectionRulesRepository } from './collection-rules.repository';
 import { CreateCollectionRuleDto } from './dto/create-collection-rule.dto';
 import { UpdateCollectionRuleDto } from './dto/update-collection-rule.dto';
+import { UpdateEmailTemplateDto } from './dto/update-email-template.dto';
 
 @Injectable()
 export class CollectionRulesService {
@@ -51,5 +52,23 @@ export class CollectionRulesService {
       renderedSubject: `Cobranca para ${payload.nome_cliente ?? 'Cliente'}`,
       renderedBody: `Valor ${payload.valor ?? '0.00'} vence em ${payload.vencimento ?? '-'}`,
     };
+  }
+
+  async listEmailTemplates(branchId: string) {
+    return this.collectionRulesRepository.listEmailTemplates(branchId);
+  }
+
+  async updateEmailTemplate(id: string, branchId: string, dto: UpdateEmailTemplateDto) {
+    const updated = await this.collectionRulesRepository.updateEmailTemplate(id, branchId, dto);
+    if (!updated) {
+      throw new BusinessException(
+        'EMAIL_TEMPLATE_NOT_FOUND',
+        'Template de e-mail nao encontrado para a filial informada',
+        { id, branchId },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return updated;
   }
 }

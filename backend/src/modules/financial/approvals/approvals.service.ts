@@ -45,4 +45,17 @@ export class ApprovalsService {
     });
     return record;
   }
+
+  async batchApprove(entryIds: string[], branchId: string, user: AuthUser) {
+    const approved: unknown[] = [];
+    for (const entryId of entryIds) {
+      approved.push(await this.approve(entryId, branchId, user));
+    }
+
+    return approved;
+  }
+
+  async history(branchId: string) {
+    return this.approvalsRepository.history(branchId);
+  }
 }

@@ -9,7 +9,9 @@ import { PaymentCalculator } from './domain/payment.calculator';
 import { PaymentRules } from './domain/payment.rules';
 import { RefundPaymentDto } from './dto/refund-payment.dto';
 import { RegisterPaymentDto } from './dto/register-payment.dto';
+import { PaymentEntity } from './dto/payment.response';
 import { PaymentsRepository } from './payments.repository';
+import { BatchPayDto } from './dto/batch-pay.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -48,6 +50,30 @@ export class PaymentsService {
     );
 
     return payment;
+  }
+
+  async listByEntry(entryId: string, branchId: string) {
+    const entry = await this.paymentsRepository.findEntryById(entryId, branchId);
+    if (!entry) {
+      throw new BusinessException(
+        'ENTRY_NOT_FOUND',
+        'Lancamento nao encontrado para consulta de pagamentos',
+        { entryId, branchId },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return this.paymentsRepository.listByEntry(entryId);
+  }
+
+  async batchPay(dto: BatchPayDto, user: AuthUser, branchId: string) {
+    const created: PaymentEntity[] = [];
+    for (const item of dto.items) {
+      const payment = await this.registerPayment(item.entryId, item, user, branchId);
+      created.push(payment);
+    }
+
+    return created;
   }
 
   async refund(entryId: string, _dto: RefundPaymentDto, user: AuthUser, branchId: string) {

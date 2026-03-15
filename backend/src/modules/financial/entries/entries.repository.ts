@@ -284,6 +284,27 @@ export class EntriesRepository {
     return restored;
   }
 
+  async cancel(entryId: string, branchId: string): Promise<EntryRecord> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const entryIdLiteral = quoteLiteral(entryId);
+    const branchIdLiteral = quoteLiteral(branchId);
+
+    await this.drizzleService.getClient().execute(sql.raw(`
+      UPDATE ${schema}.financial_entries
+      SET status = 'CANCELLED', updated_at = NOW()
+      WHERE id = ${entryIdLiteral}
+        AND branch_id = ${branchIdLiteral}
+        AND deleted_at IS NULL
+    `));
+
+    const cancelled = await this.findById(entryId, branchId);
+    if (!cancelled) {
+      throw new Error('Cancelled entry could not be reloaded');
+    }
+
+    return cancelled;
+  }
+
   private mapRow(row: Record<string, unknown>): EntryRecord {
     return {
       id: String(row.id),
