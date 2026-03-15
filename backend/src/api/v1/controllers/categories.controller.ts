@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
+import { Idempotent } from '../../../common/decorators/idempotent.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { BranchGuard } from '../../../common/guards/branch.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
@@ -8,6 +9,7 @@ import { RbacGuard } from '../../../common/guards/rbac.guard';
 import { CategoriesService } from '../../../modules/financial/categories/categories.service';
 import { CreateCategoryDto } from '../../../modules/financial/categories/dto/create-category.dto';
 import { CategoryResponse } from '../../../modules/financial/categories/dto/category.response';
+import { UpdateCategoryDto } from '../../../modules/financial/categories/dto/update-category.dto';
 
 @Controller('categories')
 @UseGuards(JwtGuard, BranchGuard, RbacGuard)
@@ -29,5 +31,28 @@ export class CategoriesController {
   ): Promise<ApiResponse<CategoryResponse>> {
     const created = await this.categoriesService.create(branchId, dto);
     return ApiResponse.created(CategoryResponse.from(created));
+  }
+
+  @Put(':id')
+  @Idempotent()
+  @RequirePermission('financial.categories.manage')
+  async update(
+    @Param('id') id: string,
+    @BranchId() branchId: string,
+    @Body() dto: UpdateCategoryDto,
+  ): Promise<ApiResponse<CategoryResponse>> {
+    const updated = await this.categoriesService.update(id, branchId, dto);
+    return ApiResponse.ok(CategoryResponse.from(updated));
+  }
+
+  @Delete(':id')
+  @Idempotent()
+  @RequirePermission('financial.categories.manage')
+  async remove(
+    @Param('id') id: string,
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<{ deleted: boolean }>> {
+    await this.categoriesService.softDelete(id, branchId);
+    return ApiResponse.ok({ deleted: true });
   }
 }

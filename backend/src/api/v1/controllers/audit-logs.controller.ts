@@ -23,4 +23,11 @@ export class AuditLogsController {
       totalPages: Math.ceil(total / query.pageSize),
     });
   }
+
+  @Get('export')
+  @RequirePermission('financial.audit.view')
+  async export(@Query() query: PaginationDto): Promise<ApiResponse<{ filename: string; content: string }>> {
+    const data = await this.auditService.exportCsv(query.page, query.pageSize);
+    return ApiResponse.ok(data);
+  }
 }

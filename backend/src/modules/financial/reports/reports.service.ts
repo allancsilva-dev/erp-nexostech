@@ -119,4 +119,39 @@ export class ReportsService {
       content: ['date,inflow,outflow', rows].filter(Boolean).join('\n'),
     };
   }
+
+  async export(
+    tenantId: string,
+    branchId: string,
+    report: 'dre' | 'cashflow',
+    startDate: string,
+    endDate: string,
+    format: 'csv' | 'pdf',
+  ) {
+    if (report === 'dre') {
+      const data = await this.getDre(tenantId, branchId, startDate, endDate);
+      const csv = `revenueTotal,expenseTotal,netResult\n${data.revenueTotal},${data.expenseTotal},${data.netResult}`;
+      return {
+        format,
+        filename: `dre-${startDate}-${endDate}.${format}`,
+        content:
+          format === 'csv'
+            ? csv
+            : Buffer.from(`DRE\n${startDate} - ${endDate}\n${csv}`).toString('base64'),
+      };
+    }
+
+    const data = await this.getCashflow(tenantId, branchId, startDate, endDate);
+    const rows = data.rows.map((row) => `${row.date},${row.inflow},${row.outflow}`).join('\n');
+    const csv = ['date,inflow,outflow', rows].filter(Boolean).join('\n');
+
+    return {
+      format,
+      filename: `cashflow-${startDate}-${endDate}.${format}`,
+      content:
+        format === 'csv'
+          ? csv
+          : Buffer.from(`CASHFLOW\n${startDate} - ${endDate}\n${csv}`).toString('base64'),
+    };
+  }
 }
