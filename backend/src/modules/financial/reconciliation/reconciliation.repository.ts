@@ -1,0 +1,116 @@
+import { Injectable } from '@nestjs/common';
+import { sql } from 'drizzle-orm';
+import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
+import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+
+@Injectable()
+export class ReconciliationRepository {
+  constructor(private readonly drizzleService: DrizzleService) {}
+
+  async listPending(branchId: string) {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT
+        i.id,
+        i.batch_id,
+        i.payment_id,
+        i.entry_id,
+        i.amount,
+        i.payment_date,
+        i.reconciled,
+        b.created_at AS batch_created_at
+      FROM ${schema}.reconciliation_items i
+      JOIN ${schema}.reconciliation_batches b ON b.id = i.batch_id
+      WHERE i.branch_id = ${quoteLiteral(branchId)}
+        AND i.deleted_at IS NULL
+        AND i.reconciled = false
+      ORDER BY i.payment_date DESC
+      LIMIT 200
+    `));
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      id: String(row.id),
+      batchId: String(row.batch_id),
+      paymentId: String(row.payment_id),
+      entryId: String(row.entry_id),
+      amount: String(row.amount),
+      paymentDate: String(row.payment_date),
+      reconciled: Boolean(row.reconciled),
+      batchCreatedAt: new Date(String(row.batch_created_at)).toISOString(),
+    }));
+  }
+
+  async createBatch(branchId: string, createdBy: string, bankAccountId: string, startDate: string, endDate: string) {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      INSERT INTO ${schema}.reconciliation_batches (
+        branch_id, bank_account_id, start_date, end_date, created_by
+      ) VALUES (
+        ${quoteLiteral(branchId)},
+        ${quoteLiteral(bankAccountId)},
+        ${quoteLiteral(startDate)},
+        ${quoteLiteral(endDate)},
+        ${quoteLiteral(createdBy)}
+      )
+      RETURNING id, branch_id, bank_account_id, start_date, end_date, created_by, created_at
+    `));
+
+    const row = result.rows[0] as Record<string, unknown>;
+    return {
+      id: String(row.id),
+      branchId: String(row.branch_id),
+      bankAccountId: String(row.bank_account_id),
+      startDate: String(row.start_date),
+      endDate: String(row.end_date),
+      createdBy: String(row.created_by),
+      createdAt: new Date(String(row.created_at)).toISOString(),
+    };
+  }
+
+  async importFromPayments(batchId: string, branchId: string, bankAccountId: string, startDate: string, endDate: string): Promise<number> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      INSERT INTO ${schema}.reconciliation_items (
+        batch_id, branch_id, payment_id, entry_id, amount, payment_date, reconciled
+      )
+      SELECT
+        ${quoteLiteral(batchId)},
+        ${quoteLiteral(branchId)},
+        p.id,
+        p.entry_id,
+        p.amount,
+        p.payment_date,
+        false
+      FROM ${schema}.financial_entry_payments p
+      JOIN ${schema}.financial_entries e ON e.id = p.entry_id
+      WHERE e.branch_id = ${quoteLiteral(branchId)}
+        AND p.bank_account_id = ${quoteLiteral(bankAccountId)}
+        AND p.payment_date >= ${quoteLiteral(startDate)}
+        AND p.payment_date <= ${quoteLiteral(endDate)}
+      ON CONFLICT (batch_id, payment_id)
+      DO NOTHING
+      RETURNING id
+    `));
+
+    return result.rows.length;
+  }
+
+  async undoBatch(batchId: string, branchId: string): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    await this.drizzleService.getClient().execute(sql.raw(`
+      UPDATE ${schema}.reconciliation_items
+      SET deleted_at = NOW(), updated_at = NOW()
+      WHERE batch_id = ${quoteLiteral(batchId)}
+        AND branch_id = ${quoteLiteral(branchId)}
+        AND deleted_at IS NULL
+    `));
+
+    await this.drizzleService.getClient().execute(sql.raw(`
+      UPDATE ${schema}.reconciliation_batches
+      SET deleted_at = NOW(), updated_at = NOW()
+      WHERE id = ${quoteLiteral(batchId)}
+        AND branch_id = ${quoteLiteral(branchId)}
+        AND deleted_at IS NULL
+    `));
+  }
+}

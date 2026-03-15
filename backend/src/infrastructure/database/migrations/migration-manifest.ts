@@ -325,4 +325,36 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
       `CREATE INDEX IF NOT EXISTS idx_collection_dispatches_status ON ${schema}.collection_dispatches(status, scheduled_for)`,
     ],
   },
+  {
+    name: '010_create_reconciliation_tables',
+    run: (schema) => [
+      `CREATE TABLE IF NOT EXISTS ${schema}.reconciliation_batches (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        branch_id UUID NOT NULL REFERENCES ${schema}.branches(id),
+        bank_account_id UUID NOT NULL REFERENCES ${schema}.bank_accounts(id),
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        created_by VARCHAR(100) NOT NULL,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_reconciliation_batches_branch ON ${schema}.reconciliation_batches(branch_id, created_at DESC)`,
+      `CREATE TABLE IF NOT EXISTS ${schema}.reconciliation_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        batch_id UUID NOT NULL REFERENCES ${schema}.reconciliation_batches(id) ON DELETE CASCADE,
+        branch_id UUID NOT NULL REFERENCES ${schema}.branches(id),
+        payment_id UUID NOT NULL REFERENCES ${schema}.financial_entry_payments(id),
+        entry_id UUID NOT NULL REFERENCES ${schema}.financial_entries(id),
+        amount DECIMAL(15,2) NOT NULL,
+        payment_date DATE NOT NULL,
+        reconciled BOOLEAN NOT NULL DEFAULT false,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        UNIQUE (batch_id, payment_id)
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_reconciliation_items_branch_pending ON ${schema}.reconciliation_items(branch_id, reconciled, payment_date DESC)`,
+    ],
+  },
 ];

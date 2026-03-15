@@ -14,6 +14,7 @@ import { LockPeriodsModule } from './lock-periods/lock-periods.module';
 import { ApprovalsModule } from './approvals/approvals.module';
 import { ApprovalRulesModule } from './approval-rules/approval-rules.module';
 import { JobsModule } from './jobs/jobs.module';
+import { ReconciliationModule } from './reconciliation/reconciliation.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { JobsModule } from './jobs/jobs.module';
     LockPeriodsModule,
     ApprovalsModule,
     ApprovalRulesModule,
+    ReconciliationModule,
     JobsModule,
   ],
   exports: [
@@ -48,6 +50,7 @@ import { JobsModule } from './jobs/jobs.module';
     LockPeriodsModule,
     ApprovalsModule,
     ApprovalRulesModule,
+    ReconciliationModule,
   ],
 })
 export class FinancialModule {}
