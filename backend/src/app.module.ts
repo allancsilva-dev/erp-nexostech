@@ -1,0 +1,29 @@
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ClsModule } from 'nestjs-cls';
+import { RequestIdMiddleware } from './common/middlewares/request-id.middleware';
+import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
+import { InfrastructureModule } from './infrastructure/infrastructure.module';
+import { V1Module } from './api/v1/v1.module';
+
+@Module({
+  imports: [
+    ClsModule.forRoot({
+      global: true,
+      middleware: { mount: true },
+    }),
+    InfrastructureModule,
+    V1Module,
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TenantInterceptor,
+    },
+  ],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}
