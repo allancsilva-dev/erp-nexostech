@@ -1,0 +1,70 @@
+import { BusinessException } from '../../../../common/exceptions/business.exception';
+
+export type ReconciliationItem = {
+  id: string;
+  reconciled: boolean;
+  amount: string;
+};
+
+export type EntryForReconciliation = {
+  id: string;
+  status: string;
+  amount: string;
+};
+
+export class MatchRules {
+  /**
+   * Garante que o item do extrato ainda não foi conciliado.
+   */
+  assertItemNotReconciled(item: ReconciliationItem): void {
+    if (item.reconciled) {
+      throw new BusinessException(
+        'RECONCILIATION_ITEM_ALREADY_MATCHED',
+        'Este item do extrato ja foi conciliado',
+        { itemId: item.id },
+      );
+    }
+  }
+
+  /**
+   * Garante que a entry não está em status que impede conciliação.
+   * Entries canceladas ou em rascunho não podem ser conciliadas.
+   */
+  assertEntryEligible(entry: EntryForReconciliation): void {
+    const ineligibleStatuses = ['CANCELLED', 'DRAFT'];
+    if (ineligibleStatuses.includes(entry.status)) {
+      throw new BusinessException(
+        'ENTRY_NOT_ELIGIBLE_FOR_RECONCILIATION',
+        `Lancamento em status ${entry.status} nao pode ser conciliado`,
+        { entryId: entry.id, status: entry.status },
+      );
+    }
+  }
+
+  /**
+   * Valida que a divergência de valor entre o item do extrato e a entry
+   * está dentro do limite aceitável (configurable, padrão R$ 0,01 centavo).
+   */
+  assertAmountWithinTolerance(
+    itemAmount: string,
+    entryAmount: string,
+    toleranceCents = 0.01,
+  ): void {
+    const item = parseFloat(itemAmount);
+    const entry = parseFloat(entryAmount);
+    const diff = Math.abs(Math.abs(item) - Math.abs(entry));
+
+    if (diff > toleranceCents) {
+      throw new BusinessException(
+        'RECONCILIATION_AMOUNT_DIVERGENCE',
+        'Valor do extrato diverge do valor do lancamento acima da tolerancia',
+        {
+          itemAmount,
+          entryAmount,
+          difference: diff.toFixed(2),
+          toleranceCents,
+        },
+      );
+    }
+  }
+}
