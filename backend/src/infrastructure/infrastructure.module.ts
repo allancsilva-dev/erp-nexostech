@@ -8,6 +8,7 @@ import { CacheModule } from './cache/cache.module';
 import { DatabaseModule } from './database/database.module';
 import { EventsModule } from './events/events.module';
 import { QueueModule } from './queue/queue.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { QueueModule } from './queue/queue.module';
     CacheModule,
     EventsModule,
     QueueModule,
+    StorageModule,
   ],
-  exports: [DatabaseModule, CacheModule, EventsModule, QueueModule],
+  exports: [DatabaseModule, CacheModule, EventsModule, QueueModule, StorageModule],
 })
 export class InfrastructureModule {}

@@ -22,8 +22,10 @@ import { ApprovalRulesController } from './controllers/approval-rules.controller
 import { ReconciliationController } from './controllers/reconciliation.controller';
 import { UsersController } from './controllers/users.controller';
 import { MetricsController } from './controllers/metrics.controller';
+import { TenantsController } from './controllers/tenants.controller';
 import { FinancialModule } from '../../modules/financial/financial.module';
 import { RbacModule } from '../../modules/rbac/rbac.module';
+import { TenantsModule } from '../../modules/tenants/tenants.module';
 import { BranchGuard } from '../../common/guards/branch.guard';
 import { FeatureFlagGuard } from '../../common/guards/feature-flag.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
@@ -32,7 +34,15 @@ import { CacheModule } from '../../infrastructure/cache/cache.module';
 import { MetricsService } from '../../infrastructure/observability/metrics.service';
 
 @Module({
-  imports: [FinancialModule, BranchesModule, RbacModule, ContactsModule, DatabaseModule, CacheModule],
+  imports: [
+    FinancialModule,
+    BranchesModule,
+    RbacModule,
+    ContactsModule,
+    DatabaseModule,
+    CacheModule,
+    TenantsModule,
+  ],
   controllers: [
     HealthController,
     EntriesController,
@@ -55,6 +65,7 @@ import { MetricsService } from '../../infrastructure/observability/metrics.servi
     ReconciliationController,
     UsersController,
     MetricsController,
+    TenantsController,
   ],
   providers: [BranchGuard, RbacGuard, FeatureFlagGuard, MetricsService],
 })

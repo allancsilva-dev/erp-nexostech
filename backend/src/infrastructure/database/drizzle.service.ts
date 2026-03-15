@@ -19,6 +19,12 @@ export class DrizzleService implements OnModuleDestroy {
         'DATABASE_STATEMENT_TIMEOUT_MS',
         5000,
       ),
+      max: this.configService.get<number>('DATABASE_POOL_MAX', 20),
+      idleTimeoutMillis: this.configService.get<number>('DATABASE_POOL_IDLE_TIMEOUT_MS', 30000),
+      connectionTimeoutMillis: this.configService.get<number>(
+        'DATABASE_POOL_CONNECTION_TIMEOUT_MS',
+        10000,
+      ),
     });
 
     this.db = drizzle(this.pool);

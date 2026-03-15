@@ -3,12 +3,14 @@ import { BoletosGatewayClient } from './boletos.gateway-client';
 import { BoletosRepository } from './boletos.repository';
 import { BoletoWebhookDto } from './dto/boleto-webhook.dto';
 import { GenerateBoletoDto } from './dto/generate-boleto.dto';
+import { StorageService } from '../../../infrastructure/storage/storage.service';
 
 @Injectable()
 export class BoletosService {
   constructor(
     private readonly gatewayClient: BoletosGatewayClient,
     private readonly boletosRepository: BoletosRepository,
+    private readonly storageService: StorageService,
   ) {}
 
   async list(branchId: string) {
@@ -44,7 +46,7 @@ export class BoletosService {
   async getPdfLink(entryId: string, branchId: string) {
     const boleto = await this.boletosRepository.findByEntryId(entryId, branchId);
     return {
-      url: boleto?.pdfUrl ?? `https://r2.local/${entryId}.pdf`,
+      url: boleto?.pdfUrl ?? this.storageService.getPublicUrl(`boletos/${entryId}.pdf`),
       expiresInSeconds: 3600,
     };
   }
