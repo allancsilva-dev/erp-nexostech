@@ -109,4 +109,29 @@ export class EntriesService {
       deletedBy: user.sub,
     });
   }
+
+  async restore(entryId: string, user: AuthUser, branchId: string) {
+    const deleted = await this.entriesRepository.findDeletedById(entryId, branchId);
+    if (!deleted) {
+      throw new BusinessException(
+        'ENTRY_NOT_FOUND',
+        'Lancamento excluido nao encontrado para restauracao',
+        { entryId, branchId },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const restored = await this.txHelper.run(async () => {
+      return this.entriesRepository.restore(entryId, branchId);
+    });
+
+    this.eventBus.emit('entry.restored', {
+      tenantId: user.tenantId,
+      branchId,
+      entryId,
+      restoredBy: user.sub,
+    });
+
+    return restored;
+  }
 }

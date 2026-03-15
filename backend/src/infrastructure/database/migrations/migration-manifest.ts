@@ -118,4 +118,23 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
       `CREATE INDEX IF NOT EXISTS idx_entry_payments_entry ON ${schema}.financial_entry_payments(entry_id)`,
     ],
   },
+  {
+    name: '003_create_financial_transfers_table',
+    run: (schema) => [
+      `CREATE TABLE IF NOT EXISTS ${schema}.financial_transfers (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        branch_id UUID NOT NULL REFERENCES ${schema}.branches(id),
+        from_account_id UUID NOT NULL REFERENCES ${schema}.bank_accounts(id),
+        to_account_id UUID NOT NULL REFERENCES ${schema}.bank_accounts(id),
+        amount DECIMAL(15,2) NOT NULL,
+        transfer_date DATE NOT NULL,
+        description VARCHAR(255),
+        created_by VARCHAR(100) NOT NULL,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_transfers_branch_date ON ${schema}.financial_transfers(branch_id, transfer_date)`,
+    ],
+  },
 ];

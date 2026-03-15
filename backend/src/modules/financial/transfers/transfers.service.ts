@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 import Decimal from 'decimal.js';
 import { TransferCreatedEvent } from '../../../common/events/financial.events';
 import { BusinessException } from '../../../common/exceptions/business.exception';
@@ -39,5 +40,28 @@ export class TransfersService {
     );
 
     return created;
+  }
+
+  async softDelete(transferId: string, branchId: string, user: AuthUser): Promise<void> {
+    const existing = await this.transfersRepository.findById(transferId, branchId);
+    if (!existing) {
+      throw new BusinessException(
+        'TRANSFER_NOT_FOUND',
+        'Transferencia nao encontrada para a filial informada',
+        { transferId, branchId },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    await this.txHelper.run(async () => {
+      await this.transfersRepository.softDelete(transferId, branchId);
+    });
+
+    this.eventBus.emit('transfer.deleted', {
+      tenantId: user.tenantId,
+      branchId,
+      transferId,
+      deletedBy: user.sub,
+    });
   }
 }

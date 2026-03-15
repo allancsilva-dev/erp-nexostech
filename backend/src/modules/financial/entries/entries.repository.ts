@@ -99,6 +99,42 @@ export class EntriesRepository {
     return this.mapRow(row);
   }
 
+  async findDeletedById(entryId: string, branchId: string): Promise<EntryRecord | null> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const entryIdLiteral = quoteLiteral(entryId);
+    const branchIdLiteral = quoteLiteral(branchId);
+
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT
+        e.id,
+        e.branch_id,
+        e.document_number,
+        e.type,
+        e.description,
+        e.amount,
+        e.issue_date,
+        e.due_date,
+        e.status,
+        c.name AS category_name,
+        ct.name AS contact_name,
+        e.paid_amount,
+        (e.amount - COALESCE(e.paid_amount, 0))::text AS remaining_balance,
+        e.installment_number,
+        e.installment_total,
+        e.created_at
+      FROM ${schema}.financial_entries e
+      LEFT JOIN ${schema}.categories c ON c.id = e.category_id
+      LEFT JOIN ${schema}.contacts ct ON ct.id = e.contact_id
+      WHERE e.id = ${entryIdLiteral}
+        AND e.branch_id = ${branchIdLiteral}
+        AND e.deleted_at IS NOT NULL
+      LIMIT 1
+    `));
+
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    return row ? this.mapRow(row) : null;
+  }
+
   async create(data: Omit<EntryRecord, 'id' | 'createdAt'> & { categoryId: string; contactId?: string | null }): Promise<EntryRecord> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchId = quoteLiteral(data.branchId);
@@ -225,6 +261,27 @@ export class EntriesRepository {
         AND branch_id = ${branchIdLiteral}
         AND deleted_at IS NULL
     `));
+  }
+
+  async restore(entryId: string, branchId: string): Promise<EntryRecord> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const entryIdLiteral = quoteLiteral(entryId);
+    const branchIdLiteral = quoteLiteral(branchId);
+
+    await this.drizzleService.getClient().execute(sql.raw(`
+      UPDATE ${schema}.financial_entries
+      SET deleted_at = NULL
+      WHERE id = ${entryIdLiteral}
+        AND branch_id = ${branchIdLiteral}
+        AND deleted_at IS NOT NULL
+    `));
+
+    const restored = await this.findById(entryId, branchId);
+    if (!restored) {
+      throw new Error('Restored entry could not be reloaded');
+    }
+
+    return restored;
   }
 
   private mapRow(row: Record<string, unknown>): EntryRecord {

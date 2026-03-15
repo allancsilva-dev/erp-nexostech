@@ -72,7 +72,7 @@ export class EntriesController {
 
   @Delete(':entryId')
   @Idempotent()
-  @RequirePermission('financial.entries.cancel')
+  @RequirePermission('financial.entries.delete')
   async remove(
     @Param('entryId') entryId: string,
     @CurrentUser() user: AuthUser,
@@ -80,5 +80,17 @@ export class EntriesController {
   ): Promise<ApiResponse<{ deleted: boolean }>> {
     await this.entriesService.softDelete(entryId, user, branchId);
     return ApiResponse.ok({ deleted: true });
+  }
+
+  @Post(':entryId/restore')
+  @Idempotent()
+  @RequirePermission('financial.entries.delete')
+  async restore(
+    @Param('entryId') entryId: string,
+    @CurrentUser() user: AuthUser,
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<EntryResponse>> {
+    const restored = await this.entriesService.restore(entryId, user, branchId);
+    return ApiResponse.ok(EntryResponse.from(restored));
   }
 }

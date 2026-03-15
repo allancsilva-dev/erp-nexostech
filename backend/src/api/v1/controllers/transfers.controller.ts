@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -34,5 +34,17 @@ export class TransfersController {
   ): Promise<ApiResponse<TransferResponse>> {
     const created = await this.transfersService.create(branchId, dto, user);
     return ApiResponse.created(TransferResponse.from(created));
+  }
+
+  @Delete(':id')
+  @Idempotent()
+  @RequirePermission('financial.entries.cancel')
+  async reverse(
+    @Param('id') id: string,
+    @BranchId() branchId: string,
+    @CurrentUser() user: AuthUser,
+  ): Promise<ApiResponse<{ deleted: boolean }>> {
+    await this.transfersService.softDelete(id, branchId, user);
+    return ApiResponse.ok({ deleted: true });
   }
 }
