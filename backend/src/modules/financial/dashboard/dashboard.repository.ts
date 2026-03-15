@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
+import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
 
 export type DashboardSummary = {
   currentBalance: string;
@@ -12,26 +14,88 @@ export type DashboardSummary = {
 export class DashboardRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
-  async getSummary(_branchId: string): Promise<DashboardSummary> {
-    this.drizzleService.getTenantDb();
+  async getSummary(branchId: string): Promise<DashboardSummary> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const branchLiteral = quoteLiteral(branchId);
+
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT
+        COALESCE((SELECT SUM(initial_balance) FROM ${schema}.bank_accounts
+                  WHERE branch_id = ${branchLiteral} AND deleted_at IS NULL), 0)::text AS current_balance,
+        COALESCE((SELECT SUM(amount) FROM ${schema}.financial_entries
+                  WHERE branch_id = ${branchLiteral}
+                    AND type = 'RECEIVABLE'
+                    AND due_date >= CURRENT_DATE
+                    AND due_date <= CURRENT_DATE + INTERVAL '30 days'
+                    AND deleted_at IS NULL), 0)::text AS receivable_30d,
+        COALESCE((SELECT SUM(amount) FROM ${schema}.financial_entries
+                  WHERE branch_id = ${branchLiteral}
+                    AND type = 'PAYABLE'
+                    AND due_date >= CURRENT_DATE
+                    AND due_date <= CURRENT_DATE + INTERVAL '30 days'
+                    AND deleted_at IS NULL), 0)::text AS payable_30d,
+        COALESCE((SELECT SUM(CASE WHEN type = 'RECEIVABLE' THEN amount ELSE -amount END)
+                  FROM ${schema}.financial_entries
+                  WHERE branch_id = ${branchLiteral}
+                    AND DATE_TRUNC('month', due_date) = DATE_TRUNC('month', CURRENT_DATE)
+                    AND deleted_at IS NULL), 0)::text AS month_result
+    `));
+
+    const row = result.rows[0] as Record<string, unknown> | undefined;
     return {
-      currentBalance: '0.00',
-      totalReceivable30d: '0.00',
-      totalPayable30d: '0.00',
-      monthResult: '0.00',
+      currentBalance: row?.current_balance ? String(row.current_balance) : '0.00',
+      totalReceivable30d: row?.receivable_30d ? String(row.receivable_30d) : '0.00',
+      totalPayable30d: row?.payable_30d ? String(row.payable_30d) : '0.00',
+      monthResult: row?.month_result ? String(row.month_result) : '0.00',
     };
   }
 
-  async getOverdue(_branchId: string): Promise<Array<{ id: string; description: string; amount: string }>> {
-    this.drizzleService.getTenantDb();
-    return [];
+  async getOverdue(branchId: string): Promise<Array<{ id: string; description: string; amount: string }>> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const branchLiteral = quoteLiteral(branchId);
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT id, description, amount
+      FROM ${schema}.financial_entries
+      WHERE branch_id = ${branchLiteral}
+        AND due_date < CURRENT_DATE
+        AND status IN ('PENDING', 'PARTIAL', 'OVERDUE')
+        AND deleted_at IS NULL
+      ORDER BY due_date ASC
+      LIMIT 20
+    `));
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      id: String(row.id),
+      description: String(row.description),
+      amount: String(row.amount),
+    }));
   }
 
   async getCashflowChart(
-    _branchId: string,
-    _period: string,
+    branchId: string,
+    period: string,
   ): Promise<Array<{ month: string; inflow: string; outflow: string }>> {
-    this.drizzleService.getTenantDb();
-    return [];
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const branchLiteral = quoteLiteral(branchId);
+    const monthsBack = period === '6m' ? 6 : period === '3m' ? 3 : 12;
+
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', due_date), 'YYYY-MM') AS month,
+        COALESCE(SUM(CASE WHEN type = 'RECEIVABLE' THEN amount ELSE 0 END), 0)::text AS inflow,
+        COALESCE(SUM(CASE WHEN type = 'PAYABLE' THEN amount ELSE 0 END), 0)::text AS outflow
+      FROM ${schema}.financial_entries
+      WHERE branch_id = ${branchLiteral}
+        AND due_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '${monthsBack - 1} months'
+        AND deleted_at IS NULL
+      GROUP BY DATE_TRUNC('month', due_date)
+      ORDER BY DATE_TRUNC('month', due_date) ASC
+    `));
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      month: String(row.month),
+      inflow: String(row.inflow),
+      outflow: String(row.outflow),
+    }));
   }
 }

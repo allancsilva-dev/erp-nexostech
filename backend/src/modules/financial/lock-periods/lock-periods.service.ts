@@ -14,4 +14,8 @@ export class LockPeriodsService {
   async create(branchId: string, user: AuthUser, dto: CreateLockPeriodDto) {
     return this.lockPeriodsRepository.create(branchId, user.sub, dto);
   }
+
+  async softDelete(id: string, branchId: string) {
+    await this.lockPeriodsRepository.softDelete(id, branchId);
+  }
 }

@@ -26,8 +26,9 @@ export class ApprovalsController {
   async approve(
     @Param('entryId') entryId: string,
     @CurrentUser() user: AuthUser,
+    @BranchId() branchId: string,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.approvalsService.approve(entryId, user));
+    return ApiResponse.ok(await this.approvalsService.approve(entryId, branchId, user));
   }
 
   @Post(':entryId/reject')
@@ -36,7 +37,8 @@ export class ApprovalsController {
     @Param('entryId') entryId: string,
     @Body() dto: RejectApprovalDto,
     @CurrentUser() user: AuthUser,
+    @BranchId() branchId: string,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.approvalsService.reject(entryId, dto.reason, user));
+    return ApiResponse.ok(await this.approvalsService.reject(entryId, branchId, dto.reason, user));
   }
 }

@@ -14,8 +14,13 @@ export class ApprovalsService {
     return this.approvalsRepository.listPending(branchId);
   }
 
-  async approve(entryId: string, user: AuthUser) {
-    const record = await this.approvalsRepository.createApprovalRecord(entryId, user.sub, 'APPROVED');
+  async approve(entryId: string, branchId: string, user: AuthUser) {
+    const record = await this.approvalsRepository.createApprovalRecord(
+      entryId,
+      branchId,
+      user.sub,
+      'APPROVED',
+    );
     this.eventBus.emit('entry.approved', {
       tenantId: user.tenantId,
       entryId,
@@ -24,9 +29,10 @@ export class ApprovalsService {
     return record;
   }
 
-  async reject(entryId: string, reason: string, user: AuthUser) {
+  async reject(entryId: string, branchId: string, reason: string, user: AuthUser) {
     const record = await this.approvalsRepository.createApprovalRecord(
       entryId,
+      branchId,
       user.sub,
       'REJECTED',
       reason,

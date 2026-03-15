@@ -228,4 +228,30 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
       )`,
     ],
   },
+  {
+    name: '007_create_approvals_and_lock_periods_tables',
+    run: (schema) => [
+      `CREATE TABLE IF NOT EXISTS ${schema}.entry_approvals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        entry_id UUID NOT NULL REFERENCES ${schema}.financial_entries(id) ON DELETE CASCADE,
+        branch_id UUID NOT NULL REFERENCES ${schema}.branches(id),
+        approved_by VARCHAR(100) NOT NULL,
+        action VARCHAR(20) NOT NULL,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_entry_approvals_entry ON ${schema}.entry_approvals(entry_id, created_at DESC)`,
+      `CREATE TABLE IF NOT EXISTS ${schema}.lock_periods (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        branch_id UUID NOT NULL REFERENCES ${schema}.branches(id),
+        locked_until DATE NOT NULL,
+        reason VARCHAR(200),
+        locked_by VARCHAR(100) NOT NULL,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_lock_periods_branch_until ON ${schema}.lock_periods(branch_id, locked_until DESC)`,
+    ],
+  },
 ];
