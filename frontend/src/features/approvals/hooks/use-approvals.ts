@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
+import { queryKeys } from '@/lib/query-keys';
 
 interface PendingApproval {
   id: string;
@@ -14,20 +15,22 @@ export function useApprovals() {
   const queryClient = useQueryClient();
 
   const pending = useQuery({
-    queryKey: ['approvals', activeBranchId, 'pending'],
+    queryKey: queryKeys.approvals.pending(activeBranchId || 'default'),
     queryFn: () => api.get<PendingApproval[]>('/approvals/pending'),
     enabled: Boolean(activeBranchId),
   });
 
   const approve = useMutation({
     mutationFn: (entryId: string) => api.post(`/approvals/${entryId}/approve`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['approvals', activeBranchId, 'pending'] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.approvals.pending(activeBranchId || 'default') }),
   });
 
   const reject = useMutation({
     mutationFn: ({ entryId, reason }: { entryId: string; reason: string }) =>
       api.post(`/approvals/${entryId}/reject`, { reason }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['approvals', activeBranchId, 'pending'] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.approvals.pending(activeBranchId || 'default') }),
   });
 
   return { pending, approve, reject };

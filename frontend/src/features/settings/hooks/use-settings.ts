@@ -3,11 +3,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
+import { queryKeys } from '@/lib/query-keys';
 
 export function useSettings() {
   const { activeBranchId } = useBranch();
   return useQuery({
-    queryKey: ['settings', activeBranchId],
+    queryKey: queryKeys.settings.all(activeBranchId || 'default'),
     queryFn: () => api.get('/settings'),
     enabled: Boolean(activeBranchId),
   });
@@ -16,7 +17,7 @@ export function useSettings() {
 export function useBankAccounts() {
   const { activeBranchId } = useBranch();
   return useQuery({
-    queryKey: ['bank-accounts', activeBranchId],
+    queryKey: queryKeys.settings.bankAccounts(activeBranchId || 'default'),
     queryFn: () => api.get('/bank-accounts'),
     enabled: Boolean(activeBranchId),
   });
@@ -25,7 +26,7 @@ export function useBankAccounts() {
 export function useLockPeriods() {
   const { activeBranchId } = useBranch();
   return useQuery({
-    queryKey: ['lock-periods', activeBranchId],
+    queryKey: queryKeys.settings.lockPeriods(activeBranchId || 'default'),
     queryFn: () => api.get('/lock-periods'),
     enabled: Boolean(activeBranchId),
   });
@@ -33,7 +34,7 @@ export function useLockPeriods() {
 
 export function useRoles() {
   return useQuery({
-    queryKey: ['roles'],
+    queryKey: queryKeys.roles,
     queryFn: () => api.get('/roles'),
   });
 }

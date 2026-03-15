@@ -14,6 +14,44 @@ export const queryKeys = {
     detail: (branchId: string, id: string) => ['entries', branchId, 'detail', id] as const,
     payments: (branchId: string, id: string) => ['entries', branchId, 'payments', id] as const,
   },
+  categories: {
+    all: (branchId: string) => ['categories', branchId] as const,
+    tree: (branchId: string, type?: string) => ['categories', branchId, 'tree', type ?? 'all'] as const,
+  },
+  contacts: {
+    all: ['contacts'] as const,
+    list: (filters?: Record<string, unknown>) => ['contacts', 'list', safeJsonStringify(filters ?? {})] as const,
+  },
+  approvals: {
+    pending: (branchId: string) => ['approvals', branchId, 'pending'] as const,
+  },
+  boletos: {
+    list: (branchId: string) => ['boletos', branchId, 'list'] as const,
+  },
+  transfers: {
+    list: (branchId: string) => ['transfers', branchId, 'list'] as const,
+  },
+  reports: {
+    dre: (branchId: string, params?: Record<string, unknown>) =>
+      ['reports', branchId, 'dre', safeJsonStringify(params ?? {})] as const,
+    balanceSheet: (branchId: string, params?: Record<string, unknown>) =>
+      ['reports', branchId, 'balance-sheet', safeJsonStringify(params ?? {})] as const,
+    aging: (branchId: string, params?: Record<string, unknown>) =>
+      ['reports', branchId, 'aging', safeJsonStringify(params ?? {})] as const,
+  },
+  reconciliation: {
+    all: (branchId: string) => ['reconciliation', branchId] as const,
+  },
+  auditLogs: {
+    list: (branchId: string) => ['audit-logs', branchId, 'list'] as const,
+  },
+  settings: {
+    all: (branchId: string) => ['settings', branchId] as const,
+    bankAccounts: (branchId: string) => ['bank-accounts', branchId] as const,
+    lockPeriods: (branchId: string) => ['lock-periods', branchId] as const,
+    collectionRules: (branchId: string) => ['collection-rules', branchId] as const,
+  },
+  roles: ['roles'] as const,
   branches: {
     my: ['branches', 'my'] as const,
   },
