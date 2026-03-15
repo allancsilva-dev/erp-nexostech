@@ -44,9 +44,11 @@ jest.mock('../src/common/guards/rbac.guard', () => ({
 import { UsersController } from '../src/api/v1/controllers/users.controller';
 import { BranchesController } from '../src/api/v1/controllers/branches.controller';
 import { ReconciliationController } from '../src/api/v1/controllers/reconciliation.controller';
+import { TenantsController } from '../src/api/v1/controllers/tenants.controller';
 import { RolesService } from '../src/modules/rbac/roles.service';
 import { BranchesService } from '../src/modules/branches/branches.service';
 import { ReconciliationService } from '../src/modules/financial/reconciliation/reconciliation.service';
+import { TenantsService } from '../src/modules/tenants/tenants.service';
 
 describe('V1 Contract (e2e)', () => {
   let app: INestApplication<App>;
@@ -80,13 +82,26 @@ describe('V1 Contract (e2e)', () => {
     undo: jest.fn(),
   };
 
+  const tenantsServiceMock = {
+    list: jest.fn().mockResolvedValue([]),
+    onboard: jest.fn().mockImplementation(async (dto: { name: string }) => ({
+      id: '88888888-8888-4888-8888-888888888888',
+      name: dto.name,
+      slug: 'tenant-gamma',
+      schema: 'tenant_88888888_8888_4888_8888_888888888888',
+      active: true,
+      createdAt: '2026-03-15T00:00:00.000Z',
+    })),
+  };
+
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      controllers: [UsersController, BranchesController, ReconciliationController],
+      controllers: [UsersController, BranchesController, ReconciliationController, TenantsController],
       providers: [
         { provide: RolesService, useValue: rolesServiceMock },
         { provide: BranchesService, useValue: branchesServiceMock },
         { provide: ReconciliationService, useValue: reconciliationServiceMock },
+        { provide: TenantsService, useValue: tenantsServiceMock },
       ],
     }).compile();
 
@@ -164,6 +179,32 @@ describe('V1 Contract (e2e)', () => {
       data: {
         id: '33333333-3333-4333-8333-333333333333',
         reconciled: true,
+      },
+    });
+  });
+
+  it('validates POST /tenants/onboarding payload and returns tenant data', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/tenants/onboarding')
+      .send({ name: '' })
+      .expect(400);
+
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/tenants/onboarding')
+      .send({ name: 'Tenant Gamma' })
+      .expect(201);
+
+    expect(tenantsServiceMock.onboard).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Tenant Gamma' }),
+    );
+    expect(response.body).toEqual({
+      data: {
+        id: '88888888-8888-4888-8888-888888888888',
+        name: 'Tenant Gamma',
+        slug: 'tenant-gamma',
+        schema: 'tenant_88888888_8888_4888_8888_888888888888',
+        active: true,
+        createdAt: '2026-03-15T00:00:00.000Z',
       },
     });
   });
