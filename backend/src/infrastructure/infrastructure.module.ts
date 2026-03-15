@@ -7,6 +7,7 @@ import { envSchema } from './config/env.schema';
 import { CacheModule } from './cache/cache.module';
 import { DatabaseModule } from './database/database.module';
 import { EventsModule } from './events/events.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
@@ -26,7 +27,8 @@ import { EventsModule } from './events/events.module';
     DatabaseModule,
     CacheModule,
     EventsModule,
+    QueueModule,
   ],
-  exports: [DatabaseModule, CacheModule, EventsModule],
+  exports: [DatabaseModule, CacheModule, EventsModule, QueueModule],
 })
 export class InfrastructureModule {}

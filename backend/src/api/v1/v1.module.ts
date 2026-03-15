@@ -13,6 +13,12 @@ import { PaymentsController } from './controllers/payments.controller';
 import { TransfersController } from './controllers/transfers.controller';
 import { DashboardController } from './controllers/dashboard.controller';
 import { ReportsController } from './controllers/reports.controller';
+import { BoletosController } from './controllers/boletos.controller';
+import { CollectionRulesController } from './controllers/collection-rules.controller';
+import { SettingsController } from './controllers/settings.controller';
+import { LockPeriodsController } from './controllers/lock-periods.controller';
+import { ApprovalsController } from './controllers/approvals.controller';
+import { ApprovalRulesController } from './controllers/approval-rules.controller';
 import { FinancialModule } from '../../modules/financial/financial.module';
 import { RbacModule } from '../../modules/rbac/rbac.module';
 import { BranchGuard } from '../../common/guards/branch.guard';
@@ -33,6 +39,12 @@ import { RbacGuard } from '../../common/guards/rbac.guard';
     TransfersController,
     DashboardController,
     ReportsController,
+    BoletosController,
+    CollectionRulesController,
+    SettingsController,
+    LockPeriodsController,
+    ApprovalsController,
+    ApprovalRulesController,
   ],
   providers: [BranchGuard, RbacGuard],
 })

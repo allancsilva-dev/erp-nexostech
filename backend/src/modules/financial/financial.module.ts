@@ -7,6 +7,13 @@ import { PaymentsModule } from './payments/payments.module';
 import { TransfersModule } from './transfers/transfers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ReportsModule } from './reports/reports.module';
+import { BoletosModule } from './boletos/boletos.module';
+import { CollectionRulesModule } from './collection-rules/collection-rules.module';
+import { SettingsModule } from './settings/settings.module';
+import { LockPeriodsModule } from './lock-periods/lock-periods.module';
+import { ApprovalsModule } from './approvals/approvals.module';
+import { ApprovalRulesModule } from './approval-rules/approval-rules.module';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
   imports: [
@@ -18,6 +25,13 @@ import { ReportsModule } from './reports/reports.module';
     TransfersModule,
     DashboardModule,
     ReportsModule,
+    BoletosModule,
+    CollectionRulesModule,
+    SettingsModule,
+    LockPeriodsModule,
+    ApprovalsModule,
+    ApprovalRulesModule,
+    JobsModule,
   ],
   exports: [
     EntriesModule,
@@ -28,6 +42,12 @@ import { ReportsModule } from './reports/reports.module';
     TransfersModule,
     DashboardModule,
     ReportsModule,
+    BoletosModule,
+    CollectionRulesModule,
+    SettingsModule,
+    LockPeriodsModule,
+    ApprovalsModule,
+    ApprovalRulesModule,
   ],
 })
 export class FinancialModule {}

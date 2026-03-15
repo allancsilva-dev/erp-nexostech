@@ -15,4 +15,7 @@ export default () => ({
     audience: process.env.AUTH_AUDIENCE,
     issuer: process.env.AUTH_ISSUER,
   },
+  boletos: {
+    gatewayUrl: process.env.BOLETOS_GATEWAY_URL,
+  },
 });
