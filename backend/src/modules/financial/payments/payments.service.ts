@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
-import { PaymentCreatedEvent, PaymentRefundedEvent } from '../../../common/events/financial.events';
+import {
+  PaymentCreatedEvent,
+  PaymentRefundedEvent,
+} from '../../../common/events/financial.events';
 import { BusinessException } from '../../../common/exceptions/business.exception';
 import type { AuthUser } from '../../../common/types/auth-user.type';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
@@ -24,26 +27,53 @@ export class PaymentsService {
     private readonly eventBus: EventBusService,
   ) {}
 
-  async registerPayment(entryId: string, dto: RegisterPaymentDto, user: AuthUser, branchId: string) {
-    const entry = await this.paymentsRepository.findEntryById(entryId, branchId);
-    if (!entry) {
-      throw new BusinessException(
-        'ENTRY_NOT_FOUND',
-        'Lancamento nao encontrado para pagamento',
-        { entryId, branchId },
-        HttpStatus.NOT_FOUND,
+  async registerPayment(
+    entryId: string,
+    dto: RegisterPaymentDto,
+    user: AuthUser,
+    branchId: string,
+  ) {
+    // Toda a operação roda dentro da mesma transação com SELECT FOR UPDATE
+    // para evitar race condition quando dois usuários pagam a mesma entry simultaneamente.
+    const payment = await this.txHelper.run(async (tx) => {
+      // 1. SELECT FOR UPDATE — trava a linha da entry para este request
+      const entry = await this.paymentsRepository.findEntryByIdForUpdate(
+        entryId,
+        branchId,
+        tx,
       );
-    }
-    this.paymentRules.validatePaymentAmount(entry.remainingBalance, dto.amount);
 
-    const payment = await this.txHelper.run(async () => {
-      const created = await this.paymentsRepository.createPayment(entryId, dto, user.sub);
-      const amounts = await this.paymentsRepository.listPaymentAmounts(entryId);
+      if (!entry) {
+        throw new BusinessException(
+          'ENTRY_NOT_FOUND',
+          'Lancamento nao encontrado para pagamento',
+          { entryId, branchId },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // 2. Valida com saldo REAL (dentro do lock) — evita aceitar pagamento acima do saldo
+      this.paymentRules.validatePaymentAmount(entry.remainingBalance, dto.amount);
+
+      // 3. Cria o pagamento dentro da transação
+      const created = await this.paymentsRepository.createPayment(
+        entryId,
+        dto,
+        user.sub,
+        tx,
+      );
+
+      // 4. Calcula novo status com os pagamentos atualizados
+      const amounts = await this.paymentsRepository.listPaymentAmounts(entryId, tx);
       const status = this.paymentCalculator.determineStatus(entry.amount, amounts);
-      await this.paymentsRepository.updateEntryPaidStatus(entryId, status);
+
+      // 5. Atualiza status e valor pago dentro da transação
+      await this.paymentsRepository.updateEntryPaidStatus(entryId, status, tx);
+
       return created;
     });
 
+    // Eventos emitidos FORA da transação (após commit)
     this.eventBus.emit(
       'payment.created',
       new PaymentCreatedEvent(user.tenantId, branchId, entryId, dto.amount),
@@ -53,7 +83,10 @@ export class PaymentsService {
   }
 
   async listByEntry(entryId: string, branchId: string) {
-    const entry = await this.paymentsRepository.findEntryById(entryId, branchId);
+    const entry = await this.paymentsRepository.findEntryById(
+      entryId,
+      branchId,
+    );
     if (!entry) {
       throw new BusinessException(
         'ENTRY_NOT_FOUND',
@@ -69,37 +102,67 @@ export class PaymentsService {
   async batchPay(dto: BatchPayDto, user: AuthUser, branchId: string) {
     const created: PaymentEntity[] = [];
     for (const item of dto.items) {
-      const payment = await this.registerPayment(item.entryId, item, user, branchId);
+      const payment = await this.registerPayment(
+        item.entryId,
+        item,
+        user,
+        branchId,
+      );
       created.push(payment);
     }
 
     return created;
   }
 
-  async refund(entryId: string, _dto: RefundPaymentDto, user: AuthUser, branchId: string) {
-    const entry = await this.paymentsRepository.findEntryById(entryId, branchId);
-    if (!entry) {
-      throw new BusinessException(
-        'ENTRY_NOT_FOUND',
-        'Lancamento nao encontrado para estorno',
-        { entryId, branchId },
-        HttpStatus.NOT_FOUND,
+  async refund(
+    entryId: string,
+    _dto: RefundPaymentDto,
+    user: AuthUser,
+    branchId: string,
+  ) {
+    // Estorno também usa SELECT FOR UPDATE para evitar estorno duplo simultâneo
+    const removedPayment = await this.txHelper.run(async (tx) => {
+      // 1. SELECT FOR UPDATE — trava a entry para este request
+      const entry = await this.paymentsRepository.findEntryByIdForUpdate(
+        entryId,
+        branchId,
+        tx,
       );
-    }
-    this.paymentRules.validateRefundPeriod(entry.lastPaymentDate ?? new Date().toISOString(), 90);
 
-    const removedPayment = await this.txHelper.run(async () => {
-      const removed = await this.paymentsRepository.removeLastPayment(entryId);
-      const amounts = await this.paymentsRepository.listPaymentAmounts(entryId);
+      if (!entry) {
+        throw new BusinessException(
+          'ENTRY_NOT_FOUND',
+          'Lancamento nao encontrado para estorno',
+          { entryId, branchId },
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      this.paymentRules.validateRefundPeriod(
+        entry.lastPaymentDate ?? new Date().toISOString(),
+        90,
+      );
+
+      // 2. Remove último pagamento dentro da transação
+      const removed = await this.paymentsRepository.removeLastPayment(entryId, tx);
+
+      // 3. Recalcula status com pagamentos restantes
+      const amounts = await this.paymentsRepository.listPaymentAmounts(entryId, tx);
       const status = this.paymentCalculator.determineStatus(entry.amount, amounts);
-      await this.paymentsRepository.updateEntryPaidStatus(entryId, status);
+      await this.paymentsRepository.updateEntryPaidStatus(entryId, status, tx);
+
       return removed;
     });
 
     if (removedPayment) {
       this.eventBus.emit(
         'payment.refunded',
-        new PaymentRefundedEvent(user.tenantId, branchId, entryId, removedPayment.amount),
+        new PaymentRefundedEvent(
+          user.tenantId,
+          branchId,
+          entryId,
+          removedPayment.amount,
+        ),
       );
     }
 
