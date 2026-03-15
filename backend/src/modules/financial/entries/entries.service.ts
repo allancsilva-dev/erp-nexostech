@@ -32,6 +32,7 @@ export class EntriesService {
     const created = await this.txHelper.run(async () => {
       const firstInstallmentAmount = installments[0] ?? dto.amount;
       return this.entriesRepository.create({
+        branchId,
         documentNumber: `${dto.type === 'PAYABLE' ? 'PAY' : 'REC'}-${new Date().getFullYear()}-00001`,
         type: dto.type,
         description: dto.description,
@@ -45,6 +46,8 @@ export class EntriesService {
         remainingBalance: firstInstallmentAmount,
         installmentNumber: dto.installment ? 1 : null,
         installmentTotal: dto.installment ? dto.installmentCount ?? null : null,
+        categoryId: dto.categoryId,
+        contactId: dto.contactId ?? null,
       });
     });
 
