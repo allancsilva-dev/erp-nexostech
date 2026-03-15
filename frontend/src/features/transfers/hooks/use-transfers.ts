@@ -1,6 +1,8 @@
 ﻿'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { v4 as uuid } from 'uuid';
 import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
 import { queryKeys } from '@/lib/query-keys';
@@ -19,9 +21,15 @@ export function useCreateTransfer() {
   const { activeBranchId } = useBranch();
 
   return useMutation({
-    mutationFn: (payload: Record<string, unknown>) => api.post('/transfers', payload),
+    mutationFn: (payload: Record<string, unknown>) => api.post('/transfers', payload, uuid()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transfers.list(activeBranchId || 'default') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.bankAccounts(activeBranchId || 'default') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(activeBranchId || 'default') });
+      toast.success('Transferencia registrada com sucesso');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
     },
   });
 }

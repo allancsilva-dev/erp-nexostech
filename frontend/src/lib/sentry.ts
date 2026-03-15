@@ -1,8 +1,23 @@
-﻿export function initSentry(): void {
-  if (process.env.NODE_ENV !== 'production') {
+﻿import * as Sentry from '@sentry/nextjs';
+
+let initialized = false;
+
+export function initSentry(): void {
+  if (initialized || process.env.NODE_ENV !== 'production') {
     return;
   }
 
-  // Placeholder para configuracao do Sentry em producao.
-  // Exemplo futuro: Sentry.init({ dsn: process.env.NEXT_PUBLIC_SENTRY_DSN, tracesSampleRate: 0.1 });
+  Sentry.init({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    environment: process.env.NODE_ENV,
+    tracesSampleRate: 0.1,
+    replaysSessionSampleRate: 0,
+  });
+
+  initialized = true;
+}
+
+export function captureError(error: unknown): void {
+  initSentry();
+  Sentry.captureException(error);
 }
