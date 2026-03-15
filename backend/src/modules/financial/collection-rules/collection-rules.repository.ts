@@ -23,6 +23,20 @@ export class CollectionRulesRepository {
     };
   }
 
+  private mapEmailTemplateRow(row: Record<string, unknown>) {
+    return {
+      id: String(row.id),
+      branchId: String(row.branch_id),
+      name: String(row.name),
+      subject: String(row.subject),
+      bodyHtml: String(row.body_html),
+      bodyText: String(row.body_text),
+      type: String(row.type),
+      createdAt: new Date(String(row.created_at)).toISOString(),
+      updatedAt: new Date(String(row.updated_at)).toISOString(),
+    };
+  }
+
   async list(branchId: string) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
@@ -126,40 +140,55 @@ export class CollectionRulesRepository {
   async listEmailTemplates(branchId: string) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const result = await this.drizzleService.getClient().execute(sql.raw(`
-      SELECT DISTINCT email_template_id
-      FROM ${schema}.collection_rules
+      SELECT id, branch_id, name, subject, body_html, body_text, type, created_at, updated_at
+      FROM ${schema}.email_templates
       WHERE branch_id = ${quoteLiteral(branchId)}
         AND deleted_at IS NULL
-      ORDER BY email_template_id
+      ORDER BY name ASC
     `));
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => {
-      const templateId = String(row.email_template_id);
-      return {
-        id: templateId,
-        branchId,
-        name: `Template ${templateId.slice(0, 8)}`,
-        subject: 'Aviso financeiro Nexos ERP',
-        bodyHtml: '<p>Prezado(a) {{nome_cliente}}, valor {{valor}} com vencimento {{vencimento}}.</p>',
-        bodyText: 'Prezado(a) {{nome_cliente}}, valor {{valor}} com vencimento {{vencimento}}.',
-      };
-    });
+    return (result.rows as Array<Record<string, unknown>>).map((row) => this.mapEmailTemplateRow(row));
+  }
+
+  async findEmailTemplateById(id: string, branchId: string) {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT id, branch_id, name, subject, body_html, body_text, type, created_at, updated_at
+      FROM ${schema}.email_templates
+      WHERE id = ${quoteLiteral(id)}
+        AND branch_id = ${quoteLiteral(branchId)}
+        AND deleted_at IS NULL
+      LIMIT 1
+    `));
+
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    return row ? this.mapEmailTemplateRow(row) : null;
   }
 
   async updateEmailTemplate(id: string, branchId: string, dto: UpdateEmailTemplateDto) {
-    const templates = await this.listEmailTemplates(branchId);
-    const existing = templates.find((template) => template.id === id);
+    const existing = await this.findEmailTemplateById(id, branchId);
     if (!existing) {
       return null;
     }
 
-    return {
-      ...existing,
-      name: dto.name ?? existing.name,
-      subject: dto.subject ?? existing.subject,
-      bodyHtml: dto.bodyHtml ?? existing.bodyHtml,
-      bodyText: dto.bodyText ?? existing.bodyText,
-      updatedAt: new Date().toISOString(),
-    };
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const sets: string[] = [];
+    if (dto.name !== undefined) sets.push(`name = ${quoteLiteral(dto.name)}`);
+    if (dto.subject !== undefined) sets.push(`subject = ${quoteLiteral(dto.subject)}`);
+    if (dto.bodyHtml !== undefined) sets.push(`body_html = ${quoteLiteral(dto.bodyHtml)}`);
+    if (dto.bodyText !== undefined) sets.push(`body_text = ${quoteLiteral(dto.bodyText)}`);
+
+    if (sets.length > 0) {
+      sets.push('updated_at = NOW()');
+      await this.drizzleService.getClient().execute(sql.raw(`
+        UPDATE ${schema}.email_templates
+        SET ${sets.join(', ')}
+        WHERE id = ${quoteLiteral(id)}
+          AND branch_id = ${quoteLiteral(branchId)}
+          AND deleted_at IS NULL
+      `));
+    }
+
+    return this.findEmailTemplateById(id, branchId);
   }
 }

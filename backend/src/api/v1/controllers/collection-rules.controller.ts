@@ -57,12 +57,13 @@ export class CollectionRulesController {
   @RequirePermission('financial.settings.manage')
   async preview(
     @Param('id') templateId: string,
+    @BranchId() branchId: string,
     @Query('nome_cliente') nomeCliente = 'Cliente',
     @Query('valor') valor = '0.00',
     @Query('vencimento') vencimento = '-',
   ): Promise<ApiResponse<unknown>> {
     return ApiResponse.ok(
-      await this.collectionRulesService.previewTemplate(templateId, {
+      await this.collectionRulesService.previewTemplate(templateId, branchId, {
         nome_cliente: nomeCliente,
         valor,
         vencimento,

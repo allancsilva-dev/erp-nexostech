@@ -357,4 +357,25 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
       `CREATE INDEX IF NOT EXISTS idx_reconciliation_items_branch_pending ON ${schema}.reconciliation_items(branch_id, reconciled, payment_date DESC)`,
     ],
   },
+  {
+    name: '011_create_email_templates_table',
+    run: (schema) => [
+      `CREATE TABLE IF NOT EXISTS ${schema}.email_templates (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        branch_id UUID NOT NULL REFERENCES ${schema}.branches(id),
+        name VARCHAR(100) NOT NULL,
+        subject VARCHAR(200) NOT NULL,
+        body_html TEXT NOT NULL,
+        body_text TEXT NOT NULL,
+        type VARCHAR(20) NOT NULL,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS uq_email_templates_branch_name_active
+       ON ${schema}.email_templates(branch_id, name)
+       WHERE deleted_at IS NULL`,
+      `CREATE INDEX IF NOT EXISTS idx_email_templates_branch_type ON ${schema}.email_templates(branch_id, type)`,
+    ],
+  },
 ];

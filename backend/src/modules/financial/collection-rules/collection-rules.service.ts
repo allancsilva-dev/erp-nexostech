@@ -46,11 +46,24 @@ export class CollectionRulesService {
     await this.collectionRulesRepository.softDelete(id, branchId);
   }
 
-  async previewTemplate(templateId: string, payload: Record<string, string>) {
+  async previewTemplate(templateId: string, branchId: string, payload: Record<string, string>) {
+    const template = await this.collectionRulesRepository.findEmailTemplateById(templateId, branchId);
+    if (!template) {
+      throw new BusinessException(
+        'EMAIL_TEMPLATE_NOT_FOUND',
+        'Template de e-mail nao encontrado para a filial informada',
+        { id: templateId, branchId },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const renderedSubject = this.applyVariables(template.subject, payload);
+    const renderedBody = this.applyVariables(template.bodyHtml, payload);
+
     return {
       templateId,
-      renderedSubject: `Cobranca para ${payload.nome_cliente ?? 'Cliente'}`,
-      renderedBody: `Valor ${payload.valor ?? '0.00'} vence em ${payload.vencimento ?? '-'}`,
+      renderedSubject,
+      renderedBody,
     };
   }
 
@@ -70,5 +83,11 @@ export class CollectionRulesService {
     }
 
     return updated;
+  }
+
+  private applyVariables(template: string, payload: Record<string, string>): string {
+    return template.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_match, key: string) => {
+      return payload[key] ?? '';
+    });
   }
 }
