@@ -9,7 +9,15 @@ import { useEntries } from '@/features/entries/hooks/use-entries';
 
 export default function ContasReceberPage() {
   const [page, setPage] = useQueryState('page', { defaultValue: '1' });
-  const entries = useEntries({ page: Number(page), pageSize: 20, type: 'RECEIVABLE' });
+  const [sortBy, setSortBy] = useQueryState('sortBy', { defaultValue: 'dueDate' });
+  const [sortOrder, setSortOrder] = useQueryState('sortOrder', { defaultValue: 'asc' });
+  const entries = useEntries({
+    page: Number(page),
+    pageSize: 20,
+    type: 'RECEIVABLE',
+    sortBy,
+    sortOrder: sortOrder === 'desc' ? 'desc' : 'asc',
+  });
 
   return (
     <div className="space-y-6">
@@ -27,7 +35,18 @@ export default function ContasReceberPage() {
       />
       <EntryFilters />
       {entries.data?.data ? (
-        <EntriesTable entries={entries.data.data} meta={entries.data.meta} onPageChange={(next) => setPage(String(next))} />
+        <EntriesTable
+          entries={entries.data.data}
+          meta={entries.data.meta}
+          onPageChange={(next) => {
+            void setPage(String(next));
+          }}
+          onSortChange={(nextSortBy, nextSortOrder) => {
+            void setSortBy(nextSortBy);
+            void setSortOrder(nextSortOrder);
+          }}
+          onSelectionChange={() => undefined}
+        />
       ) : null}
     </div>
   );

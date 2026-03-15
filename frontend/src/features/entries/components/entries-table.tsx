@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { useMemo } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { PaginatedMeta } from '@/lib/api-types';
 import type { Entry } from '@/features/entries/types/entry.types';
@@ -9,51 +10,76 @@ import { CategoryBadge } from '@/components/shared/category-badge';
 import { MoneyDisplay } from '@/components/shared/money-display';
 import { formatDate } from '@/lib/format';
 
-const columns: ColumnDef<Entry, unknown>[] = [
-  {
-    accessorKey: 'documentNumber',
-    header: 'Codigo',
-    cell: ({ row }) => <span className="font-mono">{row.original.documentNumber}</span>,
-  },
-  {
-    accessorKey: 'description',
-    header: 'Descricao',
-  },
-  {
-    accessorKey: 'contactName',
-    header: 'Fornecedor/Cliente',
-    cell: ({ row }) => row.original.contactName ?? '-',
-  },
-  {
-    id: 'category',
-    header: 'Categoria',
-    cell: ({ row }) => <CategoryBadge name={row.original.categoryName} color={row.original.categoryColor} />,
-  },
-  {
-    accessorKey: 'dueDate',
-    header: 'Vencimento',
-    cell: ({ row }) => formatDate(row.original.dueDate),
-  },
-  {
-    accessorKey: 'amount',
-    header: 'Valor',
-    cell: ({ row }) => <MoneyDisplay value={row.original.amount} />,
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
-  },
-];
-
 export function EntriesTable({
   entries,
   meta,
   onPageChange,
+  onSortChange,
+  onSelectionChange,
 }: {
   entries: Entry[];
   meta: PaginatedMeta;
   onPageChange: (page: number) => void;
+  onSortChange: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
+  onSelectionChange: (ids: string[]) => void;
 }) {
-  return <DataTable columns={columns} data={entries} meta={meta} onPageChange={onPageChange} />;
+  const columns = useMemo<ColumnDef<Entry, unknown>[]>(
+    () => [
+      {
+        accessorKey: 'documentNumber',
+        header: 'Codigo',
+        enableSorting: true,
+        cell: ({ row }) => <span className="font-mono">{row.original.documentNumber}</span>,
+      },
+      {
+        accessorKey: 'description',
+        header: 'Descricao',
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'contactName',
+        header: 'Fornecedor/Cliente',
+        enableSorting: true,
+        cell: ({ row }) => row.original.contactName ?? '-',
+      },
+      {
+        id: 'category',
+        header: 'Categoria',
+        cell: ({ row }) => <CategoryBadge name={row.original.categoryName} color={row.original.categoryColor} />,
+      },
+      {
+        accessorKey: 'dueDate',
+        header: 'Vencimento',
+        enableSorting: true,
+        cell: ({ row }) => formatDate(row.original.dueDate),
+      },
+      {
+        accessorKey: 'amount',
+        header: 'Valor',
+        enableSorting: true,
+        cell: ({ row }) => <MoneyDisplay value={row.original.amount} />,
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        enableSorting: true,
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      },
+    ],
+    [],
+  );
+
+  return (
+    <DataTable
+      columns={columns}
+      data={entries}
+      meta={meta}
+      onPageChange={onPageChange}
+      onSortChange={onSortChange}
+      enableSelection
+      onSelectionChange={onSelectionChange}
+      getRowId={(row) => row.id}
+      enableVirtualization={meta.total > 300}
+    />
+  );
 }
