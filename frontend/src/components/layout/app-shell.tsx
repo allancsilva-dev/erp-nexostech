@@ -7,6 +7,8 @@ import { BranchSwitcher } from './branch-switcher';
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/financeiro/contas-pagar', label: 'Contas a Pagar' },
+  { href: '/financeiro/aprovacoes', label: 'Aprovacoes' },
+  { href: '/financeiro/relatorios', label: 'Relatorios' },
   { href: '/financeiro/configuracoes', label: 'Configuracoes' },
 ];
 
