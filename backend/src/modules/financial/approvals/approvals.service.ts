@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 import type { AuthUser } from '../../../common/types/auth-user.type';
 import { EventBusService } from '../../../infrastructure/events/event-bus.service';
 import { ApprovalsRepository } from './approvals.repository';
@@ -15,6 +16,16 @@ export class ApprovalsService {
   }
 
   async approve(entryId: string, branchId: string, user: AuthUser) {
+    // Verifica se o aprovador é o mesmo que criou o lançamento (proibido pela especificação)
+    const entry = await this.approvalsRepository.findEntryCreator(entryId, branchId);
+    if (entry && entry.createdBy === user.sub) {
+      throw new BusinessException(
+        'APPROVAL_SELF_FORBIDDEN',
+        'O criador do lancamento nao pode aprovar a propria solicitacao',
+        { entryId, approverId: user.sub },
+      );
+    }
+
     const record = await this.approvalsRepository.createApprovalRecord(
       entryId,
       branchId,
@@ -29,7 +40,12 @@ export class ApprovalsService {
     return record;
   }
 
-  async reject(entryId: string, branchId: string, reason: string, user: AuthUser) {
+  async reject(
+    entryId: string,
+    branchId: string,
+    reason: string,
+    user: AuthUser,
+  ) {
     const record = await this.approvalsRepository.createApprovalRecord(
       entryId,
       branchId,

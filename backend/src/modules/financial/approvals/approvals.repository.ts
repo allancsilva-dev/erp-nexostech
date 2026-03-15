@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 
 @Injectable()
 export class ApprovalsRepository {
@@ -11,7 +14,8 @@ export class ApprovalsRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT
         e.id AS entry_id,
         e.document_number,
@@ -28,7 +32,8 @@ export class ApprovalsRepository {
         AND e.status = 'PENDING_APPROVAL'
         AND e.deleted_at IS NULL
       ORDER BY e.due_date ASC, e.created_at ASC
-    `));
+    `),
+    );
 
     return (result.rows as Array<Record<string, unknown>>).map((row) => ({
       entryId: String(row.entry_id),
@@ -40,6 +45,25 @@ export class ApprovalsRepository {
       categoryName: row.category_name ? String(row.category_name) : null,
       contactName: row.contact_name ? String(row.contact_name) : null,
     }));
+  }
+
+  async findEntryCreator(
+    entryId: string,
+    branchId: string,
+  ): Promise<{ createdBy: string } | null> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT created_by
+      FROM ${schema}.financial_entries
+      WHERE id = ${quoteLiteral(entryId)}
+        AND branch_id = ${quoteLiteral(branchId)}
+        AND deleted_at IS NULL
+      LIMIT 1
+    `),
+    );
+    const row = result.rows[0] as Record<string, unknown> | undefined;
+    return row ? { createdBy: String(row.created_by) } : null;
   }
 
   async createApprovalRecord(
@@ -56,23 +80,27 @@ export class ApprovalsRepository {
     const actionLiteral = quoteLiteral(action);
     const notesLiteral = quoteLiteral(notes ?? null);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.entry_approvals (
         entry_id, branch_id, approved_by, action, notes
       ) VALUES (
         ${entryLiteral}, ${branchLiteral}, ${userLiteral}, ${actionLiteral}, ${notesLiteral}
       )
       RETURNING id, entry_id, approved_by, action, notes, created_at
-    `));
+    `),
+    );
 
     const nextStatus = action === 'APPROVED' ? 'PENDING' : 'CANCELLED';
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.financial_entries
       SET status = ${quoteLiteral(nextStatus)}
       WHERE id = ${entryLiteral}
         AND branch_id = ${branchLiteral}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown>;
     return {
@@ -89,13 +117,15 @@ export class ApprovalsRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, entry_id, approved_by, action, notes, created_at
       FROM ${schema}.entry_approvals
       WHERE branch_id = ${branchLiteral}
       ORDER BY created_at DESC
       LIMIT 300
-    `));
+    `),
+    );
 
     return (result.rows as Array<Record<string, unknown>>).map((row) => ({
       id: String(row.id),

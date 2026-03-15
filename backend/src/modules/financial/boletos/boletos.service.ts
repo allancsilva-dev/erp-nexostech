@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 import { BoletosGatewayClient } from './boletos.gateway-client';
 import { BoletosRepository } from './boletos.repository';
 import { BoletoWebhookDto } from './dto/boleto-webhook.dto';
@@ -18,6 +19,16 @@ export class BoletosService {
   }
 
   async generate(entryId: string, branchId: string, dto: GenerateBoletoDto) {
+    // Verifica se já existe boleto ativo para este lançamento
+    const existing = await this.boletosRepository.findByEntryId(entryId, branchId);
+    if (existing && existing.status === 'ACTIVE') {
+      throw new BusinessException(
+        'BOLETO_ALREADY_GENERATED',
+        'Ja existe um boleto ativo para este lancamento',
+        { entryId, boletoId: existing.id },
+      );
+    }
+
     const gateway = await this.gatewayClient.generate({
       entryId,
       amount: dto.amount,
@@ -36,7 +47,10 @@ export class BoletosService {
   }
 
   async cancel(entryId: string, branchId: string) {
-    const boleto = await this.boletosRepository.findByEntryId(entryId, branchId);
+    const boleto = await this.boletosRepository.findByEntryId(
+      entryId,
+      branchId,
+    );
     const gatewayId = boleto?.gatewayBoletoId ?? `bol_${entryId}`;
     const gatewayResult = await this.gatewayClient.cancel(gatewayId);
     await this.boletosRepository.markCancelled(entryId, branchId);
@@ -44,15 +58,24 @@ export class BoletosService {
   }
 
   async getPdfLink(entryId: string, branchId: string) {
-    const boleto = await this.boletosRepository.findByEntryId(entryId, branchId);
+    const boleto = await this.boletosRepository.findByEntryId(
+      entryId,
+      branchId,
+    );
     return {
-      url: boleto?.pdfUrl ?? this.storageService.getPublicUrl(`boletos/${entryId}.pdf`),
+      url:
+        boleto?.pdfUrl ??
+        this.storageService.getPublicUrl(`boletos/${entryId}.pdf`),
       expiresInSeconds: 3600,
     };
   }
 
   async handleWebhook(dto: BoletoWebhookDto) {
-    await this.boletosRepository.markWebhookStatus(dto.entryId, dto.status, dto.paidAt);
+    await this.boletosRepository.markWebhookStatus(
+      dto.entryId,
+      dto.status,
+      dto.paidAt,
+    );
     return {
       acknowledged: true,
       boletoId: dto.boletoId,

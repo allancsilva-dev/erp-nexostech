@@ -43,7 +43,10 @@ export class EntriesService {
     this.entryRules.validateCreate(dto, null);
 
     const installments = dto.installment
-      ? this.entryCalculator.calculateInstallments(dto.amount, dto.installmentCount ?? 1)
+      ? this.entryCalculator.calculateInstallments(
+          dto.amount,
+          dto.installmentCount ?? 1,
+        )
       : [dto.amount];
 
     const created = await this.txHelper.run(async () => {
@@ -62,7 +65,9 @@ export class EntriesService {
         paidAmount: null,
         remainingBalance: firstInstallmentAmount,
         installmentNumber: dto.installment ? 1 : null,
-        installmentTotal: dto.installment ? dto.installmentCount ?? null : null,
+        installmentTotal: dto.installment
+          ? (dto.installmentCount ?? null)
+          : null,
         categoryId: dto.categoryId,
         contactId: dto.contactId ?? null,
       });
@@ -78,7 +83,12 @@ export class EntriesService {
     return created;
   }
 
-  async update(entryId: string, dto: UpdateEntryDto, user: AuthUser, branchId: string) {
+  async update(
+    entryId: string,
+    dto: UpdateEntryDto,
+    user: AuthUser,
+    branchId: string,
+  ) {
     await this.getById(entryId, branchId);
 
     const updated = await this.txHelper.run(async () => {
@@ -95,7 +105,11 @@ export class EntriesService {
     return updated;
   }
 
-  async softDelete(entryId: string, user: AuthUser, branchId: string): Promise<void> {
+  async softDelete(
+    entryId: string,
+    user: AuthUser,
+    branchId: string,
+  ): Promise<void> {
     await this.getById(entryId, branchId);
 
     await this.txHelper.run(async () => {
@@ -111,7 +125,10 @@ export class EntriesService {
   }
 
   async restore(entryId: string, user: AuthUser, branchId: string) {
-    const deleted = await this.entriesRepository.findDeletedById(entryId, branchId);
+    const deleted = await this.entriesRepository.findDeletedById(
+      entryId,
+      branchId,
+    );
     if (!deleted) {
       throw new BusinessException(
         'ENTRY_NOT_FOUND',
@@ -135,7 +152,26 @@ export class EntriesService {
     return restored;
   }
 
-  async cancel(entryId: string, reason: string | undefined, user: AuthUser, branchId: string) {
+  /**
+   * Valida que a entry não está em status PENDING_APPROVAL.
+   * Deve ser chamado antes de qualquer operação que exija status ativo.
+   */
+  assertNotPendingApproval(entry: { id: string; status: string }): void {
+    if (entry.status === 'PENDING_APPROVAL') {
+      throw new BusinessException(
+        'APPROVAL_REQUIRED',
+        'Este lancamento esta aguardando aprovacao e nao pode ser operado diretamente',
+        { entryId: entry.id, status: entry.status },
+      );
+    }
+  }
+
+  async cancel(
+    entryId: string,
+    reason: string | undefined,
+    user: AuthUser,
+    branchId: string,
+  ) {
     const entry = await this.getById(entryId, branchId);
     if (entry.status === 'CANCELLED') {
       return entry;
