@@ -13,22 +13,27 @@ export class SequencesProcessor implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.queueService.registerProcessor('financial.sequences', async (payload) => {
-      const schema = resolveTenantSchema(payload);
-      const year =
-        typeof payload.year === 'number' && Number.isFinite(payload.year)
-          ? Number(payload.year)
-          : new Date().getFullYear();
-      const yearLiteral = quoteLiteral(year);
+    this.queueService.registerProcessor(
+      'financial.sequences',
+      async (payload) => {
+        const schema = resolveTenantSchema(payload);
+        const year =
+          typeof payload.year === 'number' && Number.isFinite(payload.year)
+            ? Number(payload.year)
+            : new Date().getFullYear();
+        const yearLiteral = quoteLiteral(year);
 
-      for (const type of ['PAY', 'REC', 'TRF']) {
-        await this.drizzleService.getClient().execute(sql.raw(`
+        for (const type of ['PAY', 'REC', 'TRF']) {
+          await this.drizzleService.getClient().execute(
+            sql.raw(`
           INSERT INTO ${schema}.document_sequences (sequence_year, doc_type, next_number)
           VALUES (${yearLiteral}, ${quoteLiteral(type)}, 1)
           ON CONFLICT (sequence_year, doc_type)
           DO NOTHING
-        `));
-      }
-    });
+        `),
+          );
+        }
+      },
+    );
   }
 }

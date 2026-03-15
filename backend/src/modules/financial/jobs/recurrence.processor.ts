@@ -29,10 +29,13 @@ export class RecurrenceProcessor implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.queueService.registerProcessor('financial.recurrence', async (payload) => {
-      const schema = resolveTenantSchema(payload);
-      const branchClause = optionalBranchClause(payload, 'branch_id');
-      const dueRows = await this.drizzleService.getClient().execute(sql.raw(`
+    this.queueService.registerProcessor(
+      'financial.recurrence',
+      async (payload) => {
+        const schema = resolveTenantSchema(payload);
+        const branchClause = optionalBranchClause(payload, 'branch_id');
+        const dueRows = await this.drizzleService.getClient().execute(
+          sql.raw(`
         SELECT
           id, branch_id, type, description, amount,
           category_id, contact_id, bank_account_id,
@@ -46,18 +49,24 @@ export class RecurrenceProcessor implements OnModuleInit {
           AND (max_occurrences IS NULL OR generated_count < max_occurrences)
         ORDER BY next_due_date ASC
         LIMIT 100
-      `));
+      `),
+        );
 
-      for (const raw of dueRows.rows as Array<Record<string, unknown>>) {
-        const row = raw as unknown as RecurrenceRow;
-        const dueDate = String(row.next_due_date);
-        const issueDate = new Date().toISOString().slice(0, 10);
-        const docType = row.type === 'PAYABLE' ? 'PAY' : 'REC';
-        const year = new Date(dueDate).getFullYear();
-        const nextNumber = await this.nextSequenceNumber(schema, year, docType);
-        const documentNumber = `${docType}-${year}-${String(nextNumber).padStart(5, '0')}`;
+        for (const raw of dueRows.rows as Array<Record<string, unknown>>) {
+          const row = raw as unknown as RecurrenceRow;
+          const dueDate = String(row.next_due_date);
+          const issueDate = new Date().toISOString().slice(0, 10);
+          const docType = row.type === 'PAYABLE' ? 'PAY' : 'REC';
+          const year = new Date(dueDate).getFullYear();
+          const nextNumber = await this.nextSequenceNumber(
+            schema,
+            year,
+            docType,
+          );
+          const documentNumber = `${docType}-${year}-${String(nextNumber).padStart(5, '0')}`;
 
-        await this.drizzleService.getClient().execute(sql.raw(`
+          await this.drizzleService.getClient().execute(
+            sql.raw(`
           INSERT INTO ${schema}.financial_entries (
             branch_id, document_number, type, description,
             amount, issue_date, due_date, status,
@@ -77,10 +86,12 @@ export class RecurrenceProcessor implements OnModuleInit {
             ${quoteLiteral(row.bank_account_id)},
             ${quoteLiteral(row.created_by)}
           )
-        `));
+        `),
+          );
 
-        const nextDueDate = this.calculateNextDueDate(dueDate, row.frequency);
-        await this.drizzleService.getClient().execute(sql.raw(`
+          const nextDueDate = this.calculateNextDueDate(dueDate, row.frequency);
+          await this.drizzleService.getClient().execute(
+            sql.raw(`
           UPDATE ${schema}.recurrences
           SET
             generated_count = generated_count + 1,
@@ -92,27 +103,37 @@ export class RecurrenceProcessor implements OnModuleInit {
             END,
             updated_at = NOW()
           WHERE id = ${quoteLiteral(row.id)}
-        `));
-      }
-    });
+        `),
+          );
+        }
+      },
+    );
   }
 
-  private async nextSequenceNumber(schema: string, year: number, docType: string): Promise<number> {
-    await this.drizzleService.getClient().execute(sql.raw(`
+  private async nextSequenceNumber(
+    schema: string,
+    year: number,
+    docType: string,
+  ): Promise<number> {
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.document_sequences (sequence_year, doc_type, next_number)
       VALUES (${quoteLiteral(year)}, ${quoteLiteral(docType)}, 1)
       ON CONFLICT (sequence_year, doc_type)
       DO NOTHING
-    `));
+    `),
+    );
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.document_sequences
       SET next_number = next_number + 1,
           updated_at = NOW()
       WHERE sequence_year = ${quoteLiteral(year)}
         AND doc_type = ${quoteLiteral(docType)}
       RETURNING next_number - 1 AS current_number
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown>;
     return Number(row.current_number);

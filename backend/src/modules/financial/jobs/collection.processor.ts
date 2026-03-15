@@ -12,11 +12,14 @@ export class CollectionProcessor implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.queueService.registerProcessor('financial.collection', async (payload) => {
-      const schema = resolveTenantSchema(payload);
-      const branchClause = optionalBranchClause(payload, 'e.branch_id');
+    this.queueService.registerProcessor(
+      'financial.collection',
+      async (payload) => {
+        const schema = resolveTenantSchema(payload);
+        const branchClause = optionalBranchClause(payload, 'e.branch_id');
 
-      await this.drizzleService.getClient().execute(sql.raw(`
+        await this.drizzleService.getClient().execute(
+          sql.raw(`
         INSERT INTO ${schema}.collection_dispatches (
           rule_id, entry_id, branch_id, email_template_id, channel, dispatch_date, status, scheduled_for
         )
@@ -44,7 +47,9 @@ export class CollectionProcessor implements OnModuleInit {
           )
         ON CONFLICT (rule_id, entry_id, dispatch_date)
         DO NOTHING
-      `));
-    });
+      `),
+        );
+      },
+    );
   }
 }

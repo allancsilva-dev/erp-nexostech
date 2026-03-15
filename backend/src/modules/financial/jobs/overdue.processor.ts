@@ -12,18 +12,23 @@ export class OverdueProcessor implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.queueService.registerProcessor('financial.overdue', async (payload) => {
-      const schema = resolveTenantSchema(payload);
-      const branchClause = optionalBranchClause(payload);
+    this.queueService.registerProcessor(
+      'financial.overdue',
+      async (payload) => {
+        const schema = resolveTenantSchema(payload);
+        const branchClause = optionalBranchClause(payload);
 
-      await this.drizzleService.getClient().execute(sql.raw(`
+        await this.drizzleService.getClient().execute(
+          sql.raw(`
         UPDATE ${schema}.financial_entries
         SET status = 'OVERDUE', updated_at = NOW()
         WHERE due_date < CURRENT_DATE
           AND status IN ('PENDING', 'PARTIAL')
           AND deleted_at IS NULL
           ${branchClause}
-      `));
-    });
+      `),
+        );
+      },
+    );
   }
 }
