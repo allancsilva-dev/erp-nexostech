@@ -137,4 +137,45 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
       `CREATE INDEX IF NOT EXISTS idx_transfers_branch_date ON ${schema}.financial_transfers(branch_id, transfer_date)`,
     ],
   },
+  {
+    name: '004_create_financial_settings_and_rules_tables',
+    run: (schema) => [
+      `CREATE TABLE IF NOT EXISTS ${schema}.financial_settings (
+        branch_id UUID PRIMARY KEY REFERENCES ${schema}.branches(id),
+        closing_day INTEGER NOT NULL DEFAULT 1,
+        currency VARCHAR(10) NOT NULL DEFAULT 'BRL',
+        alert_days_before INTEGER NOT NULL DEFAULT 3,
+        email_alerts BOOLEAN NOT NULL DEFAULT true,
+        max_refund_days_payable INTEGER NOT NULL DEFAULT 90,
+        max_refund_days_receivable INTEGER NOT NULL DEFAULT 180,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE TABLE IF NOT EXISTS ${schema}.approval_rules (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        branch_id UUID NOT NULL REFERENCES ${schema}.branches(id),
+        entry_type VARCHAR(20),
+        min_amount DECIMAL(15,2) NOT NULL,
+        approver_role_id UUID NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT true,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_approval_rules_branch_active ON ${schema}.approval_rules(branch_id, active)`,
+      `CREATE TABLE IF NOT EXISTS ${schema}.collection_rules (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        branch_id UUID NOT NULL REFERENCES ${schema}.branches(id),
+        event VARCHAR(20) NOT NULL,
+        days_offset INTEGER NOT NULL,
+        email_template_id UUID NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT true,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_collection_rules_branch_event ON ${schema}.collection_rules(branch_id, event)`,
+    ],
+  },
 ];
