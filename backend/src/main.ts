@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -14,8 +15,14 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  app.use(cookieParser());
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ limit: '10mb', extended: true }));
+
+  app.enableCors({
+    origin: ['https://erp.zonadev.tech'],
+    credentials: true,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
