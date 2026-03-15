@@ -15,9 +15,9 @@ export const createEntrySchema = z
     amount: monetaryAmount,
     issueDate: z.string().min(1, 'Data obrigatoria'),
     dueDate: z.string().min(1, 'Data obrigatoria'),
-    categoryId: z.string().min(1, 'Categoria obrigatoria'),
-    contactId: z.string().optional().or(z.literal('')),
-    bankAccountId: z.string().optional().or(z.literal('')),
+    categoryId: z.string().uuid('Categoria obrigatoria'),
+    contactId: z.string().uuid('Contato invalido').optional().or(z.literal('')),
+    bankAccountId: z.string().uuid('Conta bancaria invalida').optional().or(z.literal('')),
     paymentMethod: z.enum(['BOLETO', 'PIX', 'TRANSFER', 'CARD', 'CASH', 'OTHER']).optional(),
     installment: z.boolean().default(false),
     installmentCount: z.number().int().min(2).max(120).optional(),
@@ -37,7 +37,7 @@ export const payEntrySchema = z.object({
   amount: monetaryAmount,
   paymentDate: z.string().min(1, 'Data obrigatoria'),
   paymentMethod: z.enum(['BOLETO', 'PIX', 'TRANSFER', 'CARD', 'CASH', 'OTHER']).optional(),
-  bankAccountId: z.string().optional().or(z.literal('')),
+  bankAccountId: z.string().uuid('Conta bancaria invalida').optional().or(z.literal('')),
   notes: z.string().max(500).optional(),
 });
 
