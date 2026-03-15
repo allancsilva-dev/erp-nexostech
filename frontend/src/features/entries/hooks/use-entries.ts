@@ -3,7 +3,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { v4 as uuid } from 'uuid';
-import type { PaginatedResponse } from '@/lib/api-types';
+import type { ApiResponse, PaginatedResponse } from '@/lib/api-types';
 import { api } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
 import { useBranch } from '@/hooks/use-branch';
@@ -61,14 +61,104 @@ export function useCreateEntry() {
 export function usePayEntry() {
   const queryClient = useQueryClient();
   const { activeBranchId } = useBranch();
+  const branchId = activeBranchId || 'default';
 
   return useMutation({
     mutationFn: ({ entryId, ...dto }: PayEntryInput & { entryId: string }) =>
       api.post<Payment>(`/entries/${entryId}/pay`, dto, uuid()),
+    onMutate: async ({ entryId, amount }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.entries.detail(branchId, entryId) });
+
+      const previousDetail = queryClient.getQueryData<ApiResponse<Entry>>(queryKeys.entries.detail(branchId, entryId));
+
+      queryClient.setQueryData<ApiResponse<Entry>>(queryKeys.entries.detail(branchId, entryId), (old) => {
+        if (!old?.data) {
+          return old;
+        }
+
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            status: 'PAID',
+            paidAmount: amount,
+          },
+        };
+      });
+
+      return { previousDetail, entryId };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(activeBranchId || 'default') });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(activeBranchId || 'default') });
       toast.success('Pagamento registrado');
+    },
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousDetail && context.entryId) {
+        queryClient.setQueryData(queryKeys.entries.detail(branchId, context.entryId), context.previousDetail);
+      }
+      toast.error(error.message);
+    },
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.entries.detail(branchId, variables.entryId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(branchId) });
+    },
+  });
+}
+
+export function useUpdateEntry() {
+  const queryClient = useQueryClient();
+  const { activeBranchId } = useBranch();
+  const branchId = activeBranchId || 'default';
+
+  return useMutation({
+    mutationFn: ({ entryId, ...dto }: CreateEntryInput & { entryId: string }) =>
+      api.put<Entry>(`/entries/${entryId}`, dto),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.entries.detail(branchId, variables.entryId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(branchId) });
+      toast.success('Lancamento atualizado com sucesso');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useCancelEntry() {
+  const queryClient = useQueryClient();
+  const { activeBranchId } = useBranch();
+  const branchId = activeBranchId || 'default';
+
+  return useMutation({
+    mutationFn: ({ entryId, reason }: { entryId: string; reason: string }) =>
+      api.post<void>(`/entries/${entryId}/cancel`, { reason }, uuid()),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.entries.detail(branchId, variables.entryId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(branchId) });
+      toast.success('Lancamento cancelado');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
+export function useRefundPayment() {
+  const queryClient = useQueryClient();
+  const { activeBranchId } = useBranch();
+  const branchId = activeBranchId || 'default';
+
+  return useMutation({
+    mutationFn: ({ entryId, reason }: { entryId: string; reason: string }) =>
+      api.post<void>(`/entries/${entryId}/refund`, { reason }, uuid()),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.entries.detail(branchId, variables.entryId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.entries.payments(branchId, variables.entryId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(branchId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(branchId) });
+      toast.success('Pagamento estornado');
     },
     onError: (error: Error) => {
       toast.error(error.message);

@@ -3,6 +3,9 @@
 import { useEntry } from '@/features/entries/hooks/use-entries';
 import { MoneyDisplay } from '@/components/shared/money-display';
 import { StatusBadge } from '@/components/shared/status-badge';
+import { PaymentModal } from '@/features/entries/components/payment-modal';
+import { CancelModal } from '@/features/entries/components/cancel-modal';
+import { RefundModal } from '@/features/entries/components/refund-modal';
 
 export function EntryDetail({ id }: { id: string }) {
   const { data, isLoading } = useEntry(id);
@@ -21,6 +24,11 @@ export function EntryDetail({ id }: { id: string }) {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">{entry.documentNumber}</h2>
         <StatusBadge status={entry.status} />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <PaymentModal entryId={entry.id} />
+        <RefundModal entryId={entry.id} />
+        <CancelModal entryId={entry.id} />
       </div>
       <p>{entry.description}</p>
       <MoneyDisplay value={entry.amount} className="text-lg" />

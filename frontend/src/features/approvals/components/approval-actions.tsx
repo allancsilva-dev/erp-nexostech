@@ -1,12 +1,17 @@
 ﻿'use client';
 
-import { Button } from '@/components/ui/button';
+import { useApprovals } from '@/features/approvals/hooks/use-approvals';
 
 export function ApprovalActions() {
+  const { pending } = useApprovals();
+  const count = pending.data?.data?.length ?? 0;
+
   return (
-    <div className="flex gap-2">
-      <Button size="sm">Aprovar</Button>
-      <Button size="sm" variant="destructive">Rejeitar</Button>
+    <div className="rounded-xl border bg-white p-4 text-sm dark:bg-slate-800">
+      <p className="font-medium">Pendencias de aprovacao</p>
+      <p className="mt-1 text-slate-500">
+        {count === 0 ? 'Nao ha lancamentos aguardando aprovacao.' : `${count} lancamento(s) aguardando decisao.`}
+      </p>
     </div>
   );
 }
