@@ -55,6 +55,7 @@ services:
         NEXT_PUBLIC_API_URL: https://api-erp.zonadev.tech/api/v1
         NEXT_PUBLIC_AUTH_URL: https://auth.zonadev.tech
         NEXT_PUBLIC_APP_AUDIENCE: erp.zonadev.tech
+        NEXT_PUBLIC_APP_URL: https://erp.zonadev.tech
     container_name: nexos-frontend
     restart: unless-stopped
     env_file:
