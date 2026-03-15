@@ -7,6 +7,7 @@ import { useQueryState } from 'nuqs';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { PermissionGate } from '@/components/shared/permission-gate';
 import { PageHeader } from '@/components/layout/page-header';
 import { EntryFilters } from '@/features/entries/components/entry-filters';
 import { EntriesTable } from '@/features/entries/components/entries-table';
@@ -33,12 +34,14 @@ export default function ContasPagarPage() {
         title="Contas a pagar"
         subtitle="Controle de despesas, pagamentos e vencimentos"
         actions={
-          <Link
-            className="inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            href="/financeiro/contas-pagar/nova"
-          >
-            Nova conta a pagar
-          </Link>
+          <PermissionGate permission="financial.entries.create">
+            <Link
+              className="inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              href="/financeiro/contas-pagar/nova"
+            >
+              Nova conta a pagar
+            </Link>
+          </PermissionGate>
         }
       />
 
@@ -51,12 +54,14 @@ export default function ContasPagarPage() {
           title="Nenhum lancamento encontrado"
           description="Crie seu primeiro lancamento para comecar"
           action={
-            <Link
-              className="inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              href="/financeiro/contas-pagar/nova"
-            >
-              Criar lancamento
-            </Link>
+            <PermissionGate permission="financial.entries.create">
+              <Link
+                className="inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                href="/financeiro/contas-pagar/nova"
+              >
+                Criar lancamento
+              </Link>
+            </PermissionGate>
           }
         />
       ) : null}
@@ -73,13 +78,15 @@ export default function ContasPagarPage() {
         />
       ) : null}
 
-      <BatchPayBar
-        selectedCount={selectedIds.length}
-        onPay={() => {
-          toast.success(`${selectedIds.length} pagamentos registrados`);
-          setSelectedIds([]);
-        }}
-      />
+      <PermissionGate permission="financial.entries.pay">
+        <BatchPayBar
+          selectedCount={selectedIds.length}
+          onPay={() => {
+            toast.success(`${selectedIds.length} pagamentos registrados`);
+            setSelectedIds([]);
+          }}
+        />
+      </PermissionGate>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useEntry } from '@/features/entries/hooks/use-entries';
 import { MoneyDisplay } from '@/components/shared/money-display';
 import { StatusBadge } from '@/components/shared/status-badge';
+import { PermissionGate } from '@/components/shared/permission-gate';
 import { PaymentModal } from '@/features/entries/components/payment-modal';
 import { CancelModal } from '@/features/entries/components/cancel-modal';
 import { RefundModal } from '@/features/entries/components/refund-modal';
@@ -26,9 +27,15 @@ export function EntryDetail({ id }: { id: string }) {
         <StatusBadge status={entry.status} />
       </div>
       <div className="flex flex-wrap gap-2">
-        <PaymentModal entryId={entry.id} />
-        <RefundModal entryId={entry.id} />
-        <CancelModal entryId={entry.id} />
+        <PermissionGate permission="financial.entries.pay">
+          <PaymentModal entryId={entry.id} />
+        </PermissionGate>
+        <PermissionGate permission="financial.entries.cancel">
+          <RefundModal entryId={entry.id} />
+        </PermissionGate>
+        <PermissionGate permission="financial.entries.cancel">
+          <CancelModal entryId={entry.id} />
+        </PermissionGate>
       </div>
       <p>{entry.description}</p>
       <MoneyDisplay value={entry.amount} className="text-lg" />

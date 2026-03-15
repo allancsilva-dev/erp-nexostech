@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { PermissionGate } from '@/components/shared/permission-gate';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApprovals } from '@/features/approvals/hooks/use-approvals';
@@ -55,23 +56,28 @@ export function ApprovalList() {
                 />
               </td>
               <td className="px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    disabled={approve.isPending || reject.isPending}
-                    onClick={() => approve.mutate(item.id)}
-                  >
-                    Aprovar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    disabled={(reasonById[item.id] ?? '').trim().length < 3 || approve.isPending || reject.isPending}
-                    onClick={() => reject.mutate({ entryId: item.id, reason: reasonById[item.id] })}
-                  >
-                    Rejeitar
-                  </Button>
-                </div>
+                <PermissionGate
+                  permission="financial.entries.approve"
+                  fallback={<span className="text-xs text-slate-500">Sem permissao para aprovar</span>}
+                >
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      disabled={approve.isPending || reject.isPending}
+                      onClick={() => approve.mutate(item.id)}
+                    >
+                      Aprovar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={(reasonById[item.id] ?? '').trim().length < 3 || approve.isPending || reject.isPending}
+                      onClick={() => reject.mutate({ entryId: item.id, reason: reasonById[item.id] })}
+                    >
+                      Rejeitar
+                    </Button>
+                  </div>
+                </PermissionGate>
               </td>
             </tr>
           ))}
