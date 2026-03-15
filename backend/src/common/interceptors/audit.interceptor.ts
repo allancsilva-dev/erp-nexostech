@@ -20,6 +20,7 @@ export class AuditInterceptor implements NestInterceptor {
       originalUrl?: string;
       route?: { path?: string };
       params?: Record<string, string | undefined>;
+      body?: Record<string, unknown>;
       headers: Record<string, string | undefined>;
       requestId?: string;
       user?: AuthUser;
@@ -44,6 +45,7 @@ export class AuditInterceptor implements NestInterceptor {
     originalUrl?: string;
     route?: { path?: string };
     params?: Record<string, string | undefined>;
+    body?: Record<string, unknown>;
     headers: Record<string, string | undefined>;
     requestId?: string;
     user?: AuthUser;
@@ -54,12 +56,15 @@ export class AuditInterceptor implements NestInterceptor {
     }
 
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const action = this.mapAction(request.method);
-    const entity = this.resolveEntity(request.originalUrl ?? request.route?.path ?? 'unknown');
+    const resolvedPath = request.originalUrl ?? request.route?.path ?? 'unknown';
+    const action = this.mapAction(request.method, resolvedPath);
+    const entity = this.resolveEntity(resolvedPath);
     const entityId = this.resolveEntityId(request.params);
     const metadata = JSON.stringify({
       method: request.method,
       path: request.originalUrl ?? request.route?.path ?? null,
+      paramKeys: Object.keys(request.params ?? {}),
+      bodyKeys: Object.keys(request.body ?? {}),
     });
 
     await this.drizzleService.getClient().execute(sql.raw(`
@@ -83,7 +88,24 @@ export class AuditInterceptor implements NestInterceptor {
     `));
   }
 
-  private mapAction(method: string): string {
+  private mapAction(method: string, path: string): string {
+    const upperMethod = method.toUpperCase();
+    if (upperMethod === 'POST' && path.includes('/pay')) {
+      return 'PAY';
+    }
+
+    if (upperMethod === 'POST' && path.includes('/cancel')) {
+      return 'CANCEL';
+    }
+
+    if (upperMethod === 'POST' && path.includes('/restore')) {
+      return 'RESTORE';
+    }
+
+    if (upperMethod === 'POST' && path.includes('/reconciliation/match')) {
+      return 'RECONCILE';
+    }
+
     switch (method.toUpperCase()) {
       case 'POST':
         return 'CREATE';
