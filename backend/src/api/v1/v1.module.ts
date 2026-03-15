@@ -9,6 +9,8 @@ import { HealthController } from './controllers/health.controller';
 import { RolesController } from './controllers/roles.controller';
 import { BankAccountsController } from './controllers/bank-accounts.controller';
 import { AuditLogsController } from './controllers/audit-logs.controller';
+import { PaymentsController } from './controllers/payments.controller';
+import { TransfersController } from './controllers/transfers.controller';
 import { FinancialModule } from '../../modules/financial/financial.module';
 import { RbacModule } from '../../modules/rbac/rbac.module';
 import { BranchGuard } from '../../common/guards/branch.guard';
@@ -25,6 +27,8 @@ import { RbacGuard } from '../../common/guards/rbac.guard';
     CategoriesController,
     BankAccountsController,
     AuditLogsController,
+    PaymentsController,
+    TransfersController,
   ],
   providers: [BranchGuard, RbacGuard],
 })
