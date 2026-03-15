@@ -254,4 +254,25 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
       `CREATE INDEX IF NOT EXISTS idx_lock_periods_branch_until ON ${schema}.lock_periods(branch_id, locked_until DESC)`,
     ],
   },
+  {
+    name: '008_create_financial_boletos_table',
+    run: (schema) => [
+      `CREATE TABLE IF NOT EXISTS ${schema}.financial_boletos (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        entry_id UUID NOT NULL UNIQUE REFERENCES ${schema}.financial_entries(id) ON DELETE CASCADE,
+        branch_id UUID NOT NULL REFERENCES ${schema}.branches(id),
+        gateway_boleto_id VARCHAR(120) NOT NULL,
+        status VARCHAR(20) NOT NULL,
+        amount DECIMAL(15,2) NOT NULL,
+        due_date DATE NOT NULL,
+        pdf_url TEXT,
+        paid_at TIMESTAMP,
+        cancelled_at TIMESTAMP,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_financial_boletos_branch_status ON ${schema}.financial_boletos(branch_id, status)`,
+    ],
+  },
 ];

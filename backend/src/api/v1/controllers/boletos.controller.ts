@@ -1,7 +1,9 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
+import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
+import { BranchGuard } from '../../../common/guards/branch.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
 import { BoletosService } from '../../../modules/financial/boletos/boletos.service';
@@ -9,14 +11,14 @@ import { BoletoWebhookDto } from '../../../modules/financial/boletos/dto/boleto-
 import { GenerateBoletoDto } from '../../../modules/financial/boletos/dto/generate-boleto.dto';
 
 @Controller('boletos')
-@UseGuards(JwtGuard, RbacGuard)
+@UseGuards(JwtGuard, BranchGuard, RbacGuard)
 export class BoletosController {
   constructor(private readonly boletosService: BoletosService) {}
 
   @Get()
   @RequirePermission('financial.entries.view')
-  async list(): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.boletosService.list());
+  async list(@BranchId() branchId: string): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.boletosService.list(branchId));
   }
 
   @Post(':entryId/generate')
@@ -24,22 +26,29 @@ export class BoletosController {
   @RequirePermission('financial.entries.create')
   async generate(
     @Param('entryId') entryId: string,
+    @BranchId() branchId: string,
     @Body() dto: GenerateBoletoDto,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.created(await this.boletosService.generate(entryId, dto));
+    return ApiResponse.created(await this.boletosService.generate(entryId, branchId, dto));
   }
 
   @Post(':entryId/cancel')
   @Idempotent()
   @RequirePermission('financial.entries.cancel')
-  async cancel(@Param('entryId') entryId: string): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.boletosService.cancel(entryId));
+  async cancel(
+    @Param('entryId') entryId: string,
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.boletosService.cancel(entryId, branchId));
   }
 
   @Get(':entryId/pdf')
   @RequirePermission('financial.entries.view')
-  async pdf(@Param('entryId') entryId: string): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.boletosService.getPdfLink(entryId));
+  async pdf(
+    @Param('entryId') entryId: string,
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.boletosService.getPdfLink(entryId, branchId));
   }
 
   @Post('webhook')
