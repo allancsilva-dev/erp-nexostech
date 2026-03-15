@@ -1,5 +1,8 @@
+import { config as loadEnv } from 'dotenv';
 import { Pool } from 'pg';
 import { TENANT_MIGRATIONS } from './migration-manifest';
+
+loadEnv();
 
 type Tenant = { id: string };
 
@@ -35,19 +38,26 @@ async function ensureControlTable(pool: Pool): Promise<void> {
   );
 }
 
-async function listTenants(pool: Pool, tenantOverride?: string): Promise<Tenant[]> {
+async function listTenants(
+  pool: Pool,
+  tenantOverride?: string,
+): Promise<Tenant[]> {
   if (tenantOverride) {
     return [{ id: tenantOverride }];
   }
 
   // Supoe tabela public.tenants no auth/onboarding. Ajustar em ambiente real se necessario.
   const result = await pool.query<Tenant>(
-    "SELECT id FROM public.tenants WHERE active = true ORDER BY created_at ASC",
+    'SELECT id FROM public.tenants WHERE active = true ORDER BY created_at ASC',
   );
   return result.rows;
 }
 
-async function wasApplied(pool: Pool, tenantId: string, migrationName: string): Promise<boolean> {
+async function wasApplied(
+  pool: Pool,
+  tenantId: string,
+  migrationName: string,
+): Promise<boolean> {
   const result = await pool.query(
     `
       SELECT 1
@@ -97,7 +107,11 @@ function schemaFromTenant(tenantId: string): string {
   return `tenant_${tenantId.replace(/[^a-zA-Z0-9_]/g, '')}`;
 }
 
-async function applyForTenant(pool: Pool, tenantId: string, retryMode = false): Promise<void> {
+async function applyForTenant(
+  pool: Pool,
+  tenantId: string,
+  retryMode = false,
+): Promise<void> {
   const schema = schemaFromTenant(tenantId);
   await pool.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
 
@@ -165,7 +179,6 @@ async function run(): Promise<void> {
 }
 
 run().catch((error) => {
-  // eslint-disable-next-line no-console
   console.error('[tenant-migrations.runner] erro:', error);
   process.exit(1);
 });
