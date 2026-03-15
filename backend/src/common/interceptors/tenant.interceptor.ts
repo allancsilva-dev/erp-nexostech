@@ -23,6 +23,13 @@ export class TenantInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<TenantAwareRequest>();
+    const path = (request.url ?? request.originalUrl ?? '').split('?')[0];
+    const publicRoutes = ['/api/v1/health', '/api/v1/metrics'];
+
+    if (publicRoutes.some((route) => path.endsWith(route))) {
+      return next.handle();
+    }
+
     const tenantFromToken = request.user?.tenantId ?? null;
     const headerValue = request.headers['x-tenant-id'];
     const tenantFromHeader =
@@ -41,13 +48,19 @@ export class TenantInterceptor implements NestInterceptor {
         throw new UnauthorizedException('Tenant nao encontrado no contexto');
       }
 
-      const path = request.originalUrl ?? request.url ?? '';
-      const isAdminRoute =
-        path.startsWith('/api/v1/tenants') ||
-        path.startsWith('/api/v1/admin/') ||
-        path === '/api/v1/admin';
+      const superadminNoTenantRoutes = [
+        '/tenants',
+        '/admin',
+        '/users/me/permissions',
+        '/branches/my',
+      ];
 
-      if (!isAdminRoute) {
+      const isAllowedSuperAdminRoute = superadminNoTenantRoutes.some(
+        (route) =>
+          path === `/api/v1${route}` || path.startsWith(`/api/v1${route}/`),
+      );
+
+      if (!isAllowedSuperAdminRoute) {
         throw new UnauthorizedException('Tenant nao encontrado no contexto');
       }
     }
