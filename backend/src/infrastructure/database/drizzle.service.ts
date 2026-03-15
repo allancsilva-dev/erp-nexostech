@@ -39,7 +39,7 @@ export class DrizzleService implements OnModuleDestroy {
 
   getTenantDb(): NodePgDatabase {
     const schema = this.getTenantSchema();
-    // Safety com pgBouncer: schema explícito por query builder, sem SET search_path.
+    // pgBouncer removido temporariamente: manter schema explícito por query builder, sem SET search_path.
     return (this.db as any).withSchema(schema);
   }
 

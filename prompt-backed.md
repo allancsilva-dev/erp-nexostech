@@ -18,7 +18,7 @@ Este módulo é o **Módulo Financeiro** — primeiro módulo de negócio do MVP
 |---|---|
 | Frontend | Next.js 14 + Tailwind CSS + TypeScript + TanStack Query |
 | Backend | NestJS + Drizzle ORM + TypeScript |
-| Banco de dados | PostgreSQL 16 (schemas por tenant) + pgBouncer (transaction pooling) |
+| Banco de dados | PostgreSQL 16 (schemas por tenant, conexão direta temporária) |
 | Cache / Filas | Redis (Keyv + BullMQ) |
 | Autenticação | ZonaDev Auth (JWT RS256 via JWKS) |
 | Storage | Cloudflare R2 (S3-compatible) |
@@ -54,10 +54,10 @@ Este módulo é o **Módulo Financeiro** — primeiro módulo de negócio do MVP
 - Stale-while-revalidate (UX fluida)
 - Perfeito para ERP com muitas listagens, dashboards e formulários
 
-### pgBouncer (obrigatório em produção)
-- Modo: `transaction pooling`
-- Sem pgBouncer o PostgreSQL explode com `max_connections` quando múltiplos tenants acessam simultaneamente
-- Configurar `pool_size` proporcional ao número de tenants ativos
+### Conexão com Banco (temporária)
+- pgBouncer removido temporariamente — conectando direto no Postgres
+- Revisar pool do driver PostgreSQL enquanto o pgBouncer estiver desativado
+- Reativar pgBouncer quando imagem estável estiver disponível
 
 ---
 
@@ -95,19 +95,19 @@ O Nexos ERP **não possui tela de login própria**. Fluxo:
 
 ### REGRA CRÍTICA: schema explícito via `.withSchema()` — NUNCA `SET search_path`
 
-Com **pgBouncer em transaction pooling**, a conexão é compartilhada entre requests de tenants diferentes. Se usar `SET search_path TO tenant_x`, o path pode **vazar para o próximo request** de outro tenant — causando acesso cruzado de dados.
+Mesmo com conexão direta temporária no Postgres, a regra de schema explícito permanece: usar `SET search_path TO tenant_x` pode causar bugs e regressões de isolamento em cenários de pool.
 
 **Solução obrigatória**: usar sempre `.withSchema()` do Drizzle em TODA query:
 
 ```typescript
-// ✅ CORRETO — schema explícito, seguro com pgBouncer
+// ✅ CORRETO — schema explícito, seguro para multi-tenant
 const entries = await db
   .select()
   .from(financialEntries)
   .withSchema(`tenant_${tenantId}`)
   .where(eq(financialEntries.branchId, branchId));
 
-// ❌ PROIBIDO — search_path vaza entre conexões no pgBouncer
+// ❌ PROIBIDO — manter sem SET search_path
 await db.execute(sql`SET search_path TO tenant_${tenantId}`);
 ```
 
@@ -2180,7 +2180,7 @@ Tabela pré-calculada para acelerar consultas de saldo e fluxo de caixa. Detalha
 - **Circuit breaker** em toda integração externa (boletos, e-mail, R2)
 - **TanStack Query** para todo fetch no frontend — nenhum fetch direto em componente
 - **3 estados visuais** em todo componente que faz fetch: loading (skeleton), erro, dados
-- **NUNCA usar `SET search_path`** — sempre `.withSchema()` do Drizzle (pgBouncer safety)
+- **NUNCA usar `SET search_path`** — sempre `.withSchema()` do Drizzle (pgBouncer removido temporariamente — conectando direto no Postgres)
 - **NUNCA usar `KEYS *` ou `invalidatePattern`** no Redis — invalidar keys exatas via Event Bus
 - **Campos formatados** — CPF, CNPJ, telefone, CEP: armazenar formatado, validar regex + dígito verificador no DTO
 - **Event Bus** (`@nestjs/event-emitter`) para desacoplar side effects: cache, audit, notificações, e-mail

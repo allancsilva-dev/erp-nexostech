@@ -17,26 +17,6 @@ services:
     networks:
       - nexos_internal
 
-  pgbouncer:
-    image: edoburu/pgbouncer:1.23.1
-    container_name: nexos-pgbouncer
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
-      POOL_MODE: transaction
-      MAX_CLIENT_CONN: 100
-      DEFAULT_POOL_SIZE: 20
-    healthcheck:
-      test: ["CMD-SHELL", "pgrep pgbouncer >/dev/null"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - nexos_internal
-
   redis:
     image: redis:7-alpine
     container_name: nexos-redis
@@ -72,7 +52,7 @@ services:
     env_file:
       - ./backend/.env
     depends_on:
-      pgbouncer:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
