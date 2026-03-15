@@ -8,7 +8,7 @@ export function AttachmentsSection() {
 
   return (
     <div className="space-y-2">
-      <FileUpload onChange={setAttachment} />
+      <FileUpload onChange={(file) => setAttachment(file)} />
       {attachment ? <p className="text-xs text-slate-500">Anexo selecionado: {attachment.name}</p> : null}
     </div>
   );

@@ -1,13 +1,93 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const ALLOWED = ['application/pdf', 'image/png', 'image/jpeg'];
 
-export function FileUpload({ onChange }: { onChange: (file: File | null) => void }) {
+interface PresignResponse {
+  data: {
+    uploadUrl: string;
+    storageKey: string;
+  };
+}
+
+function uploadWithProgress(file: File, uploadUrl: string, onProgress: (value: number) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) {
+        return;
+      }
+      onProgress(Math.round((event.loaded / event.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        reject(new Error('Falha no upload')); 
+      }
+    };
+    xhr.onerror = () => reject(new Error('Falha de rede no upload'));
+    xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type);
+    xhr.send(file);
+  });
+}
+
+async function retryUpload(file: File, uploadUrl: string, onProgress: (value: number) => void): Promise<void> {
+  const delays = [1000, 2000, 4000];
+
+  for (let attempt = 0; attempt <= delays.length; attempt += 1) {
+    try {
+      await uploadWithProgress(file, uploadUrl, onProgress);
+      return;
+    } catch (error) {
+      if (attempt === delays.length) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+    }
+  }
+}
+
+export function FileUpload({ onChange }: { onChange: (file: File | null, storageKey?: string) => void }) {
   const [fileName, setFileName] = useState<string>('');
+  const [progress, setProgress] = useState<number>(0);
+  const [error, setError] = useState<string>('');
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const currentFile = useRef<File | null>(null);
+
+  async function startUpload(file: File): Promise<void> {
+    setError('');
+    setProgress(0);
+    setIsUploading(true);
+
+    try {
+      const presignResponse = await fetch('/api/v1/attachments/presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ filename: file.name, mimeType: file.type }),
+      });
+
+      if (!presignResponse.ok) {
+        throw new Error('Nao foi possivel obter URL de upload');
+      }
+
+      const presign = (await presignResponse.json()) as PresignResponse;
+      await retryUpload(file, presign.data.uploadUrl, setProgress);
+
+      setFileName(file.name);
+      onChange(file, presign.data.storageKey);
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'Erro no upload');
+      onChange(null);
+    } finally {
+      setIsUploading(false);
+    }
+  }
 
   return (
     <div className="rounded-xl border border-dashed p-4">
@@ -18,25 +98,73 @@ export function FileUpload({ onChange }: { onChange: (file: File | null) => void
           type="file"
           className="hidden"
           accept=".pdf,.png,.jpg,.jpeg"
+          disabled={isUploading}
           onChange={(event) => {
             const file = event.target.files?.[0] ?? null;
+            currentFile.current = file;
             if (!file) {
               setFileName('');
+              setProgress(0);
+              setError('');
               onChange(null);
               return;
             }
             if (!ALLOWED.includes(file.type) || file.size > 10 * 1024 * 1024) {
               setFileName('Arquivo invalido');
+              setError('Arquivo invalido. Aceito: PDF/JPG/PNG ate 10MB.');
               onChange(null);
               return;
             }
-            setFileName(file.name);
-            onChange(file);
+            void startUpload(file);
           }}
         />
       </label>
+
+      {isUploading ? (
+        <div className="mt-3 space-y-2">
+          <div className="h-2 w-full overflow-hidden rounded bg-slate-200">
+            <div className="h-full bg-blue-600 transition-all" style={{ width: `${progress}%` }} />
+          </div>
+          <p className="text-xs text-slate-500">Upload em andamento: {progress}%</p>
+        </div>
+      ) : null}
+
       {fileName ? <p className="mt-2 text-xs text-slate-500">{fileName}</p> : null}
-      {fileName ? <Button className="mt-2" variant="outline" size="sm" onClick={() => { setFileName(''); onChange(null); }}>Remover</Button> : null}
+      {error ? <p className="mt-2 text-xs text-red-600">{error}</p> : null}
+
+      <div className="mt-2 flex gap-2">
+        {error && currentFile.current ? (
+          <Button
+            className="mt-1"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (currentFile.current) {
+                void startUpload(currentFile.current);
+              }
+            }}
+          >
+            Tentar novamente
+          </Button>
+        ) : null}
+
+        {fileName ? (
+          <Button
+            className="mt-1"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setFileName('');
+              setProgress(0);
+              setError('');
+              currentFile.current = null;
+              onChange(null);
+            }}
+          >
+            Remover
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -8,13 +8,15 @@ export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
 
+  function toggleTheme(): void {
+    const nextTheme = isDark ? 'light' : 'dark';
+    localStorage.setItem('theme', nextTheme);
+    document.cookie = `theme=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
+    setTheme(nextTheme);
+  }
+
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      aria-label="Alternar tema"
-    >
+    <Button variant="outline" size="sm" onClick={toggleTheme} aria-label="Alternar tema">
       {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </Button>
   );
