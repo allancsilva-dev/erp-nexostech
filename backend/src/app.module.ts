@@ -2,7 +2,9 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ClsModule } from 'nestjs-cls';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { AuditLogListener } from './common/listeners/audit-log.listener';
 import { CacheInvalidationListener } from './common/listeners/cache-invalidation.listener';
+import { NotificationListener } from './common/listeners/notification.listener';
 import { RbacCacheInvalidationListener } from './common/listeners/rbac-cache-invalidation.listener';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
@@ -21,7 +23,9 @@ import { V1Module } from './api/v1/v1.module';
     V1Module,
   ],
   providers: [
+    AuditLogListener,
     CacheInvalidationListener,
+    NotificationListener,
     RbacCacheInvalidationListener,
     {
       provide: APP_GUARD,
