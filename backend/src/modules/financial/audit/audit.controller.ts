@@ -1,0 +1,39 @@
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiResponse } from '../../../common/dtos/api-response.dto';
+import { PaginationDto } from '../../../common/dtos/pagination.dto';
+import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
+import { BranchGuard } from '../../../common/guards/branch.guard';
+import { JwtGuard } from '../../../common/guards/jwt.guard';
+import { RbacGuard } from '../../../common/guards/rbac.guard';
+import { AuditService } from './audit.service';
+
+@Controller('audit')
+@UseGuards(JwtGuard, BranchGuard, RbacGuard)
+export class AuditController {
+  constructor(private readonly auditService: AuditService) {}
+
+  @Get()
+  @RequirePermission('financial.audit.view')
+  async list(@Query() query: PaginationDto): Promise<ApiResponse<unknown[]>> {
+    const { items, total } = await this.auditService.list(query.page, query.pageSize);
+    return ApiResponse.paginated(items, {
+      page: query.page,
+      pageSize: query.pageSize,
+      total,
+      totalPages: Math.ceil(total / query.pageSize),
+    });
+  }
+
+  @Get('export')
+  @RequirePermission('financial.audit.view')
+  async export(@Query() query: PaginationDto): Promise<ApiResponse<{ filename: string; content: string }>> {
+    const data = await this.auditService.exportCsv(query.page, query.pageSize);
+    return ApiResponse.ok(data);
+  }
+
+  @Get(':id')
+  @RequirePermission('financial.audit.view')
+  async detail(@Param('id') id: string): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.auditService.getById(id));
+  }
+}

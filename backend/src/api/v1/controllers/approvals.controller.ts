@@ -2,8 +2,10 @@ import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { RequireFeature } from '../../../common/decorators/require-feature.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { BranchGuard } from '../../../common/guards/branch.guard';
+import { FeatureFlagGuard } from '../../../common/guards/feature-flag.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
 import type { AuthUser } from '../../../common/types/auth-user.type';
@@ -12,7 +14,8 @@ import { ApprovalsService } from '../../../modules/financial/approvals/approvals
 import { BatchApproveDto } from '../../../modules/financial/approvals/dto/batch-approve.dto';
 
 @Controller('approvals')
-@UseGuards(JwtGuard, BranchGuard, RbacGuard)
+@UseGuards(JwtGuard, BranchGuard, RbacGuard, FeatureFlagGuard)
+@RequireFeature('approval_flow_enabled')
 export class ApprovalsController {
   constructor(private readonly approvalsService: ApprovalsService) {}
 

@@ -2,8 +2,10 @@ import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nes
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
+import { RequireFeature } from '../../../common/decorators/require-feature.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { BranchGuard } from '../../../common/guards/branch.guard';
+import { FeatureFlagGuard } from '../../../common/guards/feature-flag.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
 import { ApprovalRulesService } from '../../../modules/financial/approval-rules/approval-rules.service';
@@ -11,7 +13,8 @@ import { CreateApprovalRuleDto } from '../../../modules/financial/approval-rules
 import { UpdateApprovalRuleDto } from '../../../modules/financial/approval-rules/dto/update-approval-rule.dto';
 
 @Controller('approval-rules')
-@UseGuards(JwtGuard, BranchGuard, RbacGuard)
+@UseGuards(JwtGuard, BranchGuard, RbacGuard, FeatureFlagGuard)
+@RequireFeature('approval_flow_enabled')
 export class ApprovalRulesController {
   constructor(private readonly approvalRulesService: ApprovalRulesService) {}
 

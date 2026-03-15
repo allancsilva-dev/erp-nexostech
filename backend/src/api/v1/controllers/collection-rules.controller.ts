@@ -2,8 +2,10 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } fro
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
+import { RequireFeature } from '../../../common/decorators/require-feature.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { BranchGuard } from '../../../common/guards/branch.guard';
+import { FeatureFlagGuard } from '../../../common/guards/feature-flag.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
 import { CollectionRulesService } from '../../../modules/financial/collection-rules/collection-rules.service';
@@ -12,7 +14,8 @@ import { UpdateCollectionRuleDto } from '../../../modules/financial/collection-r
 import { UpdateEmailTemplateDto } from '../../../modules/financial/collection-rules/dto/update-email-template.dto';
 
 @Controller()
-@UseGuards(JwtGuard, BranchGuard, RbacGuard)
+@UseGuards(JwtGuard, BranchGuard, RbacGuard, FeatureFlagGuard)
+@RequireFeature('collection_rules_enabled')
 export class CollectionRulesController {
   constructor(private readonly collectionRulesService: CollectionRulesService) {}
 

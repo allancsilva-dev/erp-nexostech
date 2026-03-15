@@ -2,8 +2,10 @@ import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nes
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
+import { RequireFeature } from '../../../common/decorators/require-feature.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { BranchGuard } from '../../../common/guards/branch.guard';
+import { FeatureFlagGuard } from '../../../common/guards/feature-flag.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
 import { BranchesService } from '../../../modules/branches/branches.service';
@@ -14,7 +16,8 @@ import { UpdateBranchDto } from '../../../modules/branches/dto/update-branch.dto
 import type { AuthUser } from '../../../common/types/auth-user.type';
 
 @Controller('branches')
-@UseGuards(JwtGuard, BranchGuard, RbacGuard)
+@UseGuards(JwtGuard, BranchGuard, RbacGuard, FeatureFlagGuard)
+@RequireFeature('branches_enabled')
 export class BranchesController {
   constructor(private readonly branchesService: BranchesService) {}
 

@@ -2,8 +2,10 @@ import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
+import { RequireFeature } from '../../../common/decorators/require-feature.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { BranchGuard } from '../../../common/guards/branch.guard';
+import { FeatureFlagGuard } from '../../../common/guards/feature-flag.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
 import { BoletosService } from '../../../modules/financial/boletos/boletos.service';
@@ -15,14 +17,16 @@ export class BoletosController {
   constructor(private readonly boletosService: BoletosService) {}
 
   @Get()
-  @UseGuards(JwtGuard, BranchGuard, RbacGuard)
+  @UseGuards(JwtGuard, BranchGuard, RbacGuard, FeatureFlagGuard)
+  @RequireFeature('boletos_enabled')
   @RequirePermission('financial.entries.view')
   async list(@BranchId() branchId: string): Promise<ApiResponse<unknown>> {
     return ApiResponse.ok(await this.boletosService.list(branchId));
   }
 
   @Post(':entryId/generate')
-  @UseGuards(JwtGuard, BranchGuard, RbacGuard)
+  @UseGuards(JwtGuard, BranchGuard, RbacGuard, FeatureFlagGuard)
+  @RequireFeature('boletos_enabled')
   @Idempotent()
   @RequirePermission('financial.entries.create')
   async generate(
@@ -34,7 +38,8 @@ export class BoletosController {
   }
 
   @Post(':entryId/cancel')
-  @UseGuards(JwtGuard, BranchGuard, RbacGuard)
+  @UseGuards(JwtGuard, BranchGuard, RbacGuard, FeatureFlagGuard)
+  @RequireFeature('boletos_enabled')
   @Idempotent()
   @RequirePermission('financial.entries.cancel')
   async cancel(
@@ -45,7 +50,8 @@ export class BoletosController {
   }
 
   @Get(':entryId/pdf')
-  @UseGuards(JwtGuard, BranchGuard, RbacGuard)
+  @UseGuards(JwtGuard, BranchGuard, RbacGuard, FeatureFlagGuard)
+  @RequireFeature('boletos_enabled')
   @RequirePermission('financial.entries.view')
   async pdf(
     @Param('entryId') entryId: string,
