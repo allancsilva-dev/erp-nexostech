@@ -389,4 +389,128 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
        ADD COLUMN IF NOT EXISTS user_email VARCHAR(255)`,
     ],
   },
+  {
+    name: '013_composite_fk_branch_isolation',
+    run: (schema) => [
+      // PASSO 0 — Verificar dados inválidos antes de criar as FKs compostas.
+      // Se houver entries referenciando category/bank_account de outra filial,
+      // esta migration falhará com um erro claro antes de tentar alterar o schema.
+      `DO $$
+       DECLARE
+         invalid_category_count INTEGER;
+         invalid_bank_count INTEGER;
+       BEGIN
+         SELECT COUNT(*) INTO invalid_category_count
+         FROM ${schema}.financial_entries fe
+         LEFT JOIN ${schema}.categories c
+           ON fe.category_id = c.id AND fe.branch_id = c.branch_id
+         WHERE fe.category_id IS NOT NULL AND c.id IS NULL;
+
+         IF invalid_category_count > 0 THEN
+           RAISE EXCEPTION
+             'Migration abortada: % entries com category_id de outra filial. Corrija antes de continuar.',
+             invalid_category_count;
+         END IF;
+
+         SELECT COUNT(*) INTO invalid_bank_count
+         FROM ${schema}.financial_entries fe
+         LEFT JOIN ${schema}.bank_accounts b
+           ON fe.bank_account_id = b.id AND fe.branch_id = b.branch_id
+         WHERE fe.bank_account_id IS NOT NULL AND b.id IS NULL;
+
+         IF invalid_bank_count > 0 THEN
+           RAISE EXCEPTION
+             'Migration abortada: % entries com bank_account_id de outra filial. Corrija antes de continuar.',
+             invalid_bank_count;
+         END IF;
+       END $$`,
+
+      // PASSO 1 — Adicionar UNIQUE(id, branch_id) em categories para suportar FK composta
+      `ALTER TABLE ${schema}.categories
+       ADD CONSTRAINT IF NOT EXISTS uq_categories_id_branch UNIQUE (id, branch_id)`,
+
+      // PASSO 2 — Adicionar UNIQUE(id, branch_id) em bank_accounts para suportar FK composta
+      `ALTER TABLE ${schema}.bank_accounts
+       ADD CONSTRAINT IF NOT EXISTS uq_bank_accounts_id_branch UNIQUE (id, branch_id)`,
+
+      // PASSO 3 — Adicionar branch_id em financial_entries.categories FK como FK composta.
+      // Dropa a FK simples (se existir) e cria a composta.
+      // Usa nome genérico pois o nome da constraint pode variar.
+      `DO $$
+       DECLARE
+         fk_name TEXT;
+       BEGIN
+         SELECT tc.constraint_name INTO fk_name
+         FROM information_schema.table_constraints tc
+         JOIN information_schema.key_column_usage kcu
+           ON tc.constraint_name = kcu.constraint_name
+           AND tc.table_schema = kcu.table_schema
+         JOIN information_schema.referential_constraints rc
+           ON tc.constraint_name = rc.constraint_name
+           AND tc.table_schema = rc.constraint_schema
+         JOIN information_schema.key_column_usage ccu
+           ON ccu.constraint_name = rc.unique_constraint_name
+           AND ccu.table_schema = rc.unique_constraint_schema
+         WHERE tc.constraint_type = 'FOREIGN KEY'
+           AND tc.table_schema = REPLACE('${schema}', '"', '')
+           AND tc.table_name = 'financial_entries'
+           AND kcu.column_name = 'category_id'
+           AND ccu.table_name = 'categories'
+           AND ccu.column_name = 'id'
+           AND (SELECT COUNT(*) FROM information_schema.key_column_usage
+                WHERE constraint_name = tc.constraint_name
+                  AND table_schema = tc.table_schema) = 1
+         LIMIT 1;
+
+         IF fk_name IS NOT NULL THEN
+           EXECUTE format('ALTER TABLE ${schema}.financial_entries DROP CONSTRAINT %I', fk_name);
+         END IF;
+       END $$`,
+
+      // PASSO 4 — Adicionar FK composta category_id + branch_id → categories(id, branch_id)
+      `ALTER TABLE ${schema}.financial_entries
+       ADD CONSTRAINT IF NOT EXISTS fk_entries_category_branch
+       FOREIGN KEY (category_id, branch_id)
+       REFERENCES ${schema}.categories(id, branch_id)`,
+
+      // PASSO 5 — Dropa FK simples de bank_account_id (se existir)
+      `DO $$
+       DECLARE
+         fk_name TEXT;
+       BEGIN
+         SELECT tc.constraint_name INTO fk_name
+         FROM information_schema.table_constraints tc
+         JOIN information_schema.key_column_usage kcu
+           ON tc.constraint_name = kcu.constraint_name
+           AND tc.table_schema = kcu.table_schema
+         JOIN information_schema.referential_constraints rc
+           ON tc.constraint_name = rc.constraint_name
+           AND tc.table_schema = rc.constraint_schema
+         JOIN information_schema.key_column_usage ccu
+           ON ccu.constraint_name = rc.unique_constraint_name
+           AND ccu.table_schema = rc.unique_constraint_schema
+         WHERE tc.constraint_type = 'FOREIGN KEY'
+           AND tc.table_schema = REPLACE('${schema}', '"', '')
+           AND tc.table_name = 'financial_entries'
+           AND kcu.column_name = 'bank_account_id'
+           AND ccu.table_name = 'bank_accounts'
+           AND ccu.column_name = 'id'
+           AND (SELECT COUNT(*) FROM information_schema.key_column_usage
+                WHERE constraint_name = tc.constraint_name
+                  AND table_schema = tc.table_schema) = 1
+         LIMIT 1;
+
+         IF fk_name IS NOT NULL THEN
+           EXECUTE format('ALTER TABLE ${schema}.financial_entries DROP CONSTRAINT %I', fk_name);
+         END IF;
+       END $$`,
+
+      // PASSO 6 — Adicionar FK composta bank_account_id + branch_id → bank_accounts(id, branch_id)
+      // bank_account_id é nullable (pagamentos sem conta definida são válidos)
+      `ALTER TABLE ${schema}.financial_entries
+       ADD CONSTRAINT IF NOT EXISTS fk_entries_bank_account_branch
+       FOREIGN KEY (bank_account_id, branch_id)
+       REFERENCES ${schema}.bank_accounts(id, branch_id)`,
+    ],
+  },
 ];
