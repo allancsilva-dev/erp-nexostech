@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { decodeToken } from '@/lib/jwt';
 import { AppShell } from '@/components/layout/app-shell';
 import { QueryProvider } from '@/providers/query-provider';
@@ -24,12 +25,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider>
           <QueryProvider>
-            <AuthProvider initialUser={user}>
-              <BranchProvider>
-                <AppShell>{children}</AppShell>
-                <ToastProvider />
-              </BranchProvider>
-            </AuthProvider>
+            <NuqsAdapter>
+              <AuthProvider initialUser={user}>
+                <BranchProvider>
+                  <AppShell>{children}</AppShell>
+                  <ToastProvider />
+                </BranchProvider>
+              </AuthProvider>
+            </NuqsAdapter>
           </QueryProvider>
         </ThemeProvider>
       </body>

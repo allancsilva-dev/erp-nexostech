@@ -4,13 +4,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
 
+interface PendingApproval {
+  id: string;
+  documentNumber: string;
+}
+
 export function useApprovals() {
   const { activeBranchId } = useBranch();
   const queryClient = useQueryClient();
 
   const pending = useQuery({
     queryKey: ['approvals', activeBranchId, 'pending'],
-    queryFn: () => api.get('/approvals/pending'),
+    queryFn: () => api.get<PendingApproval[]>('/approvals/pending'),
     enabled: Boolean(activeBranchId),
   });
 
