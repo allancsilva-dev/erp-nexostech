@@ -2,6 +2,7 @@
 
 import { Building2 } from 'lucide-react';
 import { useBranch } from '@/hooks/use-branch';
+import { Select } from '@/components/ui/select';
 
 export function BranchSwitcher() {
   const { activeBranch, branches, switchBranch } = useBranch();
@@ -11,10 +12,10 @@ export function BranchSwitcher() {
   }
 
   return (
-    <label className="flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:bg-slate-800">
+    <label className="flex min-w-[220px] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
       <Building2 className="h-4 w-4" />
-      <select
-        className="bg-transparent outline-none"
+      <Select
+        className="h-7 border-0 bg-transparent p-0 shadow-none outline-none focus-visible:ring-0"
         value={activeBranch?.id ?? ''}
         onChange={(event) => switchBranch(event.target.value)}
       >
@@ -23,7 +24,7 @@ export function BranchSwitcher() {
             {branch.name}{branch.isHeadquarters ? ' (Matriz)' : ''}
           </option>
         ))}
-      </select>
+      </Select>
     </label>
   );
 }
