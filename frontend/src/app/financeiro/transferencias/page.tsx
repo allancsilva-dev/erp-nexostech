@@ -1,10 +1,11 @@
 ﻿import { PageHeader } from '@/components/layout/page-header';
+import { TransferForm } from '@/features/transfers/components/transfer-form';
 
 export default function TransferenciasPage() {
   return (
     <div className="space-y-6">
-      <PageHeader title="Transferencias" subtitle="Transferencias entre contas bancarias" />
-      <div className="rounded-xl border bg-white p-6 dark:bg-slate-800">Formulario de transferencia e historico.</div>
+      <PageHeader title="Transferencias" subtitle="Movimentacao entre contas bancarias" />
+      <TransferForm />
     </div>
   );
 }
