@@ -29,7 +29,16 @@ describe('StorageService', () => {
     } as unknown as ConfigService;
 
     const service = new StorageService(config);
-    const sendSpy = jest.spyOn((service as unknown as { client: { send: (cmd: unknown) => Promise<unknown> } }).client, 'send')
+    service.onModuleInit();
+    const sendSpy = jest
+      .spyOn(
+        (
+          service as unknown as {
+            client: { send: (cmd: unknown) => Promise<unknown> };
+          }
+        ).client,
+        'send',
+      )
       .mockResolvedValue({});
 
     const result = await service.uploadBuffer({
