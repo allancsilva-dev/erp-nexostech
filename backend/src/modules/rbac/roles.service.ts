@@ -10,6 +10,7 @@ import {
   RbacRolePermissionsChangedEvent,
   RbacUserRoleChangedEvent,
 } from '../../common/events/rbac.events';
+import type { AuthUser } from '../../common/types/auth-user.type';
 
 @Injectable()
 export class RolesService {
@@ -100,6 +101,14 @@ export class RolesService {
     await this.rolesRepository.assignRoleToUser(userId, roleId);
     this.emitUserRoleChanged(userId);
     return { userId, roleId };
+  }
+
+  async listCurrentUserPermissions(user: AuthUser): Promise<string[]> {
+    if (user.roles.includes('SUPERADMIN')) {
+      return ['*'];
+    }
+
+    return this.rolesRepository.listUserPermissions(user.sub);
   }
 
   private emitUserRoleChanged(userId: string): void {

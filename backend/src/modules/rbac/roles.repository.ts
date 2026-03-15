@@ -184,6 +184,23 @@ export class RolesRepository {
     );
   }
 
+  async listUserPermissions(userId: string): Promise<string[]> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT DISTINCT rp.permission_code
+      FROM ${schema}.user_roles ur
+      JOIN ${schema}.role_permissions rp ON rp.role_id = ur.role_id
+      WHERE ur.user_id = ${quoteLiteral(userId)}
+      ORDER BY rp.permission_code ASC
+    `),
+    );
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) =>
+      String(row.permission_code),
+    );
+  }
+
   async listUserIdsByRole(roleId: string): Promise<string[]> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const result = await this.drizzleService.getClient().execute(
