@@ -196,4 +196,26 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
       `CREATE INDEX IF NOT EXISTS idx_audit_logs_branch_entity ON ${schema}.audit_logs(branch_id, entity)`,
     ],
   },
+  {
+    name: '006_create_rbac_tables',
+    run: (schema) => [
+      `CREATE TABLE IF NOT EXISTS ${schema}.roles (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(50) NOT NULL,
+        description VARCHAR(200),
+        is_system BOOLEAN NOT NULL DEFAULT false,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS uq_roles_name_active
+       ON ${schema}.roles(name)
+       WHERE deleted_at IS NULL`,
+      `CREATE TABLE IF NOT EXISTS ${schema}.role_permissions (
+        role_id UUID NOT NULL REFERENCES ${schema}.roles(id) ON DELETE CASCADE,
+        permission_code VARCHAR(120) NOT NULL,
+        PRIMARY KEY (role_id, permission_code)
+      )`,
+    ],
+  },
 ];
