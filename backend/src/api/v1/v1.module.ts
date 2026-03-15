@@ -11,6 +11,8 @@ import { BankAccountsController } from './controllers/bank-accounts.controller';
 import { AuditLogsController } from './controllers/audit-logs.controller';
 import { PaymentsController } from './controllers/payments.controller';
 import { TransfersController } from './controllers/transfers.controller';
+import { DashboardController } from './controllers/dashboard.controller';
+import { ReportsController } from './controllers/reports.controller';
 import { FinancialModule } from '../../modules/financial/financial.module';
 import { RbacModule } from '../../modules/rbac/rbac.module';
 import { BranchGuard } from '../../common/guards/branch.guard';
@@ -29,6 +31,8 @@ import { RbacGuard } from '../../common/guards/rbac.guard';
     AuditLogsController,
     PaymentsController,
     TransfersController,
+    DashboardController,
+    ReportsController,
   ],
   providers: [BranchGuard, RbacGuard],
 })

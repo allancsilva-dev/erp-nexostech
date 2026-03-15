@@ -5,6 +5,8 @@ import { BankAccountsModule } from './bank-accounts/bank-accounts.module';
 import { AuditModule } from './audit/audit.module';
 import { PaymentsModule } from './payments/payments.module';
 import { TransfersModule } from './transfers/transfers.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { TransfersModule } from './transfers/transfers.module';
     AuditModule,
     PaymentsModule,
     TransfersModule,
+    DashboardModule,
+    ReportsModule,
   ],
   exports: [
     EntriesModule,
@@ -22,6 +26,8 @@ import { TransfersModule } from './transfers/transfers.module';
     AuditModule,
     PaymentsModule,
     TransfersModule,
+    DashboardModule,
+    ReportsModule,
   ],
 })
 export class FinancialModule {}
