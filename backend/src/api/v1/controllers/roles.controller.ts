@@ -46,4 +46,15 @@ export class RolesController {
     await this.rolesService.softDelete(id);
     return ApiResponse.ok({ deleted: true });
   }
+
+  @Delete('/users/:id/roles/:roleId')
+  @Idempotent()
+  @RequirePermission('admin.users.manage')
+  async unlinkRoleFromUser(
+    @Param('id') userId: string,
+    @Param('roleId') roleId: string,
+  ): Promise<ApiResponse<{ deleted: boolean }>> {
+    await this.rolesService.unlinkRoleFromUser(userId, roleId);
+    return ApiResponse.ok({ deleted: true });
+  }
 }

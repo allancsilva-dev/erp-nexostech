@@ -216,6 +216,16 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
         permission_code VARCHAR(120) NOT NULL,
         PRIMARY KEY (role_id, permission_code)
       )`,
+      `CREATE TABLE IF NOT EXISTS ${schema}.user_roles (
+        user_id VARCHAR(100) NOT NULL,
+        role_id UUID NOT NULL REFERENCES ${schema}.roles(id) ON DELETE CASCADE,
+        PRIMARY KEY (user_id, role_id)
+      )`,
+      `CREATE TABLE IF NOT EXISTS ${schema}.user_branches (
+        user_id VARCHAR(100) NOT NULL,
+        branch_id UUID NOT NULL REFERENCES ${schema}.branches(id) ON DELETE CASCADE,
+        PRIMARY KEY (user_id, branch_id)
+      )`,
     ],
   },
 ];

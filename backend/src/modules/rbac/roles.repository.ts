@@ -124,6 +124,18 @@ export class RolesRepository {
     `));
   }
 
+  async unlinkRoleFromUser(userId: string, roleId: string): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const userLiteral = quoteLiteral(userId);
+    const roleLiteral = quoteLiteral(roleId);
+
+    await this.drizzleService.getClient().execute(sql.raw(`
+      DELETE FROM ${schema}.user_roles
+      WHERE user_id = ${userLiteral}
+        AND role_id = ${roleLiteral}
+    `));
+  }
+
   private async getPermissionsMap(roleIds: string[]): Promise<Map<string, string[]>> {
     const map = new Map<string, string[]>();
     if (roleIds.length === 0) {

@@ -47,4 +47,15 @@ export class BranchesController {
     await this.branchesService.softDelete(id);
     return ApiResponse.ok({ deleted: true });
   }
+
+  @Delete(':id/users/:userId')
+  @Idempotent()
+  @RequirePermission('admin.users.manage')
+  async unlinkUser(
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+  ): Promise<ApiResponse<{ deleted: boolean }>> {
+    await this.branchesService.unlinkUser(id, userId);
+    return ApiResponse.ok({ deleted: true });
+  }
 }

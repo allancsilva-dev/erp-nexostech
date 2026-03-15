@@ -42,4 +42,8 @@ export class RolesService {
 
     await this.rolesRepository.softDelete(id);
   }
+
+  async unlinkRoleFromUser(userId: string, roleId: string): Promise<void> {
+    await this.rolesRepository.unlinkRoleFromUser(userId, roleId);
+  }
 }

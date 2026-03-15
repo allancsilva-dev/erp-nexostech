@@ -34,4 +34,8 @@ export class BranchesService {
 
     await this.branchesRepository.softDelete(id);
   }
+
+  async unlinkUser(branchId: string, userId: string): Promise<void> {
+    await this.branchesRepository.unlinkUser(branchId, userId);
+  }
 }

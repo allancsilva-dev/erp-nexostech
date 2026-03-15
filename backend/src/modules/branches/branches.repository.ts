@@ -130,4 +130,16 @@ export class BranchesRepository {
         AND deleted_at IS NULL
     `));
   }
+
+  async unlinkUser(branchId: string, userId: string): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const branchLiteral = quoteLiteral(branchId);
+    const userLiteral = quoteLiteral(userId);
+
+    await this.drizzleService.getClient().execute(sql.raw(`
+      DELETE FROM ${schema}.user_branches
+      WHERE branch_id = ${branchLiteral}
+        AND user_id = ${userLiteral}
+    `));
+  }
 }
