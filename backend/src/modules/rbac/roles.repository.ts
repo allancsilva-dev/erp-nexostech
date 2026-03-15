@@ -162,6 +162,17 @@ export class RolesRepository {
     `));
   }
 
+  async listUserIdsByRole(roleId: string): Promise<string[]> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(sql.raw(`
+      SELECT user_id
+      FROM ${schema}.user_roles
+      WHERE role_id = ${quoteLiteral(roleId)}
+    `));
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => String(row.user_id));
+  }
+
   private async getPermissionsMap(roleIds: string[]): Promise<Map<string, string[]>> {
     const map = new Map<string, string[]>();
     if (roleIds.length === 0) {

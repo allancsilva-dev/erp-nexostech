@@ -7,15 +7,15 @@ import {
   Post,
   Put,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
+import { BranchGuard } from '../../../common/guards/branch.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
-import { TenantInterceptor } from '../../../common/interceptors/tenant.interceptor';
+import { RbacGuard } from '../../../common/guards/rbac.guard';
 import type { AuthUser } from '../../../common/types/auth-user.type';
 import { EntriesService } from '../../../modules/financial/entries/entries.service';
 import { CreateEntryDto } from '../../../modules/financial/entries/dto/create-entry.dto';
@@ -24,8 +24,7 @@ import { UpdateEntryDto } from '../../../modules/financial/entries/dto/update-en
 import { CancelEntryDto } from '../../../modules/financial/entries/dto/cancel-entry.dto';
 
 @Controller('entries')
-@UseGuards(JwtGuard)
-@UseInterceptors(TenantInterceptor)
+@UseGuards(JwtGuard, BranchGuard, RbacGuard)
 export class EntriesController {
   constructor(private readonly entriesService: EntriesService) {}
 

@@ -26,9 +26,10 @@ import { RbacModule } from '../../modules/rbac/rbac.module';
 import { BranchGuard } from '../../common/guards/branch.guard';
 import { RbacGuard } from '../../common/guards/rbac.guard';
 import { DatabaseModule } from '../../infrastructure/database/database.module';
+import { CacheModule } from '../../infrastructure/cache/cache.module';
 
 @Module({
-  imports: [FinancialModule, BranchesModule, RbacModule, ContactsModule, DatabaseModule],
+  imports: [FinancialModule, BranchesModule, RbacModule, ContactsModule, DatabaseModule, CacheModule],
   controllers: [
     HealthController,
     EntriesController,
