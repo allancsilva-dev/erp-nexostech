@@ -38,7 +38,7 @@ export class TransfersController {
 
   @Delete(':id')
   @Idempotent()
-  @RequirePermission('financial.entries.cancel')
+  @RequirePermission('admin.users.manage')
   async reverse(
     @Param('id') id: string,
     @BranchId() branchId: string,

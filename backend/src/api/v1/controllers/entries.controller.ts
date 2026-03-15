@@ -98,7 +98,7 @@ export class EntriesController {
 
   @Post(':entryId/restore')
   @Idempotent()
-  @RequirePermission('financial.entries.delete')
+  @RequirePermission('admin.users.manage')
   async restore(
     @Param('entryId') entryId: string,
     @CurrentUser() user: AuthUser,

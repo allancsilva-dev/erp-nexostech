@@ -82,7 +82,7 @@ export class ReportsController {
   }
 
   @Get('dre/export')
-  @RequirePermission('financial.reports.view')
+  @RequirePermission('financial.reports.export')
   async exportDre(
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
@@ -99,7 +99,7 @@ export class ReportsController {
   }
 
   @Get('cashflow/export')
-  @RequirePermission('financial.reports.view')
+  @RequirePermission('financial.reports.export')
   async exportCashflow(
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,

@@ -378,4 +378,15 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
       `CREATE INDEX IF NOT EXISTS idx_email_templates_branch_type ON ${schema}.email_templates(branch_id, type)`,
     ],
   },
+  {
+    name: '012_alter_audit_logs_add_field_changes',
+    run: (schema) => [
+      `ALTER TABLE ${schema}.audit_logs
+       ADD COLUMN IF NOT EXISTS field_changes JSONB`,
+      `ALTER TABLE ${schema}.audit_logs
+       ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45)`,
+      `ALTER TABLE ${schema}.audit_logs
+       ADD COLUMN IF NOT EXISTS user_email VARCHAR(255)`,
+    ],
+  },
 ];
