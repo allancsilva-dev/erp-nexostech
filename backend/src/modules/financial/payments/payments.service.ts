@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 import { PaymentCreatedEvent, PaymentRefundedEvent } from '../../../common/events/financial.events';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 import type { AuthUser } from '../../../common/types/auth-user.type';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
 import { EventBusService } from '../../../infrastructure/events/event-bus.service';
@@ -21,12 +23,20 @@ export class PaymentsService {
   ) {}
 
   async registerPayment(entryId: string, dto: RegisterPaymentDto, user: AuthUser, branchId: string) {
-    const entry = await this.paymentsRepository.findEntryById(entryId);
+    const entry = await this.paymentsRepository.findEntryById(entryId, branchId);
+    if (!entry) {
+      throw new BusinessException(
+        'ENTRY_NOT_FOUND',
+        'Lancamento nao encontrado para pagamento',
+        { entryId, branchId },
+        HttpStatus.NOT_FOUND,
+      );
+    }
     this.paymentRules.validatePaymentAmount(entry.remainingBalance, dto.amount);
 
     const payment = await this.txHelper.run(async () => {
       const created = await this.paymentsRepository.createPayment(entryId, dto, user.sub);
-      const amounts = [...(await this.paymentsRepository.listPaymentAmounts(entryId)), dto.amount];
+      const amounts = await this.paymentsRepository.listPaymentAmounts(entryId);
       const status = this.paymentCalculator.determineStatus(entry.amount, amounts);
       await this.paymentsRepository.updateEntryPaidStatus(entryId, status);
       return created;
@@ -41,7 +51,15 @@ export class PaymentsService {
   }
 
   async refund(entryId: string, _dto: RefundPaymentDto, user: AuthUser, branchId: string) {
-    const entry = await this.paymentsRepository.findEntryById(entryId);
+    const entry = await this.paymentsRepository.findEntryById(entryId, branchId);
+    if (!entry) {
+      throw new BusinessException(
+        'ENTRY_NOT_FOUND',
+        'Lancamento nao encontrado para estorno',
+        { entryId, branchId },
+        HttpStatus.NOT_FOUND,
+      );
+    }
     this.paymentRules.validateRefundPeriod(entry.lastPaymentDate ?? new Date().toISOString(), 90);
 
     const removedPayment = await this.txHelper.run(async () => {

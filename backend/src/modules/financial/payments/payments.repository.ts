@@ -16,9 +16,10 @@ type EntryStub = {
 export class PaymentsRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
-  async findEntryById(entryId: string): Promise<EntryStub> {
+  async findEntryById(entryId: string, branchId: string): Promise<EntryStub | null> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const entry = quoteLiteral(entryId);
+    const branch = quoteLiteral(branchId);
 
     const result = await this.drizzleService.getClient().execute(sql.raw(`
       SELECT
@@ -29,17 +30,15 @@ export class PaymentsRepository {
       FROM ${schema}.financial_entries e
       LEFT JOIN ${schema}.financial_entry_payments p ON p.entry_id = e.id
       WHERE e.id = ${entry}
+        AND e.branch_id = ${branch}
+        AND e.deleted_at IS NULL
       GROUP BY e.id, e.amount
       LIMIT 1
     `));
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     if (!row) {
-      return {
-        id: entryId,
-        amount: '0.00',
-        remainingBalance: '0.00',
-      };
+      return null;
     }
 
     return {
