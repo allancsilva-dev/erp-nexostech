@@ -1,16 +1,16 @@
 ﻿'use client';
 
 import { useRef, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Upload } from 'lucide-react';
+import { api } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 
 const ALLOWED = ['application/pdf', 'image/png', 'image/jpeg'];
 
-interface PresignResponse {
-  data: {
-    uploadUrl: string;
-    storageKey: string;
-  };
+interface PresignPayload {
+  uploadUrl: string;
+  storageKey: string;
 }
 
 function uploadWithProgress(file: File, uploadUrl: string, onProgress: (value: number) => void): Promise<void> {
@@ -58,6 +58,13 @@ export function FileUpload({ onChange }: { onChange: (file: File | null, storage
   const [error, setError] = useState<string>('');
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const currentFile = useRef<File | null>(null);
+  const presignMutation = useMutation({
+    mutationFn: (file: File) =>
+      api.post<PresignPayload>('/attachments/presign', {
+        filename: file.name,
+        mimeType: file.type,
+      }),
+  });
 
   async function startUpload(file: File): Promise<void> {
     setError('');
@@ -65,18 +72,7 @@ export function FileUpload({ onChange }: { onChange: (file: File | null, storage
     setIsUploading(true);
 
     try {
-      const presignResponse = await fetch('/api/v1/attachments/presign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ filename: file.name, mimeType: file.type }),
-      });
-
-      if (!presignResponse.ok) {
-        throw new Error('Nao foi possivel obter URL de upload');
-      }
-
-      const presign = (await presignResponse.json()) as PresignResponse;
+      const presign = await presignMutation.mutateAsync(file);
       await retryUpload(file, presign.data.uploadUrl, setProgress);
 
       setFileName(file.name);
