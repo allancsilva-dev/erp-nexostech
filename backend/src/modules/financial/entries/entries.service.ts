@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 import { EventBusService } from '../../../infrastructure/events/event-bus.service';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
 import { AuthUser } from '../../../common/types/auth-user.type';
 import { CreateEntryDto } from './dto/create-entry.dto';
+import { UpdateEntryDto } from './dto/update-entry.dto';
 import { EntryCalculator } from './domain/entry.calculator';
 import { EntryRules } from './domain/entry.rules';
 import { EntriesRepository } from './entries.repository';
@@ -18,8 +21,22 @@ export class EntriesService {
     private readonly eventBus: EventBusService,
   ) {}
 
-  async list() {
-    return this.entriesRepository.list();
+  async list(branchId: string) {
+    return this.entriesRepository.list(branchId);
+  }
+
+  async getById(entryId: string, branchId: string) {
+    const entry = await this.entriesRepository.findById(entryId, branchId);
+    if (!entry) {
+      throw new BusinessException(
+        'ENTRY_NOT_FOUND',
+        'Lancamento nao encontrado para a filial informada',
+        { entryId, branchId },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return entry;
   }
 
   async create(dto: CreateEntryDto, user: AuthUser, branchId: string) {
@@ -59,5 +76,37 @@ export class EntriesService {
     });
 
     return created;
+  }
+
+  async update(entryId: string, dto: UpdateEntryDto, user: AuthUser, branchId: string) {
+    await this.getById(entryId, branchId);
+
+    const updated = await this.txHelper.run(async () => {
+      return this.entriesRepository.update(entryId, branchId, dto);
+    });
+
+    this.eventBus.emit('entry.updated', {
+      tenantId: user.tenantId,
+      branchId,
+      entryId,
+      updatedBy: user.sub,
+    });
+
+    return updated;
+  }
+
+  async softDelete(entryId: string, user: AuthUser, branchId: string): Promise<void> {
+    await this.getById(entryId, branchId);
+
+    await this.txHelper.run(async () => {
+      await this.entriesRepository.softDelete(entryId, branchId);
+    });
+
+    this.eventBus.emit('entry.deleted', {
+      tenantId: user.tenantId,
+      branchId,
+      entryId,
+      deletedBy: user.sub,
+    });
   }
 }

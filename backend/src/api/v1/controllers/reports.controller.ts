@@ -8,6 +8,7 @@ import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
 import type { AuthUser } from '../../../common/types/auth-user.type';
 import { ReportPeriodDto } from '../../../modules/financial/reports/dto/report-period.dto';
+import { ExportReportDto } from '../../../modules/financial/reports/dto/export-report.dto';
 import { ReportsService } from '../../../modules/financial/reports/reports.service';
 
 @Controller('reports')
@@ -43,6 +44,40 @@ export class ReportsController {
       branchId,
       query.startDate,
       query.endDate,
+    );
+    return ApiResponse.ok(data);
+  }
+
+  @Get('dre/export')
+  @RequirePermission('financial.reports.view')
+  async exportDre(
+    @CurrentUser() user: AuthUser,
+    @BranchId() branchId: string,
+    @Query() query: ExportReportDto,
+  ): Promise<ApiResponse<{ format: string; filename: string; content: string }>> {
+    const data = await this.reportsService.exportDre(
+      user.tenantId,
+      branchId,
+      query.startDate,
+      query.endDate,
+      query.format,
+    );
+    return ApiResponse.ok(data);
+  }
+
+  @Get('cashflow/export')
+  @RequirePermission('financial.reports.view')
+  async exportCashflow(
+    @CurrentUser() user: AuthUser,
+    @BranchId() branchId: string,
+    @Query() query: ExportReportDto,
+  ): Promise<ApiResponse<{ format: string; filename: string; content: string }>> {
+    const data = await this.reportsService.exportCashflow(
+      user.tenantId,
+      branchId,
+      query.startDate,
+      query.endDate,
+      query.format,
     );
     return ApiResponse.ok(data);
   }

@@ -5,6 +5,7 @@ import { RequirePermission } from '../../../common/decorators/require-permission
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
 import { BoletosService } from '../../../modules/financial/boletos/boletos.service';
+import { BoletoWebhookDto } from '../../../modules/financial/boletos/dto/boleto-webhook.dto';
 import { GenerateBoletoDto } from '../../../modules/financial/boletos/dto/generate-boleto.dto';
 
 @Controller('boletos')
@@ -39,5 +40,12 @@ export class BoletosController {
   @RequirePermission('financial.entries.view')
   async pdf(@Param('entryId') entryId: string): Promise<ApiResponse<unknown>> {
     return ApiResponse.ok(await this.boletosService.getPdfLink(entryId));
+  }
+
+  @Post('webhook')
+  @Idempotent()
+  @RequirePermission('financial.entries.edit')
+  async webhook(@Body() dto: BoletoWebhookDto): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.boletosService.handleWebhook(dto));
   }
 }

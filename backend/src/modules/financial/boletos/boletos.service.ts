@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { BoletosGatewayClient } from './boletos.gateway-client';
+import { BoletoWebhookDto } from './dto/boleto-webhook.dto';
 import { GenerateBoletoDto } from './dto/generate-boleto.dto';
 
 @Injectable()
@@ -24,5 +25,16 @@ export class BoletosService {
 
   async getPdfLink(entryId: string) {
     return { url: `https://r2.local/${entryId}.pdf`, expiresInSeconds: 3600 };
+  }
+
+  async handleWebhook(dto: BoletoWebhookDto) {
+    return {
+      acknowledged: true,
+      boletoId: dto.boletoId,
+      entryId: dto.entryId,
+      status: dto.status,
+      paidAt: dto.paidAt ?? null,
+      processedAt: new Date().toISOString(),
+    };
   }
 }
