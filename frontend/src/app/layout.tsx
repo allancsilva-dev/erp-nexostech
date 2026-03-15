@@ -1,36 +1,37 @@
-import type { Metadata } from 'next';
-import { Sora, IBM_Plex_Mono } from 'next/font/google';
+﻿import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
+import { decodeToken } from '@/lib/jwt';
 import { AppShell } from '@/components/layout/app-shell';
-import { Providers } from './providers';
-import './globals.css';
-
-const sora = Sora({
-  variable: '--font-sora',
-  subsets: ['latin'],
-});
-
-const ibmPlexMono = IBM_Plex_Mono({
-  variable: '--font-plex-mono',
-  subsets: ['latin'],
-  weight: ['400', '600'],
-});
+import { QueryProvider } from '@/providers/query-provider';
+import { ThemeProvider } from '@/providers/theme-provider';
+import { AuthProvider } from '@/providers/auth-provider';
+import { BranchProvider } from '@/providers/branch-provider';
+import { ToastProvider } from '@/providers/toast-provider';
+import '@/styles/globals.css';
 
 export const metadata: Metadata = {
-  title: 'Nexos ERP - Modulo Financeiro',
-  description: 'Nexos ERP financeiro com dashboard, contas e configuracoes',
+  title: 'Nexos Financeiro',
+  description: 'Modulo Financeiro do Nexos ERP',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = cookies();
+  const token = cookieStore.get('access_token')?.value;
+  const user = token ? decodeToken(token) : null;
+
   return (
-    <html lang="pt-BR">
-      <body className={`${sora.variable} ${ibmPlexMono.variable} antialiased`}>
-        <Providers>
-          <AppShell>{children}</AppShell>
-        </Providers>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body>
+        <ThemeProvider>
+          <QueryProvider>
+            <AuthProvider initialUser={user}>
+              <BranchProvider>
+                <AppShell>{children}</AppShell>
+                <ToastProvider />
+              </BranchProvider>
+            </AuthProvider>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

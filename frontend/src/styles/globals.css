@@ -1,0 +1,71 @@
+﻿@import "tailwindcss";
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 221 83% 53%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 221 83% 53%;
+  --radius: 0.5rem;
+  --sidebar-bg: 222 47% 11%;
+  --sidebar-foreground: 210 40% 96%;
+  --sidebar-active: 221 83% 53%;
+  --sidebar-hover: 217 33% 17%;
+  --content-bg: 210 40% 98%;
+}
+
+.dark {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 217 33% 17%;
+  --card-foreground: 210 40% 98%;
+  --popover: 217 33% 17%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 217 91% 60%;
+  --sidebar-bg: 224 71% 4%;
+  --sidebar-foreground: 215 20% 65%;
+  --sidebar-active: 217 91% 60%;
+  --sidebar-hover: 222 47% 11%;
+  --content-bg: 222 47% 11%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: hsl(var(--content-bg));
+  color: hsl(var(--foreground));
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}

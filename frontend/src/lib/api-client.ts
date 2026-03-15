@@ -1,49 +1,100 @@
-import type { ApiErrorPayload, ApiResponse } from './types';
+﻿import { ApiError, type ApiResponse, type PaginatedResponse } from '@/lib/api-types';
 
-export class ApiError extends Error {
-  code: string;
-  details?: Record<string, unknown>;
-
-  constructor(payload: ApiErrorPayload) {
-    super(payload.message);
-    this.name = 'ApiError';
-    this.code = payload.code;
-    this.details = payload.details;
+function getCookieValue(name: string): string | null {
+  if (typeof document === 'undefined') {
+    return null;
   }
+
+  const value = document.cookie
+    .split('; ')
+    .find((part) => part.startsWith(`${name}=`))
+    ?.split('=')[1];
+
+  return value ? decodeURIComponent(value) : null;
 }
 
-function getBranchIdFromStorage(): string {
-  if (typeof window === 'undefined') return 'branch-matriz';
-  return window.localStorage.getItem('active_branch_id') ?? 'branch-matriz';
+function cleanParams(params: Record<string, unknown>): Record<string, string> {
+  return Object.entries(params).reduce<Record<string, string>>((acc, [key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      return acc;
+    }
+    acc[key] = String(value);
+    return acc;
+  }, {});
 }
 
 class ApiClient {
   private readonly baseUrl = '/api/v1';
 
-  async request<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
-    const branchId = getBranchIdFromStorage();
+  private async request<T>(
+    endpoint: string,
+    options?: RequestInit & { idempotencyKey?: string },
+  ): Promise<T> {
+    const branchId = getCookieValue('branch_id');
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(branchId ? { 'X-Branch-Id': branchId } : {}),
+      ...(options?.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}),
+    };
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
-        'X-Branch-Id': branchId,
-        ...(options?.headers ?? {}),
+        ...headers,
+        ...(options?.headers as Record<string, string> | undefined),
       },
       credentials: 'include',
     });
 
-    if (!response.ok) {
-      const payload = (await response.json()) as { error: ApiErrorPayload };
-      throw new ApiError(payload.error);
-    }
-
     if (response.status === 204) {
-      return { data: undefined as T };
+      return undefined as T;
     }
 
-    return (await response.json()) as ApiResponse<T>;
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new ApiError(
+        body?.error?.code ?? 'UNKNOWN',
+        body?.error?.message ?? 'Erro na API',
+        body?.error?.details,
+        response.status,
+      );
+    }
+
+    return response.json() as Promise<T>;
+  }
+
+  public get<T>(endpoint: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
+    const query = params ? `?${new URLSearchParams(cleanParams(params)).toString()}` : '';
+    return this.request<ApiResponse<T>>(`${endpoint}${query}`);
+  }
+
+  public getList<T>(
+    endpoint: string,
+    params?: Record<string, unknown>,
+  ): Promise<PaginatedResponse<T>> {
+    const query = params ? `?${new URLSearchParams(cleanParams(params)).toString()}` : '';
+    return this.request<PaginatedResponse<T>>(`${endpoint}${query}`);
+  }
+
+  public post<T>(endpoint: string, body?: unknown, idempotencyKey?: string): Promise<ApiResponse<T>> {
+    return this.request<ApiResponse<T>>(endpoint, {
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+      idempotencyKey,
+    });
+  }
+
+  public put<T>(endpoint: string, body: unknown): Promise<ApiResponse<T>> {
+    return this.request<ApiResponse<T>>(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  public delete(endpoint: string): Promise<void> {
+    return this.request<void>(endpoint, { method: 'DELETE' });
   }
 }
 
-export const apiClient = new ApiClient();
+export const api = new ApiClient();
