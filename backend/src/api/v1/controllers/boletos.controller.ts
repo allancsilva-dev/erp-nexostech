@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
+import { Idempotent } from '../../../common/decorators/idempotent.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
@@ -18,6 +19,7 @@ export class BoletosController {
   }
 
   @Post(':entryId/generate')
+  @Idempotent()
   @RequirePermission('financial.entries.create')
   async generate(
     @Param('entryId') entryId: string,
@@ -27,6 +29,7 @@ export class BoletosController {
   }
 
   @Post(':entryId/cancel')
+  @Idempotent()
   @RequirePermission('financial.entries.cancel')
   async cancel(@Param('entryId') entryId: string): Promise<ApiResponse<unknown>> {
     return ApiResponse.ok(await this.boletosService.cancel(entryId));

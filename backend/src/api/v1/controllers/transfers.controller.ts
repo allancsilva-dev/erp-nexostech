@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { Idempotent } from '../../../common/decorators/idempotent.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { BranchGuard } from '../../../common/guards/branch.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
@@ -24,6 +25,7 @@ export class TransfersController {
   }
 
   @Post()
+  @Idempotent()
   @RequirePermission('financial.entries.create')
   async create(
     @BranchId() branchId: string,

@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { Idempotent } from '../../../common/decorators/idempotent.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { TenantInterceptor } from '../../../common/interceptors/tenant.interceptor';
@@ -24,6 +25,7 @@ export class EntriesController {
   }
 
   @Post()
+  @Idempotent()
   @RequirePermission('financial.entries.create')
   async create(
     @Body() dto: CreateEntryDto,

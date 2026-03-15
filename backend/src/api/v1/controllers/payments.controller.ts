@@ -2,6 +2,7 @@ import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { Idempotent } from '../../../common/decorators/idempotent.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { BranchGuard } from '../../../common/guards/branch.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
@@ -18,6 +19,7 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Post(':id/pay')
+  @Idempotent()
   @RequirePermission('financial.entries.pay')
   async register(
     @Param('id') entryId: string,
@@ -30,6 +32,7 @@ export class PaymentsController {
   }
 
   @Post(':id/refund')
+  @Idempotent()
   @RequirePermission('financial.entries.cancel')
   async refund(
     @Param('id') entryId: string,
