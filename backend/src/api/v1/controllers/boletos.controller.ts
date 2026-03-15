@@ -11,17 +11,18 @@ import { BoletoWebhookDto } from '../../../modules/financial/boletos/dto/boleto-
 import { GenerateBoletoDto } from '../../../modules/financial/boletos/dto/generate-boleto.dto';
 
 @Controller('boletos')
-@UseGuards(JwtGuard, BranchGuard, RbacGuard)
 export class BoletosController {
   constructor(private readonly boletosService: BoletosService) {}
 
   @Get()
+  @UseGuards(JwtGuard, BranchGuard, RbacGuard)
   @RequirePermission('financial.entries.view')
   async list(@BranchId() branchId: string): Promise<ApiResponse<unknown>> {
     return ApiResponse.ok(await this.boletosService.list(branchId));
   }
 
   @Post(':entryId/generate')
+  @UseGuards(JwtGuard, BranchGuard, RbacGuard)
   @Idempotent()
   @RequirePermission('financial.entries.create')
   async generate(
@@ -33,6 +34,7 @@ export class BoletosController {
   }
 
   @Post(':entryId/cancel')
+  @UseGuards(JwtGuard, BranchGuard, RbacGuard)
   @Idempotent()
   @RequirePermission('financial.entries.cancel')
   async cancel(
@@ -43,6 +45,7 @@ export class BoletosController {
   }
 
   @Get(':entryId/pdf')
+  @UseGuards(JwtGuard, BranchGuard, RbacGuard)
   @RequirePermission('financial.entries.view')
   async pdf(
     @Param('entryId') entryId: string,
