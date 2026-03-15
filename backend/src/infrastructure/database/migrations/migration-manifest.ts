@@ -178,4 +178,22 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
       `CREATE INDEX IF NOT EXISTS idx_collection_rules_branch_event ON ${schema}.collection_rules(branch_id, event)`,
     ],
   },
+  {
+    name: '005_create_audit_logs_table',
+    run: (schema) => [
+      `CREATE TABLE IF NOT EXISTS ${schema}.audit_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        branch_id UUID REFERENCES ${schema}.branches(id),
+        user_id VARCHAR(100) NOT NULL,
+        action VARCHAR(20) NOT NULL,
+        entity VARCHAR(80) NOT NULL,
+        entity_id VARCHAR(100) NOT NULL,
+        request_id VARCHAR(100),
+        metadata JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON ${schema}.audit_logs(created_at DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_audit_logs_branch_entity ON ${schema}.audit_logs(branch_id, entity)`,
+    ],
+  },
 ];
