@@ -18,7 +18,7 @@ services:
       - nexos_internal
 
   pgbouncer:
-    image: bitnami/pgbouncer:1.22.1
+    image: bitnami/pgbouncer:latest
     container_name: nexos-pgbouncer
     restart: unless-stopped
     depends_on:
