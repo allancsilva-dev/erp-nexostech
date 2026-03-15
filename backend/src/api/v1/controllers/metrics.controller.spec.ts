@@ -4,7 +4,11 @@ import { MetricsService } from '../../../infrastructure/observability/metrics.se
 describe('MetricsController', () => {
   it('returns prom metrics payload', async () => {
     const metricsService = {
-      scrape: jest.fn().mockResolvedValue('# HELP test_metric test\n# TYPE test_metric counter\ntest_metric 1'),
+      scrape: jest
+        .fn()
+        .mockResolvedValue(
+          '# HELP test_metric test\n# TYPE test_metric counter\ntest_metric 1',
+        ),
     } as unknown as MetricsService;
 
     const controller = new MetricsController(metricsService);

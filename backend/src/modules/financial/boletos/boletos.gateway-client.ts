@@ -18,8 +18,14 @@ type GatewayResponse = {
 
 @Injectable()
 export class BoletosGatewayClient {
-  private readonly generateBreaker: CircuitBreaker<[GeneratePayload], GatewayResponse>;
-  private readonly cancelBreaker: CircuitBreaker<[string], { success: boolean }>;
+  private readonly generateBreaker: CircuitBreaker<
+    [GeneratePayload],
+    GatewayResponse
+  >;
+  private readonly cancelBreaker: CircuitBreaker<
+    [string],
+    { success: boolean }
+  >;
 
   constructor(private readonly configService: ConfigService) {
     const options = {
@@ -35,12 +41,9 @@ export class BoletosGatewayClient {
       options,
     );
 
-    this.cancelBreaker = new CircuitBreaker(
-      async (boletoId: string) => {
-        return withRetry(async () => this.cancelOnGateway(boletoId));
-      },
-      options,
-    );
+    this.cancelBreaker = new CircuitBreaker(async (boletoId: string) => {
+      return withRetry(async () => this.cancelOnGateway(boletoId));
+    }, options);
 
     this.generateBreaker.fallback(() => {
       throw new BusinessException(
@@ -65,8 +68,12 @@ export class BoletosGatewayClient {
     return this.cancelBreaker.fire(boletoId);
   }
 
-  private async generateOnGateway(payload: GeneratePayload): Promise<GatewayResponse> {
-    const gatewayUrl = this.configService.get<string>('BOLETOS_GATEWAY_URL') ?? 'https://gateway.local';
+  private async generateOnGateway(
+    payload: GeneratePayload,
+  ): Promise<GatewayResponse> {
+    const gatewayUrl =
+      this.configService.get<string>('BOLETOS_GATEWAY_URL') ??
+      'https://gateway.local';
     void gatewayUrl;
     return {
       boletoId: `bol_${payload.entryId}`,
@@ -75,7 +82,9 @@ export class BoletosGatewayClient {
     };
   }
 
-  private async cancelOnGateway(_boletoId: string): Promise<{ success: boolean }> {
+  private async cancelOnGateway(
+    _boletoId: string,
+  ): Promise<{ success: boolean }> {
     return { success: true };
   }
 }

@@ -1,4 +1,10 @@
-import { IsEnum, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 import { BankAccountType } from './create-bank-account.dto';
 
 export class UpdateBankAccountDto {

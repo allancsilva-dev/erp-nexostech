@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
@@ -17,7 +27,9 @@ import { UpdateEmailTemplateDto } from '../../../modules/financial/collection-ru
 @UseGuards(JwtGuard, BranchGuard, RbacGuard, FeatureFlagGuard)
 @RequireFeature('collection_rules_enabled')
 export class CollectionRulesController {
-  constructor(private readonly collectionRulesService: CollectionRulesService) {}
+  constructor(
+    private readonly collectionRulesService: CollectionRulesService,
+  ) {}
 
   @Get('collection-rules')
   @RequirePermission('financial.settings.manage')
@@ -31,7 +43,9 @@ export class CollectionRulesController {
     @BranchId() branchId: string,
     @Body() dto: CreateCollectionRuleDto,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.created(await this.collectionRulesService.create(branchId, dto));
+    return ApiResponse.created(
+      await this.collectionRulesService.create(branchId, dto),
+    );
   }
 
   @Put('collection-rules/:id')
@@ -42,7 +56,9 @@ export class CollectionRulesController {
     @BranchId() branchId: string,
     @Body() dto: UpdateCollectionRuleDto,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.collectionRulesService.update(id, branchId, dto));
+    return ApiResponse.ok(
+      await this.collectionRulesService.update(id, branchId, dto),
+    );
   }
 
   @Delete('collection-rules/:id')
@@ -76,8 +92,12 @@ export class CollectionRulesController {
 
   @Get('email-templates')
   @RequirePermission('financial.settings.manage')
-  async listEmailTemplates(@BranchId() branchId: string): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.collectionRulesService.listEmailTemplates(branchId));
+  async listEmailTemplates(
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(
+      await this.collectionRulesService.listEmailTemplates(branchId),
+    );
   }
 
   @Put('email-templates/:id')
@@ -88,6 +108,8 @@ export class CollectionRulesController {
     @BranchId() branchId: string,
     @Body() dto: UpdateEmailTemplateDto,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.collectionRulesService.updateEmailTemplate(id, branchId, dto));
+    return ApiResponse.ok(
+      await this.collectionRulesService.updateEmailTemplate(id, branchId, dto),
+    );
   }
 }

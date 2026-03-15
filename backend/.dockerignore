@@ -1,0 +1,10 @@
+node_modules
+dist
+.next
+build
+.git
+.env
+.env.*
+*.log
+coverage
+.nyc_output

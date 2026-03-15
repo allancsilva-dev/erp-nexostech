@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -19,7 +27,9 @@ export class TransfersController {
 
   @Get()
   @RequirePermission('financial.entries.view')
-  async list(@BranchId() branchId: string): Promise<ApiResponse<TransferResponse[]>> {
+  async list(
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<TransferResponse[]>> {
     const items = await this.transfersService.list(branchId);
     return ApiResponse.ok(items.map((item) => TransferResponse.from(item)));
   }

@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -29,7 +37,9 @@ export class LockPeriodsController {
     @CurrentUser() user: AuthUser,
     @Body() dto: CreateLockPeriodDto,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.created(await this.lockPeriodsService.create(branchId, user, dto));
+    return ApiResponse.created(
+      await this.lockPeriodsService.create(branchId, user, dto),
+    );
   }
 
   @Delete(':id')

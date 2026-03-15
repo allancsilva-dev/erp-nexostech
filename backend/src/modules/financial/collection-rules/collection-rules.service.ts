@@ -8,7 +8,9 @@ import { UpdateEmailTemplateDto } from './dto/update-email-template.dto';
 
 @Injectable()
 export class CollectionRulesService {
-  constructor(private readonly collectionRulesRepository: CollectionRulesRepository) {}
+  constructor(
+    private readonly collectionRulesRepository: CollectionRulesRepository,
+  ) {}
 
   async list(branchId: string) {
     return this.collectionRulesRepository.list(branchId);
@@ -19,7 +21,10 @@ export class CollectionRulesService {
   }
 
   async update(id: string, branchId: string, dto: UpdateCollectionRuleDto) {
-    const existing = await this.collectionRulesRepository.findById(id, branchId);
+    const existing = await this.collectionRulesRepository.findById(
+      id,
+      branchId,
+    );
     if (!existing) {
       throw new BusinessException(
         'COLLECTION_RULE_NOT_FOUND',
@@ -33,7 +38,10 @@ export class CollectionRulesService {
   }
 
   async softDelete(id: string, branchId: string): Promise<void> {
-    const existing = await this.collectionRulesRepository.findById(id, branchId);
+    const existing = await this.collectionRulesRepository.findById(
+      id,
+      branchId,
+    );
     if (!existing) {
       throw new BusinessException(
         'COLLECTION_RULE_NOT_FOUND',
@@ -46,8 +54,15 @@ export class CollectionRulesService {
     await this.collectionRulesRepository.softDelete(id, branchId);
   }
 
-  async previewTemplate(templateId: string, branchId: string, payload: Record<string, string>) {
-    const template = await this.collectionRulesRepository.findEmailTemplateById(templateId, branchId);
+  async previewTemplate(
+    templateId: string,
+    branchId: string,
+    payload: Record<string, string>,
+  ) {
+    const template = await this.collectionRulesRepository.findEmailTemplateById(
+      templateId,
+      branchId,
+    );
     if (!template) {
       throw new BusinessException(
         'EMAIL_TEMPLATE_NOT_FOUND',
@@ -71,8 +86,16 @@ export class CollectionRulesService {
     return this.collectionRulesRepository.listEmailTemplates(branchId);
   }
 
-  async updateEmailTemplate(id: string, branchId: string, dto: UpdateEmailTemplateDto) {
-    const updated = await this.collectionRulesRepository.updateEmailTemplate(id, branchId, dto);
+  async updateEmailTemplate(
+    id: string,
+    branchId: string,
+    dto: UpdateEmailTemplateDto,
+  ) {
+    const updated = await this.collectionRulesRepository.updateEmailTemplate(
+      id,
+      branchId,
+      dto,
+    );
     if (!updated) {
       throw new BusinessException(
         'EMAIL_TEMPLATE_NOT_FOUND',
@@ -85,9 +108,15 @@ export class CollectionRulesService {
     return updated;
   }
 
-  private applyVariables(template: string, payload: Record<string, string>): string {
-    return template.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_match, key: string) => {
-      return payload[key] ?? '';
-    });
+  private applyVariables(
+    template: string,
+    payload: Record<string, string>,
+  ): string {
+    return template.replace(
+      /{{\s*([a-zA-Z0-9_]+)\s*}}/g,
+      (_match, key: string) => {
+        return payload[key] ?? '';
+      },
+    );
   }
 }

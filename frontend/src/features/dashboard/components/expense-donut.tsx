@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import Decimal from 'decimal.js';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/format';
@@ -8,7 +9,7 @@ import type { ExpenseBreakdownItem } from '@/features/dashboard/hooks/use-dashbo
 export function ExpenseDonut({ data }: { data: ExpenseBreakdownItem[] }) {
   const limited = data.slice(0, 24).map((item) => ({
     ...item,
-    numeric: Number(item.value),
+    numeric: new Decimal(item.value).toNumber(),
   }));
 
   return (
@@ -25,8 +26,8 @@ export function ExpenseDonut({ data }: { data: ExpenseBreakdownItem[] }) {
               </Pie>
               <Tooltip
                 formatter={(value) => {
-                  const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
-                  return formatCurrency(numericValue.toFixed(2));
+                  const numericValue = new Decimal(String(value ?? '0')).toFixed(2);
+                  return formatCurrency(numericValue);
                 }}
               />
             </PieChart>

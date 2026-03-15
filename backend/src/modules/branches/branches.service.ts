@@ -29,7 +29,12 @@ export class BranchesService {
   async update(id: string, dto: UpdateBranchDto) {
     const existing = await this.branchesRepository.findById(id);
     if (!existing) {
-      throw new BusinessException('BRANCH_NOT_FOUND', 'Filial nao encontrada', { id }, HttpStatus.NOT_FOUND);
+      throw new BusinessException(
+        'BRANCH_NOT_FOUND',
+        'Filial nao encontrada',
+        { id },
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     return this.branchesRepository.update(id, dto);
@@ -38,7 +43,12 @@ export class BranchesService {
   async softDelete(id: string): Promise<void> {
     const existing = await this.branchesRepository.findById(id);
     if (!existing) {
-      throw new BusinessException('BRANCH_NOT_FOUND', 'Filial nao encontrada', { id }, HttpStatus.NOT_FOUND);
+      throw new BusinessException(
+        'BRANCH_NOT_FOUND',
+        'Filial nao encontrada',
+        { id },
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     await this.branchesRepository.softDelete(id);
@@ -52,7 +62,10 @@ export class BranchesService {
     return this.branchesRepository.listUsers(branchId);
   }
 
-  async assignUser(branchId: string, userId: string): Promise<{ branchId: string; userId: string }> {
+  async assignUser(
+    branchId: string,
+    userId: string,
+  ): Promise<{ branchId: string; userId: string }> {
     await this.branchesRepository.assignUser(branchId, userId);
     return { branchId, userId };
   }

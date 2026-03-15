@@ -30,11 +30,21 @@ export class RolesService {
   async update(id: string, dto: UpdateRoleDto) {
     const existing = await this.rolesRepository.findById(id);
     if (!existing) {
-      throw new BusinessException('ROLE_NOT_FOUND', 'Role nao encontrada', { id }, HttpStatus.NOT_FOUND);
+      throw new BusinessException(
+        'ROLE_NOT_FOUND',
+        'Role nao encontrada',
+        { id },
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     if (existing.isSystem) {
-      throw new BusinessException('ROLE_SYSTEM_LOCKED', 'Role de sistema nao pode ser editada', { id }, HttpStatus.FORBIDDEN);
+      throw new BusinessException(
+        'ROLE_SYSTEM_LOCKED',
+        'Role de sistema nao pode ser editada',
+        { id },
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const updated = await this.rolesRepository.update(id, dto);
@@ -50,11 +60,21 @@ export class RolesService {
   async softDelete(id: string): Promise<void> {
     const existing = await this.rolesRepository.findById(id);
     if (!existing) {
-      throw new BusinessException('ROLE_NOT_FOUND', 'Role nao encontrada', { id }, HttpStatus.NOT_FOUND);
+      throw new BusinessException(
+        'ROLE_NOT_FOUND',
+        'Role nao encontrada',
+        { id },
+        HttpStatus.NOT_FOUND,
+      );
     }
 
     if (existing.isSystem) {
-      throw new BusinessException('ROLE_SYSTEM_LOCKED', 'Role de sistema nao pode ser excluida', { id }, HttpStatus.FORBIDDEN);
+      throw new BusinessException(
+        'ROLE_SYSTEM_LOCKED',
+        'Role de sistema nao pode ser excluida',
+        { id },
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const userIds = await this.rolesRepository.listUserIdsByRole(id);
@@ -67,11 +87,16 @@ export class RolesService {
     this.emitUserRoleChanged(userId);
   }
 
-  async listUserRoles(userId: string): Promise<Array<{ roleId: string; roleName: string }>> {
+  async listUserRoles(
+    userId: string,
+  ): Promise<Array<{ roleId: string; roleName: string }>> {
     return this.rolesRepository.listUserRoles(userId);
   }
 
-  async assignRoleToUser(userId: string, roleId: string): Promise<{ userId: string; roleId: string }> {
+  async assignRoleToUser(
+    userId: string,
+    roleId: string,
+  ): Promise<{ userId: string; roleId: string }> {
     await this.rolesRepository.assignRoleToUser(userId, roleId);
     this.emitUserRoleChanged(userId);
     return { userId, roleId };
@@ -80,7 +105,10 @@ export class RolesService {
   private emitUserRoleChanged(userId: string): void {
     this.eventBusService.emit(
       'rbac.user-role.changed',
-      new RbacUserRoleChangedEvent(this.tenantContextService.getTenantIdOrFail(), userId),
+      new RbacUserRoleChangedEvent(
+        this.tenantContextService.getTenantIdOrFail(),
+        userId,
+      ),
     );
   }
 
@@ -91,7 +119,10 @@ export class RolesService {
 
     this.eventBusService.emit(
       'rbac.role-permissions.changed',
-      new RbacRolePermissionsChangedEvent(this.tenantContextService.getTenantIdOrFail(), userIds),
+      new RbacRolePermissionsChangedEvent(
+        this.tenantContextService.getTenantIdOrFail(),
+        userIds,
+      ),
     );
   }
 }

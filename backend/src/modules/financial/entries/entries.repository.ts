@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 
 export type EntryRecord = {
   id: string;
@@ -29,7 +32,8 @@ export class EntriesRepository {
   async list(branchId: string): Promise<EntryRecord[]> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchIdLiteral = quoteLiteral(branchId);
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT
         e.id,
         e.branch_id,
@@ -54,17 +58,24 @@ export class EntriesRepository {
         AND e.branch_id = ${branchIdLiteral}
       ORDER BY e.created_at DESC
       LIMIT 100
-    `));
+    `),
+    );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => this.mapRow(row));
+    return (result.rows as Array<Record<string, unknown>>).map((row) =>
+      this.mapRow(row),
+    );
   }
 
-  async findById(entryId: string, branchId: string): Promise<EntryRecord | null> {
+  async findById(
+    entryId: string,
+    branchId: string,
+  ): Promise<EntryRecord | null> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const entryIdLiteral = quoteLiteral(entryId);
     const branchIdLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT
         e.id,
         e.branch_id,
@@ -89,7 +100,8 @@ export class EntriesRepository {
         AND e.branch_id = ${branchIdLiteral}
         AND e.deleted_at IS NULL
       LIMIT 1
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     if (!row) {
@@ -99,12 +111,16 @@ export class EntriesRepository {
     return this.mapRow(row);
   }
 
-  async findDeletedById(entryId: string, branchId: string): Promise<EntryRecord | null> {
+  async findDeletedById(
+    entryId: string,
+    branchId: string,
+  ): Promise<EntryRecord | null> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const entryIdLiteral = quoteLiteral(entryId);
     const branchIdLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT
         e.id,
         e.branch_id,
@@ -129,13 +145,19 @@ export class EntriesRepository {
         AND e.branch_id = ${branchIdLiteral}
         AND e.deleted_at IS NOT NULL
       LIMIT 1
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return row ? this.mapRow(row) : null;
   }
 
-  async create(data: Omit<EntryRecord, 'id' | 'createdAt'> & { categoryId: string; contactId?: string | null }): Promise<EntryRecord> {
+  async create(
+    data: Omit<EntryRecord, 'id' | 'createdAt'> & {
+      categoryId: string;
+      contactId?: string | null;
+    },
+  ): Promise<EntryRecord> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchId = quoteLiteral(data.branchId);
     const documentNumber = quoteLiteral(data.documentNumber);
@@ -151,7 +173,8 @@ export class EntriesRepository {
     const installmentNumber = quoteLiteral(data.installmentNumber);
     const installmentTotal = quoteLiteral(data.installmentTotal);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.financial_entries (
         branch_id,
         document_number,
@@ -185,7 +208,8 @@ export class EntriesRepository {
       )
       RETURNING id, branch_id, document_number, type, description, amount, issue_date, due_date, status,
                 paid_amount, installment_number, installment_total, created_at
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown>;
 
@@ -203,8 +227,12 @@ export class EntriesRepository {
       contactName: data.contactName,
       paidAmount: row.paid_amount ? String(row.paid_amount) : null,
       remainingBalance: String(row.amount),
-      installmentNumber: row.installment_number ? Number(row.installment_number) : null,
-      installmentTotal: row.installment_total ? Number(row.installment_total) : null,
+      installmentNumber: row.installment_number
+        ? Number(row.installment_number)
+        : null,
+      installmentTotal: row.installment_total
+        ? Number(row.installment_total)
+        : null,
       createdAt: new Date(String(row.created_at)).toISOString(),
     };
   }
@@ -225,20 +253,27 @@ export class EntriesRepository {
     const branchIdLiteral = quoteLiteral(branchId);
 
     const sets: string[] = [];
-    if (data.description !== undefined) sets.push(`description = ${quoteLiteral(data.description)}`);
-    if (data.amount !== undefined) sets.push(`amount = ${quoteLiteral(data.amount)}`);
-    if (data.dueDate !== undefined) sets.push(`due_date = ${quoteLiteral(data.dueDate)}`);
-    if (data.categoryId !== undefined) sets.push(`category_id = ${quoteLiteral(data.categoryId)}`);
-    if (data.contactId !== undefined) sets.push(`contact_id = ${quoteLiteral(data.contactId)}`);
+    if (data.description !== undefined)
+      sets.push(`description = ${quoteLiteral(data.description)}`);
+    if (data.amount !== undefined)
+      sets.push(`amount = ${quoteLiteral(data.amount)}`);
+    if (data.dueDate !== undefined)
+      sets.push(`due_date = ${quoteLiteral(data.dueDate)}`);
+    if (data.categoryId !== undefined)
+      sets.push(`category_id = ${quoteLiteral(data.categoryId)}`);
+    if (data.contactId !== undefined)
+      sets.push(`contact_id = ${quoteLiteral(data.contactId)}`);
 
     if (sets.length > 0) {
-      await this.drizzleService.getClient().execute(sql.raw(`
+      await this.drizzleService.getClient().execute(
+        sql.raw(`
         UPDATE ${schema}.financial_entries
         SET ${sets.join(', ')}
         WHERE id = ${entryIdLiteral}
           AND branch_id = ${branchIdLiteral}
           AND deleted_at IS NULL
-      `));
+      `),
+      );
     }
 
     const updated = await this.findById(entryId, branchId);
@@ -254,13 +289,15 @@ export class EntriesRepository {
     const entryIdLiteral = quoteLiteral(entryId);
     const branchIdLiteral = quoteLiteral(branchId);
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.financial_entries
       SET deleted_at = NOW()
       WHERE id = ${entryIdLiteral}
         AND branch_id = ${branchIdLiteral}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
   }
 
   async restore(entryId: string, branchId: string): Promise<EntryRecord> {
@@ -268,13 +305,15 @@ export class EntriesRepository {
     const entryIdLiteral = quoteLiteral(entryId);
     const branchIdLiteral = quoteLiteral(branchId);
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.financial_entries
       SET deleted_at = NULL
       WHERE id = ${entryIdLiteral}
         AND branch_id = ${branchIdLiteral}
         AND deleted_at IS NOT NULL
-    `));
+    `),
+    );
 
     const restored = await this.findById(entryId, branchId);
     if (!restored) {
@@ -289,13 +328,15 @@ export class EntriesRepository {
     const entryIdLiteral = quoteLiteral(entryId);
     const branchIdLiteral = quoteLiteral(branchId);
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.financial_entries
       SET status = 'CANCELLED', updated_at = NOW()
       WHERE id = ${entryIdLiteral}
         AND branch_id = ${branchIdLiteral}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
 
     const cancelled = await this.findById(entryId, branchId);
     if (!cancelled) {
@@ -316,12 +357,18 @@ export class EntriesRepository {
       issueDate: String(row.issue_date),
       dueDate: String(row.due_date),
       status: String(row.status),
-      categoryName: row.category_name ? String(row.category_name) : 'Sem categoria',
+      categoryName: row.category_name
+        ? String(row.category_name)
+        : 'Sem categoria',
       contactName: row.contact_name ? String(row.contact_name) : null,
       paidAmount: row.paid_amount ? String(row.paid_amount) : null,
       remainingBalance: String(row.remaining_balance),
-      installmentNumber: row.installment_number ? Number(row.installment_number) : null,
-      installmentTotal: row.installment_total ? Number(row.installment_total) : null,
+      installmentNumber: row.installment_number
+        ? Number(row.installment_number)
+        : null,
+      installmentTotal: row.installment_total
+        ? Number(row.installment_total)
+        : null,
       createdAt: new Date(String(row.created_at)).toISOString(),
     };
   }

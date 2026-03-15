@@ -1,4 +1,11 @@
-import { IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { IsCep } from '../../../common/validators/is-cep.decorator';
 import { IsPhone } from '../../../common/validators/is-phone.decorator';
 

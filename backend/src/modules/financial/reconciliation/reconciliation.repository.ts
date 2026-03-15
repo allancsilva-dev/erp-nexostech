@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 
 @Injectable()
 export class ReconciliationRepository {
@@ -9,7 +12,8 @@ export class ReconciliationRepository {
 
   async listPending(branchId: string) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT
         i.id,
         i.batch_id,
@@ -26,7 +30,8 @@ export class ReconciliationRepository {
         AND i.reconciled = false
       ORDER BY i.payment_date DESC
       LIMIT 200
-    `));
+    `),
+    );
 
     return (result.rows as Array<Record<string, unknown>>).map((row) => ({
       id: String(row.id),
@@ -40,9 +45,16 @@ export class ReconciliationRepository {
     }));
   }
 
-  async createBatch(branchId: string, createdBy: string, bankAccountId: string, startDate: string, endDate: string) {
+  async createBatch(
+    branchId: string,
+    createdBy: string,
+    bankAccountId: string,
+    startDate: string,
+    endDate: string,
+  ) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.reconciliation_batches (
         branch_id, bank_account_id, start_date, end_date, created_by
       ) VALUES (
@@ -53,7 +65,8 @@ export class ReconciliationRepository {
         ${quoteLiteral(createdBy)}
       )
       RETURNING id, branch_id, bank_account_id, start_date, end_date, created_by, created_at
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown>;
     return {
@@ -67,9 +80,16 @@ export class ReconciliationRepository {
     };
   }
 
-  async importFromPayments(batchId: string, branchId: string, bankAccountId: string, startDate: string, endDate: string): Promise<number> {
+  async importFromPayments(
+    batchId: string,
+    branchId: string,
+    bankAccountId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<number> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.reconciliation_items (
         batch_id, branch_id, payment_id, entry_id, amount, payment_date, reconciled
       )
@@ -90,33 +110,39 @@ export class ReconciliationRepository {
       ON CONFLICT (batch_id, payment_id)
       DO NOTHING
       RETURNING id
-    `));
+    `),
+    );
 
     return result.rows.length;
   }
 
   async undoBatch(batchId: string, branchId: string): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.reconciliation_items
       SET deleted_at = NOW(), updated_at = NOW()
       WHERE batch_id = ${quoteLiteral(batchId)}
         AND branch_id = ${quoteLiteral(branchId)}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.reconciliation_batches
       SET deleted_at = NOW(), updated_at = NOW()
       WHERE id = ${quoteLiteral(batchId)}
         AND branch_id = ${quoteLiteral(branchId)}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
   }
 
   async getBatchItems(batchId: string, branchId: string) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT
         id,
         batch_id,
@@ -131,7 +157,8 @@ export class ReconciliationRepository {
         AND branch_id = ${quoteLiteral(branchId)}
         AND deleted_at IS NULL
       ORDER BY payment_date DESC, created_at DESC
-    `));
+    `),
+    );
 
     return (result.rows as Array<Record<string, unknown>>).map((row) => ({
       id: String(row.id),
@@ -145,12 +172,17 @@ export class ReconciliationRepository {
     }));
   }
 
-  async matchItem(itemId: string, entryId: string | undefined, branchId: string) {
+  async matchItem(
+    itemId: string,
+    entryId: string | undefined,
+    branchId: string,
+  ) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const entryClause =
       entryId !== undefined ? `entry_id = ${quoteLiteral(entryId)},` : '';
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.reconciliation_items
       SET ${entryClause}
           reconciled = true,
@@ -159,7 +191,8 @@ export class ReconciliationRepository {
         AND branch_id = ${quoteLiteral(branchId)}
         AND deleted_at IS NULL
       RETURNING id, batch_id, payment_id, entry_id, amount, payment_date, reconciled, updated_at
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown>;
     return {

@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
@@ -18,9 +27,13 @@ export class CategoriesController {
 
   @Get()
   @RequirePermission('financial.categories.view')
-  async list(@BranchId() branchId: string): Promise<ApiResponse<CategoryResponse[]>> {
+  async list(
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<CategoryResponse[]>> {
     const categories = await this.categoriesService.list(branchId);
-    return ApiResponse.ok(categories.map((item) => CategoryResponse.from(item)));
+    return ApiResponse.ok(
+      categories.map((item) => CategoryResponse.from(item)),
+    );
   }
 
   @Post()

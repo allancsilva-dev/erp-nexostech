@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
@@ -42,7 +51,9 @@ export class RolesController {
   @Delete(':id')
   @Idempotent()
   @RequirePermission('admin.users.manage')
-  async remove(@Param('id') id: string): Promise<ApiResponse<{ deleted: boolean }>> {
+  async remove(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<{ deleted: boolean }>> {
     await this.rolesService.softDelete(id);
     return ApiResponse.ok({ deleted: true });
   }

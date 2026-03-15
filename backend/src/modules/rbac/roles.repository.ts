@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../infrastructure/database/sql-builder.util';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { RoleEntity } from './dto/role.response';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -12,12 +15,14 @@ export class RolesRepository {
 
   async list(): Promise<RoleEntity[]> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const rows = await this.drizzleService.getClient().execute(sql.raw(`
+    const rows = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, name, description, is_system
       FROM ${schema}.roles
       WHERE deleted_at IS NULL
       ORDER BY name ASC
-    `));
+    `),
+    );
 
     const items = rows.rows as Array<Record<string, unknown>>;
     const roleIds = items.map((row) => String(row.id));
@@ -37,11 +42,13 @@ export class RolesRepository {
     const name = quoteLiteral(dto.name);
     const description = quoteLiteral(dto.description);
 
-    const inserted = await this.drizzleService.getClient().execute(sql.raw(`
+    const inserted = await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.roles (name, description, is_system)
       VALUES (${name}, ${description}, false)
       RETURNING id, name, description, is_system
-    `));
+    `),
+    );
 
     const row = inserted.rows[0] as Record<string, unknown>;
     const roleId = String(row.id);
@@ -60,13 +67,15 @@ export class RolesRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const idLiteral = quoteLiteral(id);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, name, description, is_system
       FROM ${schema}.roles
       WHERE id = ${idLiteral}
         AND deleted_at IS NULL
       LIMIT 1
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     if (!row) {
@@ -89,15 +98,18 @@ export class RolesRepository {
     const sets: string[] = [];
 
     if (dto.name !== undefined) sets.push(`name = ${quoteLiteral(dto.name)}`);
-    if (dto.description !== undefined) sets.push(`description = ${quoteLiteral(dto.description)}`);
+    if (dto.description !== undefined)
+      sets.push(`description = ${quoteLiteral(dto.description)}`);
 
     if (sets.length > 0) {
-      await this.drizzleService.getClient().execute(sql.raw(`
+      await this.drizzleService.getClient().execute(
+        sql.raw(`
         UPDATE ${schema}.roles
         SET ${sets.join(', ')}
         WHERE id = ${idLiteral}
           AND deleted_at IS NULL
-      `));
+      `),
+      );
     }
 
     if (dto.permissionCodes !== undefined) {
@@ -116,12 +128,14 @@ export class RolesRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const idLiteral = quoteLiteral(id);
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.roles
       SET deleted_at = NOW()
       WHERE id = ${idLiteral}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
   }
 
   async unlinkRoleFromUser(userId: string, roleId: string): Promise<void> {
@@ -129,23 +143,29 @@ export class RolesRepository {
     const userLiteral = quoteLiteral(userId);
     const roleLiteral = quoteLiteral(roleId);
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       DELETE FROM ${schema}.user_roles
       WHERE user_id = ${userLiteral}
         AND role_id = ${roleLiteral}
-    `));
+    `),
+    );
   }
 
-  async listUserRoles(userId: string): Promise<Array<{ roleId: string; roleName: string }>> {
+  async listUserRoles(
+    userId: string,
+  ): Promise<Array<{ roleId: string; roleName: string }>> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT r.id AS role_id, r.name AS role_name
       FROM ${schema}.user_roles ur
       JOIN ${schema}.roles r ON r.id = ur.role_id
       WHERE ur.user_id = ${quoteLiteral(userId)}
         AND r.deleted_at IS NULL
       ORDER BY r.name ASC
-    `));
+    `),
+    );
 
     return (result.rows as Array<Record<string, unknown>>).map((row) => ({
       roleId: String(row.role_id),
@@ -155,25 +175,33 @@ export class RolesRepository {
 
   async assignRoleToUser(userId: string, roleId: string): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.user_roles (user_id, role_id)
       VALUES (${quoteLiteral(userId)}, ${quoteLiteral(roleId)})
       ON CONFLICT (user_id, role_id) DO NOTHING
-    `));
+    `),
+    );
   }
 
   async listUserIdsByRole(roleId: string): Promise<string[]> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT user_id
       FROM ${schema}.user_roles
       WHERE role_id = ${quoteLiteral(roleId)}
-    `));
+    `),
+    );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => String(row.user_id));
+    return (result.rows as Array<Record<string, unknown>>).map((row) =>
+      String(row.user_id),
+    );
   }
 
-  private async getPermissionsMap(roleIds: string[]): Promise<Map<string, string[]>> {
+  private async getPermissionsMap(
+    roleIds: string[],
+  ): Promise<Map<string, string[]>> {
     const map = new Map<string, string[]>();
     if (roleIds.length === 0) {
       return map;
@@ -181,11 +209,13 @@ export class RolesRepository {
 
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const idsCsv = roleIds.map((id) => quoteLiteral(id)).join(', ');
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT role_id, permission_code
       FROM ${schema}.role_permissions
       WHERE role_id IN (${idsCsv})
-    `));
+    `),
+    );
 
     (result.rows as Array<Record<string, unknown>>).forEach((row) => {
       const roleId = String(row.role_id);
@@ -198,13 +228,18 @@ export class RolesRepository {
     return map;
   }
 
-  private async replacePermissions(roleId: string, permissionCodes: string[]): Promise<void> {
+  private async replacePermissions(
+    roleId: string,
+    permissionCodes: string[],
+  ): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const roleLiteral = quoteLiteral(roleId);
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       DELETE FROM ${schema}.role_permissions
       WHERE role_id = ${roleLiteral}
-    `));
+    `),
+    );
 
     if (permissionCodes.length === 0) {
       return;
@@ -214,9 +249,11 @@ export class RolesRepository {
       .map((permission) => `(${roleLiteral}, ${quoteLiteral(permission)})`)
       .join(', ');
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.role_permissions (role_id, permission_code)
       VALUES ${values}
-    `));
+    `),
+    );
   }
 }

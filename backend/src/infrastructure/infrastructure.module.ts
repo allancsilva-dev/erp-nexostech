@@ -31,6 +31,12 @@ import { StorageModule } from './storage/storage.module';
     QueueModule,
     StorageModule,
   ],
-  exports: [DatabaseModule, CacheModule, EventsModule, QueueModule, StorageModule],
+  exports: [
+    DatabaseModule,
+    CacheModule,
+    EventsModule,
+    QueueModule,
+    StorageModule,
+  ],
 })
 export class InfrastructureModule {}

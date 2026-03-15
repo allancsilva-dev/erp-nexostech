@@ -1,4 +1,13 @@
-import { IsHexColor, IsInt, IsOptional, IsString, IsUUID, MaxLength, Min, MinLength } from 'class-validator';
+import {
+  IsHexColor,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export enum CategoryType {
   RECEITA = 'RECEITA',

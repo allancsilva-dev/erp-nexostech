@@ -4,7 +4,10 @@ import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
-import { shutdownOpenTelemetry, startOpenTelemetry } from './infrastructure/observability/otel.bootstrap';
+import {
+  shutdownOpenTelemetry,
+  startOpenTelemetry,
+} from './infrastructure/observability/otel.bootstrap';
 
 async function bootstrap() {
   await startOpenTelemetry();

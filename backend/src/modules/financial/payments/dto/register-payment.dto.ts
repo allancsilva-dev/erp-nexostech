@@ -1,4 +1,12 @@
-import { IsDateString, IsEnum, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 import { PaymentMethod } from '../../entries/dto/create-entry.dto';
 
 export class RegisterPaymentDto {

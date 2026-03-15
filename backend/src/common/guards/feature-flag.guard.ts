@@ -10,7 +10,12 @@ import type { AuthUser } from '../types/auth-user.type';
 
 const PLAN_FEATURES: Record<string, string[]> = {
   STARTER: [],
-  PRO: ['boletos_enabled', 'approval_flow_enabled', 'branches_enabled', 'collection_rules_enabled'],
+  PRO: [
+    'boletos_enabled',
+    'approval_flow_enabled',
+    'branches_enabled',
+    'collection_rules_enabled',
+  ],
   ENTERPRISE: [
     'boletos_enabled',
     'approval_flow_enabled',
@@ -25,10 +30,10 @@ export class FeatureFlagGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredFeature = this.reflector.getAllAndOverride<string>(REQUIRED_FEATURE_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredFeature = this.reflector.getAllAndOverride<string>(
+      REQUIRED_FEATURE_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!requiredFeature) return true;
 

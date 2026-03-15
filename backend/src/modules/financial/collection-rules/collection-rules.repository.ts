@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 import { CreateCollectionRuleDto } from './dto/create-collection-rule.dto';
 import { UpdateCollectionRuleDto } from './dto/update-collection-rule.dto';
 import { UpdateEmailTemplateDto } from './dto/update-email-template.dto';
@@ -41,15 +44,19 @@ export class CollectionRulesRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, branch_id, event, days_offset, email_template_id, active, sort_order, created_at
       FROM ${schema}.collection_rules
       WHERE branch_id = ${branchLiteral}
         AND deleted_at IS NULL
       ORDER BY sort_order ASC, created_at ASC
-    `));
+    `),
+    );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => this.mapRow(row));
+    return (result.rows as Array<Record<string, unknown>>).map((row) =>
+      this.mapRow(row),
+    );
   }
 
   async create(branchId: string, dto: CreateCollectionRuleDto) {
@@ -61,14 +68,16 @@ export class CollectionRulesRepository {
     const activeLiteral = quoteLiteral(dto.active);
     const sortOrderLiteral = quoteLiteral(dto.sortOrder);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.collection_rules (
         branch_id, event, days_offset, email_template_id, active, sort_order
       ) VALUES (
         ${branchLiteral}, ${eventLiteral}, ${daysOffsetLiteral}, ${emailTemplateIdLiteral}, ${activeLiteral}, ${sortOrderLiteral}
       )
       RETURNING id, branch_id, event, days_offset, email_template_id, active, sort_order, created_at
-    `));
+    `),
+    );
 
     return this.mapRow(result.rows[0] as Record<string, unknown>);
   }
@@ -78,14 +87,16 @@ export class CollectionRulesRepository {
     const idLiteral = quoteLiteral(id);
     const branchLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, branch_id, event, days_offset, email_template_id, active, sort_order, created_at
       FROM ${schema}.collection_rules
       WHERE id = ${idLiteral}
         AND branch_id = ${branchLiteral}
         AND deleted_at IS NULL
       LIMIT 1
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return row ? this.mapRow(row) : null;
@@ -97,22 +108,28 @@ export class CollectionRulesRepository {
     const branchLiteral = quoteLiteral(branchId);
     const sets: string[] = [];
 
-    if (dto.event !== undefined) sets.push(`event = ${quoteLiteral(dto.event)}`);
-    if (dto.daysOffset !== undefined) sets.push(`days_offset = ${quoteLiteral(dto.daysOffset)}`);
+    if (dto.event !== undefined)
+      sets.push(`event = ${quoteLiteral(dto.event)}`);
+    if (dto.daysOffset !== undefined)
+      sets.push(`days_offset = ${quoteLiteral(dto.daysOffset)}`);
     if (dto.emailTemplateId !== undefined) {
       sets.push(`email_template_id = ${quoteLiteral(dto.emailTemplateId)}`);
     }
-    if (dto.active !== undefined) sets.push(`active = ${quoteLiteral(dto.active)}`);
-    if (dto.sortOrder !== undefined) sets.push(`sort_order = ${quoteLiteral(dto.sortOrder)}`);
+    if (dto.active !== undefined)
+      sets.push(`active = ${quoteLiteral(dto.active)}`);
+    if (dto.sortOrder !== undefined)
+      sets.push(`sort_order = ${quoteLiteral(dto.sortOrder)}`);
 
     if (sets.length > 0) {
-      await this.drizzleService.getClient().execute(sql.raw(`
+      await this.drizzleService.getClient().execute(
+        sql.raw(`
         UPDATE ${schema}.collection_rules
         SET ${sets.join(', ')}
         WHERE id = ${idLiteral}
           AND branch_id = ${branchLiteral}
           AND deleted_at IS NULL
-      `));
+      `),
+      );
     }
 
     const updated = await this.findById(id, branchId);
@@ -128,44 +145,56 @@ export class CollectionRulesRepository {
     const idLiteral = quoteLiteral(id);
     const branchLiteral = quoteLiteral(branchId);
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.collection_rules
       SET deleted_at = NOW(), active = false
       WHERE id = ${idLiteral}
         AND branch_id = ${branchLiteral}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
   }
 
   async listEmailTemplates(branchId: string) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, branch_id, name, subject, body_html, body_text, type, created_at, updated_at
       FROM ${schema}.email_templates
       WHERE branch_id = ${quoteLiteral(branchId)}
         AND deleted_at IS NULL
       ORDER BY name ASC
-    `));
+    `),
+    );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => this.mapEmailTemplateRow(row));
+    return (result.rows as Array<Record<string, unknown>>).map((row) =>
+      this.mapEmailTemplateRow(row),
+    );
   }
 
   async findEmailTemplateById(id: string, branchId: string) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, branch_id, name, subject, body_html, body_text, type, created_at, updated_at
       FROM ${schema}.email_templates
       WHERE id = ${quoteLiteral(id)}
         AND branch_id = ${quoteLiteral(branchId)}
         AND deleted_at IS NULL
       LIMIT 1
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return row ? this.mapEmailTemplateRow(row) : null;
   }
 
-  async updateEmailTemplate(id: string, branchId: string, dto: UpdateEmailTemplateDto) {
+  async updateEmailTemplate(
+    id: string,
+    branchId: string,
+    dto: UpdateEmailTemplateDto,
+  ) {
     const existing = await this.findEmailTemplateById(id, branchId);
     if (!existing) {
       return null;
@@ -174,19 +203,24 @@ export class CollectionRulesRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const sets: string[] = [];
     if (dto.name !== undefined) sets.push(`name = ${quoteLiteral(dto.name)}`);
-    if (dto.subject !== undefined) sets.push(`subject = ${quoteLiteral(dto.subject)}`);
-    if (dto.bodyHtml !== undefined) sets.push(`body_html = ${quoteLiteral(dto.bodyHtml)}`);
-    if (dto.bodyText !== undefined) sets.push(`body_text = ${quoteLiteral(dto.bodyText)}`);
+    if (dto.subject !== undefined)
+      sets.push(`subject = ${quoteLiteral(dto.subject)}`);
+    if (dto.bodyHtml !== undefined)
+      sets.push(`body_html = ${quoteLiteral(dto.bodyHtml)}`);
+    if (dto.bodyText !== undefined)
+      sets.push(`body_text = ${quoteLiteral(dto.bodyText)}`);
 
     if (sets.length > 0) {
       sets.push('updated_at = NOW()');
-      await this.drizzleService.getClient().execute(sql.raw(`
+      await this.drizzleService.getClient().execute(
+        sql.raw(`
         UPDATE ${schema}.email_templates
         SET ${sets.join(', ')}
         WHERE id = ${quoteLiteral(id)}
           AND branch_id = ${quoteLiteral(branchId)}
           AND deleted_at IS NULL
-      `));
+      `),
+      );
     }
 
     return this.findEmailTemplateById(id, branchId);

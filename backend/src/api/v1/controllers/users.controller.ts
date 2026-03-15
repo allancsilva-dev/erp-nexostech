@@ -14,7 +14,9 @@ export class UsersController {
 
   @Get(':id/roles')
   @RequirePermission('admin.users.manage')
-  async listRoles(@Param('id') userId: string): Promise<ApiResponse<{ roleId: string; roleName: string }[]>> {
+  async listRoles(
+    @Param('id') userId: string,
+  ): Promise<ApiResponse<{ roleId: string; roleName: string }[]>> {
     return ApiResponse.ok(await this.rolesService.listUserRoles(userId));
   }
 
@@ -25,6 +27,8 @@ export class UsersController {
     @Param('id') userId: string,
     @Body() dto: AssignUserRoleDto,
   ): Promise<ApiResponse<{ userId: string; roleId: string }>> {
-    return ApiResponse.created(await this.rolesService.assignRoleToUser(userId, dto.roleId));
+    return ApiResponse.created(
+      await this.rolesService.assignRoleToUser(userId, dto.roleId),
+    );
   }
 }

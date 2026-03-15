@@ -1,4 +1,11 @@
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsUUID, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsUUID,
+  Min,
+} from 'class-validator';
 import { CollectionEventType } from './create-collection-rule.dto';
 
 export class UpdateCollectionRuleDto {

@@ -7,7 +7,9 @@ describe('BoletosService', () => {
   it('acknowledges webhook and persists status update', async () => {
     const gateway = {} as BoletosGatewayClient;
     const storage = {
-      getPublicUrl: jest.fn().mockReturnValue('https://r2.local/boletos/entry_1.pdf'),
+      getPublicUrl: jest
+        .fn()
+        .mockReturnValue('https://r2.local/boletos/entry_1.pdf'),
     } as unknown as StorageService;
 
     const repository: jest.Mocked<BoletosRepository> = {
@@ -38,7 +40,9 @@ describe('BoletosService', () => {
   it('uses storage public url fallback when boleto has no persisted pdf', async () => {
     const gateway = {} as BoletosGatewayClient;
     const storage = {
-      getPublicUrl: jest.fn().mockReturnValue('https://r2.local/boletos/entry_2.pdf'),
+      getPublicUrl: jest
+        .fn()
+        .mockReturnValue('https://r2.local/boletos/entry_2.pdf'),
     } as unknown as StorageService;
 
     const repository: jest.Mocked<BoletosRepository> = {

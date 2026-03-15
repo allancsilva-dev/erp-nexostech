@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { TransferEntity } from './dto/transfer.response';
 
@@ -27,16 +30,20 @@ export class TransfersRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by, created_at
       FROM ${schema}.financial_transfers
       WHERE branch_id = ${branchLiteral}
         AND deleted_at IS NULL
       ORDER BY created_at DESC
       LIMIT 100
-    `));
+    `),
+    );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => this.mapRow(row));
+    return (result.rows as Array<Record<string, unknown>>).map((row) =>
+      this.mapRow(row),
+    );
   }
 
   async findById(id: string, branchId: string): Promise<TransferEntity | null> {
@@ -44,20 +51,26 @@ export class TransfersRepository {
     const idLiteral = quoteLiteral(id);
     const branchLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by, created_at
       FROM ${schema}.financial_transfers
       WHERE id = ${idLiteral}
         AND branch_id = ${branchLiteral}
         AND deleted_at IS NULL
       LIMIT 1
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return row ? this.mapRow(row) : null;
   }
 
-  async create(branchId: string, dto: CreateTransferDto, userId: string): Promise<TransferEntity> {
+  async create(
+    branchId: string,
+    dto: CreateTransferDto,
+    userId: string,
+  ): Promise<TransferEntity> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
     const fromAccountLiteral = quoteLiteral(dto.fromAccountId);
@@ -67,14 +80,16 @@ export class TransfersRepository {
     const descriptionLiteral = quoteLiteral(dto.description ?? null);
     const userLiteral = quoteLiteral(userId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.financial_transfers (
         branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by
       ) VALUES (
         ${branchLiteral}, ${fromAccountLiteral}, ${toAccountLiteral}, ${amountLiteral}, ${transferDateLiteral}, ${descriptionLiteral}, ${userLiteral}
       )
       RETURNING id, branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by, created_at
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown>;
     return this.mapRow(row);
@@ -85,12 +100,14 @@ export class TransfersRepository {
     const idLiteral = quoteLiteral(id);
     const branchLiteral = quoteLiteral(branchId);
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.financial_transfers
       SET deleted_at = NOW()
       WHERE id = ${idLiteral}
         AND branch_id = ${branchLiteral}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
   }
 }

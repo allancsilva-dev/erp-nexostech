@@ -26,7 +26,9 @@ describe('CollectionRulesService', () => {
     });
 
     expect(preview.renderedSubject).toBe('Cobranca para ACME LTDA');
-    expect(preview.renderedBody).toBe('<p>Valor 150.00 vence em 2026-03-20</p>');
+    expect(preview.renderedBody).toBe(
+      '<p>Valor 150.00 vence em 2026-03-20</p>',
+    );
   });
 
   it('throws when template is missing for branch', async () => {
@@ -37,7 +39,9 @@ describe('CollectionRulesService', () => {
     const service = new CollectionRulesService(repository);
 
     await expect(
-      service.previewTemplate('missing', 'branch-1', { nome_cliente: 'Cliente' }),
+      service.previewTemplate('missing', 'branch-1', {
+        nome_cliente: 'Cliente',
+      }),
     ).rejects.toMatchObject({
       response: {
         error: {

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 
 @Injectable()
@@ -12,13 +15,15 @@ export class SettingsRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT branch_id, closing_day, currency, alert_days_before, email_alerts,
              max_refund_days_payable, max_refund_days_receivable
       FROM ${schema}.financial_settings
       WHERE branch_id = ${branchLiteral}
       LIMIT 1
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     if (!row) {
@@ -52,9 +57,12 @@ export class SettingsRepository {
     const alertDaysBeforeLiteral = quoteLiteral(dto.alertDaysBefore);
     const emailAlertsLiteral = quoteLiteral(dto.emailAlerts);
     const maxRefundPayableLiteral = quoteLiteral(dto.maxRefundDaysPayable);
-    const maxRefundReceivableLiteral = quoteLiteral(dto.maxRefundDaysReceivable);
+    const maxRefundReceivableLiteral = quoteLiteral(
+      dto.maxRefundDaysReceivable,
+    );
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.financial_settings (
         branch_id,
         closing_day,
@@ -81,7 +89,8 @@ export class SettingsRepository {
         max_refund_days_payable = EXCLUDED.max_refund_days_payable,
         max_refund_days_receivable = EXCLUDED.max_refund_days_receivable,
         updated_at = NOW()
-    `));
+    `),
+    );
 
     return this.get(branchId);
   }

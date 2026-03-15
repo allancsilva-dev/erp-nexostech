@@ -1,4 +1,5 @@
 import { BusinessException } from '../../../../common/exceptions/business.exception';
+import Decimal from 'decimal.js';
 
 export type ReconciliationItem = {
   id: string;
@@ -50,11 +51,11 @@ export class MatchRules {
     entryAmount: string,
     toleranceCents = 0.01,
   ): void {
-    const item = parseFloat(itemAmount);
-    const entry = parseFloat(entryAmount);
-    const diff = Math.abs(Math.abs(item) - Math.abs(entry));
+    const item = new Decimal(itemAmount).abs();
+    const entry = new Decimal(entryAmount).abs();
+    const diff = item.minus(entry).abs();
 
-    if (diff > toleranceCents) {
+    if (diff.greaterThan(new Decimal(toleranceCents))) {
       throw new BusinessException(
         'RECONCILIATION_AMOUNT_DIVERGENCE',
         'Valor do extrato diverge do valor do lancamento acima da tolerancia',

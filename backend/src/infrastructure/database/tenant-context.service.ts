@@ -9,7 +9,12 @@ export class TenantContextService {
   private sanitizeTenantId(rawTenantId: string): string {
     const sanitized = rawTenantId.replace(/[^a-zA-Z0-9_]/g, '_');
     if (!sanitized) {
-      throw new BusinessException('UNAUTHORIZED', 'Tenant invalido no contexto', undefined, 401);
+      throw new BusinessException(
+        'UNAUTHORIZED',
+        'Tenant invalido no contexto',
+        undefined,
+        401,
+      );
     }
     return sanitized;
   }
@@ -17,7 +22,12 @@ export class TenantContextService {
   getTenantIdOrFail(): string {
     const tenantId = this.clsService.get<string>('tenantId');
     if (!tenantId) {
-      throw new BusinessException('UNAUTHORIZED', 'Tenant não encontrado no contexto', undefined, 401);
+      throw new BusinessException(
+        'UNAUTHORIZED',
+        'Tenant não encontrado no contexto',
+        undefined,
+        401,
+      );
     }
     return tenantId;
   }

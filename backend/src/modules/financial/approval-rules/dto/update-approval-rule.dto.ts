@@ -1,4 +1,10 @@
-import { IsBoolean, IsEnum, IsOptional, IsUUID, Matches } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsUUID,
+  Matches,
+} from 'class-validator';
 import { EntryType } from '../../entries/dto/create-entry.dto';
 
 export class UpdateApprovalRuleDto {

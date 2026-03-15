@@ -26,7 +26,9 @@ export class PaymentsController {
     @BranchId() branchId: string,
   ): Promise<ApiResponse<PaymentResponse[]>> {
     const payments = await this.paymentsService.listByEntry(entryId, branchId);
-    return ApiResponse.ok(payments.map((payment) => PaymentResponse.from(payment)));
+    return ApiResponse.ok(
+      payments.map((payment) => PaymentResponse.from(payment)),
+    );
   }
 
   @Post(':id/pay')
@@ -38,7 +40,12 @@ export class PaymentsController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
   ): Promise<ApiResponse<PaymentResponse>> {
-    const payment = await this.paymentsService.registerPayment(entryId, dto, user, branchId);
+    const payment = await this.paymentsService.registerPayment(
+      entryId,
+      dto,
+      user,
+      branchId,
+    );
     return ApiResponse.created(PaymentResponse.from(payment));
   }
 
@@ -51,7 +58,12 @@ export class PaymentsController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
   ): Promise<ApiResponse<PaymentResponse | null>> {
-    const payment = await this.paymentsService.refund(entryId, dto, user, branchId);
+    const payment = await this.paymentsService.refund(
+      entryId,
+      dto,
+      user,
+      branchId,
+    );
     return ApiResponse.ok(payment ? PaymentResponse.from(payment) : null);
   }
 
@@ -64,6 +76,8 @@ export class PaymentsController {
     @BranchId() branchId: string,
   ): Promise<ApiResponse<PaymentResponse[]>> {
     const payments = await this.paymentsService.batchPay(dto, user, branchId);
-    return ApiResponse.created(payments.map((payment) => PaymentResponse.from(payment)));
+    return ApiResponse.created(
+      payments.map((payment) => PaymentResponse.from(payment)),
+    );
   }
 }

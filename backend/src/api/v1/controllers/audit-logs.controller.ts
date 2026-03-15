@@ -15,7 +15,10 @@ export class AuditLogsController {
   @Get()
   @RequirePermission('financial.audit.view')
   async list(@Query() query: PaginationDto): Promise<ApiResponse<unknown[]>> {
-    const { items, total } = await this.auditService.list(query.page, query.pageSize);
+    const { items, total } = await this.auditService.list(
+      query.page,
+      query.pageSize,
+    );
     return ApiResponse.paginated(items, {
       page: query.page,
       pageSize: query.pageSize,
@@ -26,7 +29,9 @@ export class AuditLogsController {
 
   @Get('export')
   @RequirePermission('financial.audit.view')
-  async export(@Query() query: PaginationDto): Promise<ApiResponse<{ filename: string; content: string }>> {
+  async export(
+    @Query() query: PaginationDto,
+  ): Promise<ApiResponse<{ filename: string; content: string }>> {
     const data = await this.auditService.exportCsv(query.page, query.pageSize);
     return ApiResponse.ok(data);
   }

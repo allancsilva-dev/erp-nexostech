@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
 import { PaginationDto } from '../../../common/dtos/pagination.dto';
@@ -17,8 +26,13 @@ export class ContactsController {
 
   @Get()
   @RequirePermission('financial.entries.view')
-  async list(@Query() query: PaginationDto): Promise<ApiResponse<ContactResponse[]>> {
-    const { items, total } = await this.contactsService.list(query.page, query.pageSize);
+  async list(
+    @Query() query: PaginationDto,
+  ): Promise<ApiResponse<ContactResponse[]>> {
+    const { items, total } = await this.contactsService.list(
+      query.page,
+      query.pageSize,
+    );
     return ApiResponse.paginated(
       items.map((item) => ContactResponse.from(item)),
       {
@@ -32,7 +46,9 @@ export class ContactsController {
 
   @Post()
   @RequirePermission('financial.entries.create')
-  async create(@Body() dto: CreateContactDto): Promise<ApiResponse<ContactResponse>> {
+  async create(
+    @Body() dto: CreateContactDto,
+  ): Promise<ApiResponse<ContactResponse>> {
     const created = await this.contactsService.create(dto);
     return ApiResponse.created(ContactResponse.from(created));
   }

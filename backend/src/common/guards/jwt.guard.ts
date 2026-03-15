@@ -27,8 +27,12 @@ export class JwtGuard implements CanActivate {
     }
 
     const jwksUrl = this.configService.getOrThrow<string>('AUTH_JWKS_URL');
-    const audience = this.configService.getOrThrow<string>('AUTH_AUDIENCE');
-    const issuer = this.configService.getOrThrow<string>('AUTH_ISSUER');
+    const audience =
+      this.configService.get<string>('AUTH_JWT_AUDIENCE') ??
+      this.configService.getOrThrow<string>('AUTH_AUDIENCE');
+    const issuer =
+      this.configService.get<string>('AUTH_JWT_ISSUER') ??
+      this.configService.getOrThrow<string>('AUTH_ISSUER');
 
     const jwks = createRemoteJWKSet(new URL(jwksUrl), {
       cacheMaxAge: 300_000,
@@ -71,7 +75,9 @@ export class JwtGuard implements CanActivate {
         ? payload.roles.map((role) => String(role))
         : [],
       plan: String(payload.plan ?? 'STARTER'),
-      aud: Array.isArray(payload.aud) ? payload.aud[0] : String(payload.aud ?? ''),
+      aud: Array.isArray(payload.aud)
+        ? payload.aud[0]
+        : String(payload.aud ?? ''),
       email: payload.email ? String(payload.email) : undefined,
     };
   }

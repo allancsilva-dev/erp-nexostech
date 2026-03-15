@@ -7,7 +7,9 @@ import { UpdateApprovalRuleDto } from './dto/update-approval-rule.dto';
 
 @Injectable()
 export class ApprovalRulesService {
-  constructor(private readonly approvalRulesRepository: ApprovalRulesRepository) {}
+  constructor(
+    private readonly approvalRulesRepository: ApprovalRulesRepository,
+  ) {}
 
   async list(branchId: string) {
     return this.approvalRulesRepository.list(branchId);

@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { RbacRolePermissionsChangedEvent, RbacUserRoleChangedEvent } from '../events/rbac.events';
+import {
+  RbacRolePermissionsChangedEvent,
+  RbacUserRoleChangedEvent,
+} from '../events/rbac.events';
 import { CacheService } from '../../infrastructure/cache/cache.service';
 
 @Injectable()
@@ -9,13 +12,19 @@ export class RbacCacheInvalidationListener {
 
   @OnEvent('rbac.user-role.changed')
   async onUserRoleChanged(event: RbacUserRoleChangedEvent): Promise<void> {
-    await this.cacheService.del(this.buildCacheKey(event.tenantId, event.userId));
+    await this.cacheService.del(
+      this.buildCacheKey(event.tenantId, event.userId),
+    );
   }
 
   @OnEvent('rbac.role-permissions.changed')
-  async onRolePermissionsChanged(event: RbacRolePermissionsChangedEvent): Promise<void> {
+  async onRolePermissionsChanged(
+    event: RbacRolePermissionsChangedEvent,
+  ): Promise<void> {
     await Promise.all(
-      event.userIds.map((userId) => this.cacheService.del(this.buildCacheKey(event.tenantId, userId))),
+      event.userIds.map((userId) =>
+        this.cacheService.del(this.buildCacheKey(event.tenantId, userId)),
+      ),
     );
   }
 

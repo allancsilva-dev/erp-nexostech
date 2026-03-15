@@ -87,7 +87,9 @@ export class ReportsController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
     @Query() query: ExportReportDto,
-  ): Promise<ApiResponse<{ format: string; filename: string; content: string }>> {
+  ): Promise<
+    ApiResponse<{ format: string; filename: string; content: string }>
+  > {
     const data = await this.reportsService.exportDre(
       user.tenantId,
       branchId,
@@ -104,7 +106,9 @@ export class ReportsController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
     @Query() query: ExportReportDto,
-  ): Promise<ApiResponse<{ format: string; filename: string; content: string }>> {
+  ): Promise<
+    ApiResponse<{ format: string; filename: string; content: string }>
+  > {
     const data = await this.reportsService.exportCashflow(
       user.tenantId,
       branchId,
@@ -121,7 +125,9 @@ export class ReportsController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
     @Query() query: ReportExportDto,
-  ): Promise<ApiResponse<{ format: string; filename: string; content: string }>> {
+  ): Promise<
+    ApiResponse<{ format: string; filename: string; content: string }>
+  > {
     const data = await this.reportsService.export(
       user.tenantId,
       branchId,

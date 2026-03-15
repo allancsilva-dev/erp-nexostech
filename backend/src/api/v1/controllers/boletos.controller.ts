@@ -34,7 +34,9 @@ export class BoletosController {
     @BranchId() branchId: string,
     @Body() dto: GenerateBoletoDto,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.created(await this.boletosService.generate(entryId, branchId, dto));
+    return ApiResponse.created(
+      await this.boletosService.generate(entryId, branchId, dto),
+    );
   }
 
   @Post(':entryId/cancel')
@@ -57,7 +59,9 @@ export class BoletosController {
     @Param('entryId') entryId: string,
     @BranchId() branchId: string,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.boletosService.getPdfLink(entryId, branchId));
+    return ApiResponse.ok(
+      await this.boletosService.getPdfLink(entryId, branchId),
+    );
   }
 
   @Post('webhook')

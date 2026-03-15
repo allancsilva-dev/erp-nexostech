@@ -17,7 +17,11 @@ export class ReconciliationService {
     return this.reconciliationRepository.listPending(branchId);
   }
 
-  async importBatch(branchId: string, user: AuthUser, dto: ImportReconciliationDto) {
+  async importBatch(
+    branchId: string,
+    user: AuthUser,
+    dto: ImportReconciliationDto,
+  ) {
     return this.txHelper.run(async () => {
       const batch = await this.reconciliationRepository.createBatch(
         dto.branchIdOverride ?? branchId,
@@ -27,13 +31,14 @@ export class ReconciliationService {
         dto.endDate,
       );
 
-      const importedCount = await this.reconciliationRepository.importFromPayments(
-        batch.id,
-        batch.branchId,
-        batch.bankAccountId,
-        batch.startDate,
-        batch.endDate,
-      );
+      const importedCount =
+        await this.reconciliationRepository.importFromPayments(
+          batch.id,
+          batch.branchId,
+          batch.bankAccountId,
+          batch.startDate,
+          batch.endDate,
+        );
 
       return {
         ...batch,
@@ -52,7 +57,12 @@ export class ReconciliationService {
     return this.reconciliationRepository.getBatchItems(batchId, branchId);
   }
 
-  async match(itemId: string, entryId: string | undefined, branchId: string, user: AuthUser) {
+  async match(
+    itemId: string,
+    entryId: string | undefined,
+    branchId: string,
+    user: AuthUser,
+  ) {
     const matched = await this.txHelper.run(async () => {
       return this.reconciliationRepository.matchItem(itemId, entryId, branchId);
     });

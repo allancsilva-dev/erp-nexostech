@@ -1,4 +1,11 @@
-import { IsEnum, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 
 export enum BankAccountType {
   CORRENTE = 'CORRENTE',

@@ -1,4 +1,11 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { IsDocument } from '../../../common/validators/is-document.decorator';
 import { IsPhone } from '../../../common/validators/is-phone.decorator';
 import { ContactType } from './create-contact.dto';

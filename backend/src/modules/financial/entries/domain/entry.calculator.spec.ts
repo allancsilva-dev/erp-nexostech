@@ -7,7 +7,9 @@ describe('EntryCalculator', () => {
     const installments = calculator.calculateInstallments('1000.00', 3);
 
     expect(installments).toEqual(['333.33', '333.33', '333.34']);
-    expect(installments.reduce((acc, value) => acc + Number(value), 0)).toBeCloseTo(1000, 2);
+    expect(
+      installments.reduce((acc, value) => acc + Number(value), 0),
+    ).toBeCloseTo(1000, 2);
   });
 
   it('calculates remaining balance using decimal-safe sum', () => {

@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
+import Decimal from 'decimal.js';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 
 @Injectable()
 export class ReportsRepository {
@@ -13,7 +17,8 @@ export class ReportsRepository {
     const startLiteral = quoteLiteral(startDate);
     const endLiteral = quoteLiteral(endDate);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT
         COALESCE(SUM(CASE WHEN type = 'RECEIVABLE' THEN amount ELSE 0 END), 0)::text AS revenue_total,
         COALESCE(SUM(CASE WHEN type = 'PAYABLE' THEN amount ELSE 0 END), 0)::text AS expense_total
@@ -22,7 +27,8 @@ export class ReportsRepository {
         AND due_date >= ${startLiteral}
         AND due_date <= ${endLiteral}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return {
@@ -37,7 +43,8 @@ export class ReportsRepository {
     const startLiteral = quoteLiteral(startDate);
     const endLiteral = quoteLiteral(endDate);
 
-    const balanceResult = await this.drizzleService.getClient().execute(sql.raw(`
+    const balanceResult = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT
         (
           COALESCE((SELECT SUM(initial_balance) FROM ${schema}.bank_accounts WHERE branch_id = ${branchLiteral} AND deleted_at IS NULL), 0)
@@ -47,9 +54,11 @@ export class ReportsRepository {
                         AND due_date < ${startLiteral}
                         AND deleted_at IS NULL), 0)
         )::text AS start_balance
-    `));
+    `),
+    );
 
-    const rowsResult = await this.drizzleService.getClient().execute(sql.raw(`
+    const rowsResult = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT
         due_date::text AS row_date,
         COALESCE(SUM(CASE WHEN type = 'RECEIVABLE' THEN amount ELSE 0 END), 0)::text AS inflow,
@@ -61,11 +70,16 @@ export class ReportsRepository {
         AND deleted_at IS NULL
       GROUP BY due_date
       ORDER BY due_date ASC
-    `));
+    `),
+    );
 
-    const balanceRow = balanceResult.rows[0] as Record<string, unknown> | undefined;
+    const balanceRow = balanceResult.rows[0] as
+      | Record<string, unknown>
+      | undefined;
     return {
-      startBalance: balanceRow?.start_balance ? String(balanceRow.start_balance) : '0.00',
+      startBalance: balanceRow?.start_balance
+        ? String(balanceRow.start_balance)
+        : '0.00',
       rows: (rowsResult.rows as Array<Record<string, unknown>>).map((row) => ({
         date: String(row.row_date),
         inflow: String(row.inflow),
@@ -80,7 +94,8 @@ export class ReportsRepository {
     const startLiteral = quoteLiteral(startDate);
     const endLiteral = quoteLiteral(endDate);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT
         COALESCE(c.name, 'Sem categoria') AS category_name,
         COALESCE(SUM(CASE WHEN e.type = 'RECEIVABLE' THEN e.amount ELSE 0 END), 0)::text AS inflow,
@@ -94,7 +109,8 @@ export class ReportsRepository {
         AND e.deleted_at IS NULL
       GROUP BY COALESCE(c.name, 'Sem categoria')
       ORDER BY category_name ASC
-    `));
+    `),
+    );
 
     const rows = (result.rows as Array<Record<string, unknown>>).map((row) => ({
       categoryName: String(row.category_name),
@@ -105,9 +121,9 @@ export class ReportsRepository {
 
     const totals = rows.reduce(
       (acc, row) => ({
-        inflow: (Number(acc.inflow) + Number(row.inflow)).toFixed(2),
-        outflow: (Number(acc.outflow) + Number(row.outflow)).toFixed(2),
-        net: (Number(acc.net) + Number(row.net)).toFixed(2),
+        inflow: new Decimal(acc.inflow).plus(row.inflow).toFixed(2),
+        outflow: new Decimal(acc.outflow).plus(row.outflow).toFixed(2),
+        net: new Decimal(acc.net).plus(row.net).toFixed(2),
       }),
       { inflow: '0.00', outflow: '0.00', net: '0.00' },
     );
@@ -121,7 +137,8 @@ export class ReportsRepository {
     const startLiteral = quoteLiteral(startDate);
     const endLiteral = quoteLiteral(endDate);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT
         CASE
           WHEN CURRENT_DATE - e.due_date <= 15 THEN '1-15'
@@ -140,7 +157,8 @@ export class ReportsRepository {
         AND e.deleted_at IS NULL
       GROUP BY aging_range
       ORDER BY aging_range
-    `));
+    `),
+    );
 
     return {
       ranges: (result.rows as Array<Record<string, unknown>>).map((row) => ({

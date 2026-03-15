@@ -10,7 +10,9 @@ jest.mock('jose', () => ({
 
 jest.mock('../src/common/guards/jwt.guard', () => ({
   JwtGuard: class {
-    canActivate(context: { switchToHttp: () => { getRequest: () => Record<string, unknown> } }) {
+    canActivate(context: {
+      switchToHttp: () => { getRequest: () => Record<string, unknown> };
+    }) {
       const req = context.switchToHttp().getRequest();
       req.user = {
         sub: 'user-1',
@@ -54,8 +56,17 @@ describe('V1 Contract (e2e)', () => {
   let app: INestApplication<App>;
 
   const rolesServiceMock = {
-    listUserRoles: jest.fn().mockResolvedValue([{ roleId: '11111111-1111-4111-8111-111111111111', roleName: 'Admin' }]),
-    assignRoleToUser: jest.fn().mockImplementation(async (userId: string, roleId: string) => ({ userId, roleId })),
+    listUserRoles: jest
+      .fn()
+      .mockResolvedValue([
+        { roleId: '11111111-1111-4111-8111-111111111111', roleName: 'Admin' },
+      ]),
+    assignRoleToUser: jest
+      .fn()
+      .mockImplementation(async (userId: string, roleId: string) => ({
+        userId,
+        roleId,
+      })),
   };
 
   const branchesServiceMock = {
@@ -65,10 +76,15 @@ describe('V1 Contract (e2e)', () => {
     update: jest.fn(),
     softDelete: jest.fn(),
     unlinkUser: jest.fn(),
-    listUsers: jest.fn().mockResolvedValue([{ userId: '22222222-2222-4222-8222-222222222222' }]),
+    listUsers: jest
+      .fn()
+      .mockResolvedValue([{ userId: '22222222-2222-4222-8222-222222222222' }]),
     assignUser: jest
       .fn()
-      .mockImplementation(async (branchId: string, userId: string) => ({ branchId, userId })),
+      .mockImplementation(async (branchId: string, userId: string) => ({
+        branchId,
+        userId,
+      })),
   };
 
   const reconciliationServiceMock = {
@@ -96,7 +112,12 @@ describe('V1 Contract (e2e)', () => {
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      controllers: [UsersController, BranchesController, ReconciliationController, TenantsController],
+      controllers: [
+        UsersController,
+        BranchesController,
+        ReconciliationController,
+        TenantsController,
+      ],
       providers: [
         { provide: RolesService, useValue: rolesServiceMock },
         { provide: BranchesService, useValue: branchesServiceMock },
@@ -107,7 +128,13 @@ describe('V1 Contract (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
     await app.init();
   });
 

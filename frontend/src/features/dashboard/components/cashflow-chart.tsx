@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import Decimal from 'decimal.js';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/format';
@@ -8,8 +9,8 @@ import type { CashflowPoint } from '@/features/dashboard/hooks/use-dashboard';
 export function CashflowChart({ data }: { data: CashflowPoint[] }) {
   const limited = data.slice(0, 24).map((item) => ({
     ...item,
-    incomingValue: Number(item.incoming),
-    outgoingValue: Number(item.outgoing),
+    incomingValue: new Decimal(item.incoming).toNumber(),
+    outgoingValue: new Decimal(item.outgoing).toNumber(),
   }));
 
   return (
@@ -24,8 +25,8 @@ export function CashflowChart({ data }: { data: CashflowPoint[] }) {
               <YAxis />
               <Tooltip
                 formatter={(value) => {
-                  const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
-                  return formatCurrency(numericValue.toFixed(2));
+                  const numericValue = new Decimal(String(value ?? '0')).toFixed(2);
+                  return formatCurrency(numericValue);
                 }}
               />
               <Line type="monotone" dataKey="incomingValue" stroke="#10B981" strokeWidth={2} />

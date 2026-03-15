@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
@@ -25,18 +34,26 @@ export class BranchesController {
   @RequirePermission('admin.branches.manage')
   async list(): Promise<ApiResponse<BranchResponse[]>> {
     const branches = await this.branchesService.list();
-    return ApiResponse.ok(branches.map((branch) => BranchResponse.from(branch)));
+    return ApiResponse.ok(
+      branches.map((branch) => BranchResponse.from(branch)),
+    );
   }
 
   @Get('my')
-  async myBranches(@CurrentUser() user: AuthUser): Promise<ApiResponse<BranchResponse[]>> {
+  async myBranches(
+    @CurrentUser() user: AuthUser,
+  ): Promise<ApiResponse<BranchResponse[]>> {
     const branches = await this.branchesService.listForUser(user);
-    return ApiResponse.ok(branches.map((branch) => BranchResponse.from(branch)));
+    return ApiResponse.ok(
+      branches.map((branch) => BranchResponse.from(branch)),
+    );
   }
 
   @Post()
   @RequirePermission('admin.branches.manage')
-  async create(@Body() dto: CreateBranchDto): Promise<ApiResponse<BranchResponse>> {
+  async create(
+    @Body() dto: CreateBranchDto,
+  ): Promise<ApiResponse<BranchResponse>> {
     const created = await this.branchesService.create(dto);
     return ApiResponse.created(BranchResponse.from(created));
   }
@@ -55,7 +72,9 @@ export class BranchesController {
   @Delete(':id')
   @Idempotent()
   @RequirePermission('admin.branches.manage')
-  async remove(@Param('id') id: string): Promise<ApiResponse<{ deleted: boolean }>> {
+  async remove(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<{ deleted: boolean }>> {
     await this.branchesService.softDelete(id);
     return ApiResponse.ok({ deleted: true });
   }
@@ -73,7 +92,9 @@ export class BranchesController {
 
   @Get(':id/users')
   @RequirePermission('admin.users.manage')
-  async listUsers(@Param('id') id: string): Promise<ApiResponse<{ userId: string }[]>> {
+  async listUsers(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<{ userId: string }[]>> {
     return ApiResponse.ok(await this.branchesService.listUsers(id));
   }
 
@@ -84,6 +105,8 @@ export class BranchesController {
     @Param('id') id: string,
     @Body() dto: AssignBranchUserDto,
   ): Promise<ApiResponse<{ branchId: string; userId: string }>> {
-    return ApiResponse.created(await this.branchesService.assignUser(id, dto.userId));
+    return ApiResponse.created(
+      await this.branchesService.assignUser(id, dto.userId),
+    );
   }
 }

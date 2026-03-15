@@ -32,7 +32,9 @@ export class ApprovalsController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.approvalsService.approve(entryId, branchId, user));
+    return ApiResponse.ok(
+      await this.approvalsService.approve(entryId, branchId, user),
+    );
   }
 
   @Post(':entryId/reject')
@@ -43,7 +45,9 @@ export class ApprovalsController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.approvalsService.reject(entryId, branchId, dto.reason, user));
+    return ApiResponse.ok(
+      await this.approvalsService.reject(entryId, branchId, dto.reason, user),
+    );
   }
 
   @Post('batch-approve')
@@ -53,7 +57,9 @@ export class ApprovalsController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.approvalsService.batchApprove(dto.entryIds, branchId, user));
+    return ApiResponse.ok(
+      await this.approvalsService.batchApprove(dto.entryIds, branchId, user),
+    );
   }
 
   @Get('history')

@@ -55,6 +55,9 @@ describe('PaymentsService', () => {
     await service.registerPayment('entry-1', dto, user, 'branch-1');
 
     expect(repository.listPaymentAmounts).toHaveBeenCalledWith('entry-1');
-    expect(repository.updateEntryPaidStatus).toHaveBeenCalledWith('entry-1', 'PAID');
+    expect(repository.updateEntryPaidStatus).toHaveBeenCalledWith(
+      'entry-1',
+      'PAID',
+    );
   });
 });

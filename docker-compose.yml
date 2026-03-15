@@ -1,14 +1,12 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: nexos-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: nexos_erp
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,43 +14,109 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: nexos-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    networks:
+      - nexos_internal
 
   pgbouncer:
-    image: edoburu/pgbouncer:latest
+    image: bitnami/pgbouncer:1.22.1
     container_name: nexos-pgbouncer
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "6432:6432"
     environment:
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_HOST: postgres
-      DB_NAME: nexos_erp
-      POOL_MODE: transaction
-      AUTH_TYPE: md5
-      ADMIN_USERS: postgres
-      MAX_CLIENT_CONN: 100
-      DEFAULT_POOL_SIZE: 20
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_PORT: 5432
+      POSTGRESQL_DATABASE: nexos_erp
+      POSTGRESQL_USERNAME: postgres
+      POSTGRESQL_PASSWORD: postgres
+      PGBOUNCER_PORT: 6432
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_MAX_CLIENT_CONN: 100
+      PGBOUNCER_DEFAULT_POOL_SIZE: 20
+      PGBOUNCER_AUTH_TYPE: md5
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep pgbouncer >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexos_internal
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexos-redis
+    restart: unless-stopped
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--requirepass",
+        "redis",
+        "--maxmemory",
+        "256mb",
+        "--maxmemory-policy",
+        "allkeys-lru"
+      ]
     volumes:
-      - ./infra/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - ./infra/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexos_internal
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nexos-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/v1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexos_internal
+      - proxy_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nexos-frontend
+    restart: unless-stopped
+    env_file:
+      - ./frontend/.env.local
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexos_internal
+      - proxy_network
+
+networks:
+  nexos_internal:
+    internal: true
+  proxy_network:
+    external: true
+    name: proxy_network
 
 volumes:
   postgres_data:

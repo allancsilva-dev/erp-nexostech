@@ -20,7 +20,10 @@ export class DashboardController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
   ): Promise<ApiResponse<unknown>> {
-    const data = await this.dashboardService.getSummary(user.tenantId, branchId);
+    const data = await this.dashboardService.getSummary(
+      user.tenantId,
+      branchId,
+    );
     return ApiResponse.ok(data);
   }
 
@@ -30,7 +33,10 @@ export class DashboardController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
   ): Promise<ApiResponse<unknown>> {
-    const data = await this.dashboardService.getOverdue(user.tenantId, branchId);
+    const data = await this.dashboardService.getOverdue(
+      user.tenantId,
+      branchId,
+    );
     return ApiResponse.ok(data);
   }
 
@@ -41,7 +47,11 @@ export class DashboardController {
     @BranchId() branchId: string,
     @Query('period') period = '12m',
   ): Promise<ApiResponse<unknown>> {
-    const data = await this.dashboardService.getCashflowChart(user.tenantId, branchId, period);
+    const data = await this.dashboardService.getCashflowChart(
+      user.tenantId,
+      branchId,
+      period,
+    );
     return ApiResponse.ok(data);
   }
 }

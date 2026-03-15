@@ -11,7 +11,8 @@ export class AuditService {
 
   async exportCsv(page: number, pageSize: number) {
     const { items } = await this.auditRepository.list(page, pageSize);
-    const header = 'id,branchId,userId,action,entity,entityId,requestId,createdAt';
+    const header =
+      'id,branchId,userId,action,entity,entityId,requestId,createdAt';
     const rows = items
       .map((item) =>
         [

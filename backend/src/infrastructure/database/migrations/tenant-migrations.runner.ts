@@ -21,6 +21,17 @@ function parseTenantArg(): string | undefined {
 }
 
 async function ensureControlTable(pool: Pool): Promise<void> {
+  await pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS public.tenants (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT NOT NULL,
+      active BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS public.tenant_migrations (
       tenant_id UUID NOT NULL,

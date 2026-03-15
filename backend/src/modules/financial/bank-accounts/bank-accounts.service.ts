@@ -7,7 +7,9 @@ import { UpdateBankAccountDto } from './dto/update-bank-account.dto';
 
 @Injectable()
 export class BankAccountsService {
-  constructor(private readonly bankAccountsRepository: BankAccountsRepository) {}
+  constructor(
+    private readonly bankAccountsRepository: BankAccountsRepository,
+  ) {}
 
   async list(branchId: string) {
     return this.bankAccountsRepository.list(branchId);

@@ -9,7 +9,10 @@ import {
 import { Reflector } from '@nestjs/core';
 import { createHash } from 'crypto';
 import { Observable, from, of, switchMap } from 'rxjs';
-import { IDEMPOTENT_KEY, IDEMPOTENT_TTL_MS } from '../decorators/idempotent.decorator';
+import {
+  IDEMPOTENT_KEY,
+  IDEMPOTENT_TTL_MS,
+} from '../decorators/idempotent.decorator';
 import { CacheService } from '../../infrastructure/cache/cache.service';
 
 type CachedIdempotentResponse = {
@@ -52,7 +55,13 @@ export class IdempotencyInterceptor implements NestInterceptor {
     }
 
     const payloadHash = createHash('sha256')
-      .update(JSON.stringify({ method: request.method, url: request.originalUrl, body: request.body }))
+      .update(
+        JSON.stringify({
+          method: request.method,
+          url: request.originalUrl,
+          body: request.body,
+        }),
+      )
       .digest('hex');
 
     const cacheKey = `idempotency:${idempotencyKey}`;
@@ -72,17 +81,19 @@ export class IdempotencyInterceptor implements NestInterceptor {
           return of(cached.response);
         }
 
-        return next.handle().pipe(
-          switchMap((response) =>
-            from(
-              this.cacheService.set(
-                cacheKey,
-                { payloadHash, response } satisfies CachedIdempotentResponse,
-                IDEMPOTENT_TTL_MS,
-              ),
-            ).pipe(switchMap(() => of(response))),
-          ),
-        );
+        return next
+          .handle()
+          .pipe(
+            switchMap((response) =>
+              from(
+                this.cacheService.set(
+                  cacheKey,
+                  { payloadHash, response } satisfies CachedIdempotentResponse,
+                  IDEMPOTENT_TTL_MS,
+                ),
+              ).pipe(switchMap(() => of(response))),
+            ),
+          );
       }),
     );
   }

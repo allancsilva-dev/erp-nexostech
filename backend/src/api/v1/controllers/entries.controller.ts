@@ -30,7 +30,9 @@ export class EntriesController {
 
   @Get()
   @RequirePermission('financial.entries.view')
-  async list(@BranchId() branchId: string): Promise<ApiResponse<EntryResponse[]>> {
+  async list(
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<EntryResponse[]>> {
     const entries = await this.entriesService.list(branchId);
     return ApiResponse.ok(entries.map((entry) => EntryResponse.from(entry)));
   }
@@ -66,7 +68,12 @@ export class EntriesController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
   ): Promise<ApiResponse<EntryResponse>> {
-    const updated = await this.entriesService.update(entryId, dto, user, branchId);
+    const updated = await this.entriesService.update(
+      entryId,
+      dto,
+      user,
+      branchId,
+    );
     return ApiResponse.ok(EntryResponse.from(updated));
   }
 
@@ -91,7 +98,12 @@ export class EntriesController {
     @CurrentUser() user: AuthUser,
     @BranchId() branchId: string,
   ): Promise<ApiResponse<EntryResponse>> {
-    const cancelled = await this.entriesService.cancel(entryId, dto.reason, user, branchId);
+    const cancelled = await this.entriesService.cancel(
+      entryId,
+      dto.reason,
+      user,
+      branchId,
+    );
     return ApiResponse.ok(EntryResponse.from(cancelled));
   }
 

@@ -23,11 +23,21 @@ export class TransfersService {
 
   async create(branchId: string, dto: CreateTransferDto, user: AuthUser) {
     if (dto.fromAccountId === dto.toAccountId) {
-      throw new BusinessException('VALIDATION_ERROR', 'Conta origem e destino devem ser diferentes', undefined, 400);
+      throw new BusinessException(
+        'VALIDATION_ERROR',
+        'Conta origem e destino devem ser diferentes',
+        undefined,
+        400,
+      );
     }
 
     if (new Decimal(dto.amount).lte(0)) {
-      throw new BusinessException('VALIDATION_ERROR', 'Valor da transferencia deve ser positivo', undefined, 400);
+      throw new BusinessException(
+        'VALIDATION_ERROR',
+        'Valor da transferencia deve ser positivo',
+        undefined,
+        400,
+      );
     }
 
     const created = await this.txHelper.run(async () => {
@@ -42,8 +52,15 @@ export class TransfersService {
     return created;
   }
 
-  async softDelete(transferId: string, branchId: string, user: AuthUser): Promise<void> {
-    const existing = await this.transfersRepository.findById(transferId, branchId);
+  async softDelete(
+    transferId: string,
+    branchId: string,
+    user: AuthUser,
+  ): Promise<void> {
+    const existing = await this.transfersRepository.findById(
+      transferId,
+      branchId,
+    );
     if (!existing) {
       throw new BusinessException(
         'TRANSFER_NOT_FOUND',

@@ -1,4 +1,12 @@
-import { IsDateString, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsDateString,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class UpdateEntryDto {
   @IsOptional()

@@ -10,7 +10,10 @@ import { REQUIRED_PERMISSION_KEY } from '../decorators/require-permission.decora
 import type { AuthUser } from '../types/auth-user.type';
 import { DrizzleService } from '../../infrastructure/database/drizzle.service';
 import { CacheService } from '../../infrastructure/cache/cache.service';
-import { quoteIdent, quoteLiteral } from '../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../infrastructure/database/sql-builder.util';
 
 const RBAC_CACHE_TTL_MS = 300_000;
 
@@ -23,10 +26,10 @@ export class RbacGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const required = this.reflector.getAllAndOverride<string>(REQUIRED_PERMISSION_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const required = this.reflector.getAllAndOverride<string>(
+      REQUIRED_PERMISSION_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!required) return true;
 
@@ -68,15 +71,17 @@ export class RbacGuard implements CanActivate {
 
     const tenantSchema = quoteIdent(this.drizzleService.getTenantSchema());
     const userId = quoteLiteral(user.sub);
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT DISTINCT rp.permission_code
       FROM ${tenantSchema}.user_roles ur
       JOIN ${tenantSchema}.role_permissions rp ON rp.role_id = ur.role_id
       WHERE ur.user_id = ${userId}
-    `));
+    `),
+    );
 
-    const permissions = (result.rows as Array<Record<string, unknown>>).map((row) =>
-      String(row.permission_code),
+    const permissions = (result.rows as Array<Record<string, unknown>>).map(
+      (row) => String(row.permission_code),
     );
     await this.cacheService.set(cacheKey, permissions, RBAC_CACHE_TTL_MS);
 

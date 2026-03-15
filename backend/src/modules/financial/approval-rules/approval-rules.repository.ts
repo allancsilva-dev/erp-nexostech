@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 import { CreateApprovalRuleDto } from './dto/create-approval-rule.dto';
 import { UpdateApprovalRuleDto } from './dto/update-approval-rule.dto';
 
@@ -25,15 +28,19 @@ export class ApprovalRulesRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, branch_id, entry_type, min_amount, approver_role_id, active, created_at
       FROM ${schema}.approval_rules
       WHERE branch_id = ${branchLiteral}
         AND deleted_at IS NULL
       ORDER BY min_amount ASC, created_at ASC
-    `));
+    `),
+    );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => this.mapRow(row));
+    return (result.rows as Array<Record<string, unknown>>).map((row) =>
+      this.mapRow(row),
+    );
   }
 
   async create(branchId: string, dto: CreateApprovalRuleDto) {
@@ -44,14 +51,16 @@ export class ApprovalRulesRepository {
     const approverRoleIdLiteral = quoteLiteral(dto.approverRoleId);
     const activeLiteral = quoteLiteral(dto.active);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.approval_rules (
         branch_id, entry_type, min_amount, approver_role_id, active
       ) VALUES (
         ${branchLiteral}, ${entryTypeLiteral}, ${minAmountLiteral}, ${approverRoleIdLiteral}, ${activeLiteral}
       )
       RETURNING id, branch_id, entry_type, min_amount, approver_role_id, active, created_at
-    `));
+    `),
+    );
 
     return this.mapRow(result.rows[0] as Record<string, unknown>);
   }
@@ -61,14 +70,16 @@ export class ApprovalRulesRepository {
     const idLiteral = quoteLiteral(id);
     const branchLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, branch_id, entry_type, min_amount, approver_role_id, active, created_at
       FROM ${schema}.approval_rules
       WHERE id = ${idLiteral}
         AND branch_id = ${branchLiteral}
         AND deleted_at IS NULL
       LIMIT 1
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return row ? this.mapRow(row) : null;
@@ -80,19 +91,25 @@ export class ApprovalRulesRepository {
     const branchLiteral = quoteLiteral(branchId);
     const sets: string[] = [];
 
-    if (dto.entryType !== undefined) sets.push(`entry_type = ${quoteLiteral(dto.entryType)}`);
-    if (dto.minAmount !== undefined) sets.push(`min_amount = ${quoteLiteral(dto.minAmount)}`);
-    if (dto.approverRoleId !== undefined) sets.push(`approver_role_id = ${quoteLiteral(dto.approverRoleId)}`);
-    if (dto.active !== undefined) sets.push(`active = ${quoteLiteral(dto.active)}`);
+    if (dto.entryType !== undefined)
+      sets.push(`entry_type = ${quoteLiteral(dto.entryType)}`);
+    if (dto.minAmount !== undefined)
+      sets.push(`min_amount = ${quoteLiteral(dto.minAmount)}`);
+    if (dto.approverRoleId !== undefined)
+      sets.push(`approver_role_id = ${quoteLiteral(dto.approverRoleId)}`);
+    if (dto.active !== undefined)
+      sets.push(`active = ${quoteLiteral(dto.active)}`);
 
     if (sets.length > 0) {
-      await this.drizzleService.getClient().execute(sql.raw(`
+      await this.drizzleService.getClient().execute(
+        sql.raw(`
         UPDATE ${schema}.approval_rules
         SET ${sets.join(', ')}
         WHERE id = ${idLiteral}
           AND branch_id = ${branchLiteral}
           AND deleted_at IS NULL
-      `));
+      `),
+      );
     }
 
     const updated = await this.findById(id, branchId);
@@ -108,12 +125,14 @@ export class ApprovalRulesRepository {
     const idLiteral = quoteLiteral(id);
     const branchLiteral = quoteLiteral(branchId);
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.approval_rules
       SET deleted_at = NOW(), active = false
       WHERE id = ${idLiteral}
         AND branch_id = ${branchLiteral}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
   }
 }

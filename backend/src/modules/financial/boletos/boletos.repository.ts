@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 
 type BoletoRow = {
   id: string;
@@ -38,21 +41,29 @@ export class BoletosRepository {
   async listByBranch(branchId: string): Promise<BoletoRow[]> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, entry_id, branch_id, gateway_boleto_id, status, amount, due_date, pdf_url, paid_at, created_at
       FROM ${schema}.financial_boletos
       WHERE branch_id = ${branchLiteral}
         AND deleted_at IS NULL
       ORDER BY created_at DESC
       LIMIT 100
-    `));
+    `),
+    );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => this.mapRow(row));
+    return (result.rows as Array<Record<string, unknown>>).map((row) =>
+      this.mapRow(row),
+    );
   }
 
-  async findByEntryId(entryId: string, branchId: string): Promise<BoletoRow | null> {
+  async findByEntryId(
+    entryId: string,
+    branchId: string,
+  ): Promise<BoletoRow | null> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT id, entry_id, branch_id, gateway_boleto_id, status, amount, due_date, pdf_url, paid_at, created_at
       FROM ${schema}.financial_boletos
       WHERE entry_id = ${quoteLiteral(entryId)}
@@ -60,7 +71,8 @@ export class BoletosRepository {
         AND deleted_at IS NULL
       ORDER BY created_at DESC
       LIMIT 1
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return row ? this.mapRow(row) : null;
@@ -76,7 +88,8 @@ export class BoletosRepository {
     pdfUrl: string,
   ): Promise<BoletoRow> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.financial_boletos (
         entry_id, branch_id, gateway_boleto_id, status, amount, due_date, pdf_url
       ) VALUES (
@@ -92,7 +105,8 @@ export class BoletosRepository {
         pdf_url = EXCLUDED.pdf_url,
         updated_at = NOW(),
         deleted_at = NULL
-    `));
+    `),
+    );
 
     const current = await this.findByEntryId(entryId, branchId);
     if (!current) {
@@ -104,25 +118,33 @@ export class BoletosRepository {
 
   async markCancelled(entryId: string, branchId: string): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.financial_boletos
       SET status = 'CANCELED', cancelled_at = NOW(), updated_at = NOW()
       WHERE entry_id = ${quoteLiteral(entryId)}
         AND branch_id = ${quoteLiteral(branchId)}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
   }
 
-  async markWebhookStatus(entryId: string, status: string, paidAt?: string): Promise<void> {
+  async markWebhookStatus(
+    entryId: string,
+    status: string,
+    paidAt?: string,
+  ): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const paidAtLiteral = quoteLiteral(paidAt ?? null);
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       UPDATE ${schema}.financial_boletos
       SET status = ${quoteLiteral(status)},
           paid_at = ${paidAtLiteral},
           updated_at = NOW()
       WHERE entry_id = ${quoteLiteral(entryId)}
         AND deleted_at IS NULL
-    `));
+    `),
+    );
   }
 }

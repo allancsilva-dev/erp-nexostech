@@ -1,3 +1,5 @@
+import Decimal from 'decimal.js';
+
 /**
  * Algoritmo de match automático para conciliação bancária.
  *
@@ -38,17 +40,17 @@ export class MatchAlgorithm {
     statement: StatementEntry,
     entries: EntryCandidate[],
   ): MatchCandidate[] {
-    const statementAmount = Math.abs(parseFloat(statement.amount));
+    const statementAmount = new Decimal(statement.amount).abs();
     const statementDate = new Date(statement.paymentDate);
 
     const candidates: MatchCandidate[] = [];
 
     for (const entry of entries) {
-      const entryAmount = Math.abs(parseFloat(entry.amount));
-      const amountDiff = Math.abs(statementAmount - entryAmount);
+      const entryAmount = new Decimal(entry.amount).abs();
+      const amountDiff = statementAmount.minus(entryAmount).abs();
 
       // Tolerância de 1 centavo para diferenças de arredondamento
-      if (amountDiff > 0.01) {
+      if (amountDiff.greaterThan(new Decimal('0.01'))) {
         continue;
       }
 

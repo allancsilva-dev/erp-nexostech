@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -19,8 +27,12 @@ export class ReconciliationController {
 
   @Get('pending')
   @RequirePermission('financial.entries.view')
-  async listPending(@BranchId() branchId: string): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.reconciliationService.listPending(branchId));
+  async listPending(
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(
+      await this.reconciliationService.listPending(branchId),
+    );
   }
 
   @Post('import')
@@ -31,7 +43,9 @@ export class ReconciliationController {
     @CurrentUser() user: AuthUser,
     @Body() dto: ImportReconciliationDto,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.created(await this.reconciliationService.importBatch(branchId, user, dto));
+    return ApiResponse.created(
+      await this.reconciliationService.importBatch(branchId, user, dto),
+    );
   }
 
   @Get(':batchId')
@@ -40,7 +54,9 @@ export class ReconciliationController {
     @Param('batchId') batchId: string,
     @BranchId() branchId: string,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.reconciliationService.getBatchItems(batchId, branchId));
+    return ApiResponse.ok(
+      await this.reconciliationService.getBatchItems(batchId, branchId),
+    );
   }
 
   @Post('match')
@@ -51,7 +67,14 @@ export class ReconciliationController {
     @BranchId() branchId: string,
     @CurrentUser() user: AuthUser,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.reconciliationService.match(dto.itemId, dto.entryId, branchId, user));
+    return ApiResponse.ok(
+      await this.reconciliationService.match(
+        dto.itemId,
+        dto.entryId,
+        branchId,
+        user,
+      ),
+    );
   }
 
   @Delete(':batchId')

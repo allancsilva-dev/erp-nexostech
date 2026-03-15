@@ -45,6 +45,8 @@ export class QueueService implements OnModuleDestroy {
 
   async onModuleDestroy(): Promise<void> {
     await Promise.all(this.workers.map((worker) => worker.close()));
-    await Promise.all(Array.from(this.queues.values()).map((queue) => queue.close()));
+    await Promise.all(
+      Array.from(this.queues.values()).map((queue) => queue.close()),
+    );
   }
 }

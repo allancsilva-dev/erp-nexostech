@@ -23,7 +23,12 @@ type CashflowData = {
 };
 
 type BalanceSheetData = {
-  byCategory: Array<{ categoryName: string; inflow: string; outflow: string; net: string }>;
+  byCategory: Array<{
+    categoryName: string;
+    inflow: string;
+    outflow: string;
+    net: string;
+  }>;
   totals: { inflow: string; outflow: string; net: string };
 };
 
@@ -41,27 +46,48 @@ export class ReportsService {
     private readonly reportsRepository: ReportsRepository,
   ) {}
 
-  async getDre(tenantId: string, branchId: string, startDate: string, endDate: string) {
+  async getDre(
+    tenantId: string,
+    branchId: string,
+    startDate: string,
+    endDate: string,
+  ) {
     const cacheKey = `reports:dre:${tenantId}:${branchId}:${startDate}:${endDate}`;
     const cached = await this.cacheService.get<DreData>(cacheKey);
     if (cached) return cached;
 
-    const base = await this.reportsRepository.getDre(branchId, startDate, endDate);
+    const base = await this.reportsRepository.getDre(
+      branchId,
+      startDate,
+      endDate,
+    );
     const result: DreData = {
       ...base,
-      netResult: this.dreCalculator.calculateResult(base.revenueTotal, base.expenseTotal),
+      netResult: this.dreCalculator.calculateResult(
+        base.revenueTotal,
+        base.expenseTotal,
+      ),
     };
 
     await this.cacheService.set(cacheKey, result, 300_000);
     return result;
   }
 
-  async getCashflow(tenantId: string, branchId: string, startDate: string, endDate: string) {
+  async getCashflow(
+    tenantId: string,
+    branchId: string,
+    startDate: string,
+    endDate: string,
+  ) {
     const cacheKey = `reports:cashflow:${tenantId}:${branchId}:${startDate}:${endDate}`;
     const cached = await this.cacheService.get<CashflowData>(cacheKey);
     if (cached) return cached;
 
-    const base = await this.reportsRepository.getCashflow(branchId, startDate, endDate);
+    const base = await this.reportsRepository.getCashflow(
+      branchId,
+      startDate,
+      endDate,
+    );
     const accumulated = this.cashflowCalculator.calculateAccumulated(
       base.startBalance,
       base.rows.map((row) => ({ inflow: row.inflow, outflow: row.outflow })),
@@ -107,7 +133,12 @@ export class ReportsService {
     endDate: string,
     format: 'csv' | 'json',
   ) {
-    const cashflow = await this.getCashflow(tenantId, branchId, startDate, endDate);
+    const cashflow = await this.getCashflow(
+      tenantId,
+      branchId,
+      startDate,
+      endDate,
+    );
     const filename = `cashflow-${startDate}-${endDate}.${format}`;
 
     if (format === 'json') {
@@ -146,13 +177,22 @@ export class ReportsService {
         content:
           format === 'csv'
             ? csv
-            : Buffer.from(`DRE\n${startDate} - ${endDate}\n${csv}`).toString('base64'),
+            : Buffer.from(`DRE\n${startDate} - ${endDate}\n${csv}`).toString(
+                'base64',
+              ),
       };
     }
 
     if (report === 'cashflow') {
-      const data = await this.getCashflow(tenantId, branchId, startDate, endDate);
-      const rows = data.rows.map((row) => `${row.date},${row.inflow},${row.outflow}`).join('\n');
+      const data = await this.getCashflow(
+        tenantId,
+        branchId,
+        startDate,
+        endDate,
+      );
+      const rows = data.rows
+        .map((row) => `${row.date},${row.inflow},${row.outflow}`)
+        .join('\n');
       const csv = ['date,inflow,outflow', rows].filter(Boolean).join('\n');
 
       return {
@@ -161,16 +201,28 @@ export class ReportsService {
         content:
           format === 'csv'
             ? csv
-            : Buffer.from(`CASHFLOW\n${startDate} - ${endDate}\n${csv}`).toString('base64'),
+            : Buffer.from(
+                `CASHFLOW\n${startDate} - ${endDate}\n${csv}`,
+              ).toString('base64'),
       };
     }
 
     if (report === 'balance-sheet') {
-      const data = await this.getBalanceSheet(tenantId, branchId, startDate, endDate);
+      const data = await this.getBalanceSheet(
+        tenantId,
+        branchId,
+        startDate,
+        endDate,
+      );
       const rows = data.byCategory
-        .map((row) => `${row.categoryName},${row.inflow},${row.outflow},${row.net}`)
+        .map(
+          (row) =>
+            `${row.categoryName},${row.inflow},${row.outflow},${row.net}`,
+        )
         .join('\n');
-      const csv = ['category,inflow,outflow,net', rows].filter(Boolean).join('\n');
+      const csv = ['category,inflow,outflow,net', rows]
+        .filter(Boolean)
+        .join('\n');
 
       return {
         format,
@@ -178,12 +230,16 @@ export class ReportsService {
         content:
           format === 'csv'
             ? csv
-            : Buffer.from(`BALANCE SHEET\n${startDate} - ${endDate}\n${csv}`).toString('base64'),
+            : Buffer.from(
+                `BALANCE SHEET\n${startDate} - ${endDate}\n${csv}`,
+              ).toString('base64'),
       };
     }
 
     const data = await this.getAging(tenantId, branchId, startDate, endDate);
-    const rows = data.ranges.map((row) => `${row.range},${row.total},${row.count}`).join('\n');
+    const rows = data.ranges
+      .map((row) => `${row.range},${row.total},${row.count}`)
+      .join('\n');
     const csv = ['range,total,count', rows].filter(Boolean).join('\n');
 
     return {
@@ -192,26 +248,46 @@ export class ReportsService {
       content:
         format === 'csv'
           ? csv
-          : Buffer.from(`AGING\n${startDate} - ${endDate}\n${csv}`).toString('base64'),
+          : Buffer.from(`AGING\n${startDate} - ${endDate}\n${csv}`).toString(
+              'base64',
+            ),
     };
   }
 
-  async getBalanceSheet(tenantId: string, branchId: string, startDate: string, endDate: string) {
+  async getBalanceSheet(
+    tenantId: string,
+    branchId: string,
+    startDate: string,
+    endDate: string,
+  ) {
     const cacheKey = `reports:balance:${tenantId}:${branchId}:${startDate}:${endDate}`;
     const cached = await this.cacheService.get<BalanceSheetData>(cacheKey);
     if (cached) return cached;
 
-    const result = await this.reportsRepository.getBalanceSheet(branchId, startDate, endDate);
+    const result = await this.reportsRepository.getBalanceSheet(
+      branchId,
+      startDate,
+      endDate,
+    );
     await this.cacheService.set(cacheKey, result, 300_000);
     return result;
   }
 
-  async getAging(tenantId: string, branchId: string, startDate: string, endDate: string) {
+  async getAging(
+    tenantId: string,
+    branchId: string,
+    startDate: string,
+    endDate: string,
+  ) {
     const cacheKey = `reports:aging:${tenantId}:${branchId}:${startDate}:${endDate}`;
     const cached = await this.cacheService.get<AgingData>(cacheKey);
     if (cached) return cached;
 
-    const result = await this.reportsRepository.getAging(branchId, startDate, endDate);
+    const result = await this.reportsRepository.getAging(
+      branchId,
+      startDate,
+      endDate,
+    );
     await this.cacheService.set(cacheKey, result, 300_000);
     return result;
   }

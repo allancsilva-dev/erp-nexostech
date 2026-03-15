@@ -7,7 +7,10 @@ import {
 import { Observable, tap } from 'rxjs';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../infrastructure/database/sql-builder.util';
 import type { AuthUser } from '../types/auth-user.type';
 
 type Snapshot = Record<string, unknown>;
@@ -39,7 +42,8 @@ export class AuditInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    const resolvedPath = request.originalUrl ?? request.route?.path ?? 'unknown';
+    const resolvedPath =
+      request.originalUrl ?? request.route?.path ?? 'unknown';
     const entity = this.resolveEntity(resolvedPath);
     const entityId = this.resolveEntityId(request.params);
     const beforeSnapshotPromise = this.fetchSnapshot(entity, entityId);
@@ -47,25 +51,30 @@ export class AuditInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap({
         next: (responseBody) => {
-          void this.writeAudit(request, responseBody, beforeSnapshotPromise).catch(() => undefined);
+          void this.writeAudit(
+            request,
+            responseBody,
+            beforeSnapshotPromise,
+          ).catch(() => undefined);
         },
       }),
     );
   }
 
-  private async writeAudit(request: {
-    method: string;
-    originalUrl?: string;
-    route?: { path?: string };
-    params?: Record<string, string | undefined>;
-    body?: Record<string, unknown>;
-    headers: Record<string, string | undefined>;
-    ip?: string;
-    requestId?: string;
-    user?: AuthUser;
-  },
-  responseBody: unknown,
-  beforeSnapshotPromise: Promise<Snapshot | null>,
+  private async writeAudit(
+    request: {
+      method: string;
+      originalUrl?: string;
+      route?: { path?: string };
+      params?: Record<string, string | undefined>;
+      body?: Record<string, unknown>;
+      headers: Record<string, string | undefined>;
+      ip?: string;
+      requestId?: string;
+      user?: AuthUser;
+    },
+    responseBody: unknown,
+    beforeSnapshotPromise: Promise<Snapshot | null>,
   ): Promise<void> {
     const user = request.user;
     if (!user?.sub) {
@@ -73,7 +82,8 @@ export class AuditInterceptor implements NestInterceptor {
     }
 
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const resolvedPath = request.originalUrl ?? request.route?.path ?? 'unknown';
+    const resolvedPath =
+      request.originalUrl ?? request.route?.path ?? 'unknown';
     const action = this.mapAction(request.method, resolvedPath);
     const entity = this.resolveEntity(resolvedPath);
     const entityId = this.resolveEntityId(request.params, responseBody);
@@ -86,11 +96,14 @@ export class AuditInterceptor implements NestInterceptor {
       paramKeys: Object.keys(request.params ?? {}),
       bodyKeys: Object.keys(request.body ?? {}),
       responseHasData: Boolean(
-        typeof responseBody === 'object' && responseBody && 'data' in (responseBody as Record<string, unknown>),
+        typeof responseBody === 'object' &&
+        responseBody &&
+        'data' in (responseBody as Record<string, unknown>),
       ),
     });
 
-    await this.drizzleService.getClient().execute(sql.raw(`
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
       INSERT INTO ${schema}.audit_logs (
         branch_id,
         user_id,
@@ -114,10 +127,14 @@ export class AuditInterceptor implements NestInterceptor {
         ${quoteLiteral(request.headers['x-forwarded-for'] ?? request.ip ?? null)},
         ${quoteLiteral(metadata)}::jsonb
       )
-    `));
+    `),
+    );
   }
 
-  private async fetchSnapshot(entity: string, entityId: string): Promise<Snapshot | null> {
+  private async fetchSnapshot(
+    entity: string,
+    entityId: string,
+  ): Promise<Snapshot | null> {
     if (!entityId || entityId === 'n/a') {
       return null;
     }
@@ -128,16 +145,20 @@ export class AuditInterceptor implements NestInterceptor {
     }
 
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(sql.raw(`
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
       SELECT to_jsonb(t) AS payload
       FROM ${schema}.${quoteIdent(table)} t
       WHERE t.id = ${quoteLiteral(entityId)}
       LIMIT 1
-    `));
+    `),
+    );
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     const payload = row?.payload;
-    return payload && typeof payload === 'object' ? (payload as Snapshot) : null;
+    return payload && typeof payload === 'object'
+      ? (payload as Snapshot)
+      : null;
   }
 
   private resolveEntityTable(entity: string): string | null {
@@ -215,7 +236,11 @@ export class AuditInterceptor implements NestInterceptor {
 
     if (responseBody && typeof responseBody === 'object') {
       const data = (responseBody as Record<string, unknown>).data;
-      if (data && typeof data === 'object' && 'id' in (data as Record<string, unknown>)) {
+      if (
+        data &&
+        typeof data === 'object' &&
+        'id' in (data as Record<string, unknown>)
+      ) {
         const id = (data as Record<string, unknown>).id;
         if (typeof id === 'string') {
           return id;
@@ -226,7 +251,10 @@ export class AuditInterceptor implements NestInterceptor {
     return 'n/a';
   }
 
-  private buildFieldChanges(beforeSnapshot: Snapshot | null, afterSnapshot: Snapshot | null): FieldChange[] {
+  private buildFieldChanges(
+    beforeSnapshot: Snapshot | null,
+    afterSnapshot: Snapshot | null,
+  ): FieldChange[] {
     if (!beforeSnapshot && !afterSnapshot) {
       return [];
     }

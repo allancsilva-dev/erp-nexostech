@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
@@ -30,7 +39,9 @@ export class ApprovalRulesController {
     @BranchId() branchId: string,
     @Body() dto: CreateApprovalRuleDto,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.created(await this.approvalRulesService.create(branchId, dto));
+    return ApiResponse.created(
+      await this.approvalRulesService.create(branchId, dto),
+    );
   }
 
   @Put(':id')
@@ -41,7 +52,9 @@ export class ApprovalRulesController {
     @BranchId() branchId: string,
     @Body() dto: UpdateApprovalRuleDto,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.approvalRulesService.update(id, branchId, dto));
+    return ApiResponse.ok(
+      await this.approvalRulesService.update(id, branchId, dto),
+    );
   }
 
   @Delete(':id')
