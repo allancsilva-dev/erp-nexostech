@@ -42,7 +42,7 @@ services:
       timeout: 5s
       retries: 5
     ports:
-      - "3001:3001"
+      - "3004:3001"
     networks:
       - nexos_internal
       - nginx-proxy
