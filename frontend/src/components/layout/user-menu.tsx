@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
-const AUTH_LOGOUT_URL = 'https://auth.zonadev.tech/logout?redirect=https://erp.zonadev.tech';
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech';
 
 export function UserMenu() {
   const user = useAuth();
@@ -35,9 +35,29 @@ export function UserMenu() {
           <DropdownMenuItem
             type="button"
             className="flex items-center gap-2 text-red-600 dark:hover:bg-slate-800"
-            onClick={() => {
+            onClick={async () => {
               setOpen(false);
-              window.location.href = AUTH_LOGOUT_URL;
+
+              try {
+                const res = await fetch(`${AUTH_URL}/auth/logout`, {
+                  method: 'POST',
+                  credentials: 'include',
+                });
+
+                const data = (await res.json()) as {
+                  logoutUrls?: string[];
+                };
+
+                if (data.logoutUrls?.length) {
+                  await Promise.allSettled(
+                    data.logoutUrls.map((url) =>
+                      fetch(url, { method: 'POST', credentials: 'include' }),
+                    ),
+                  );
+                }
+              } finally {
+                window.location.href = `${AUTH_URL}/login?app=erp.zonadev.tech`;
+              }
             }}
           >
             <LogOut className="h-4 w-4" />

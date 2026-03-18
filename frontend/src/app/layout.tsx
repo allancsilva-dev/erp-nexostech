@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = cookies();
-  const token = cookieStore.get('access_token')?.value;
+  const token = cookieStore.get('erp_access_token')?.value;
   const user = token ? decodeToken(token) : null;
 
   return (
