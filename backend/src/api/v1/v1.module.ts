@@ -23,6 +23,7 @@ import { ReconciliationController } from './controllers/reconciliation.controlle
 import { UsersController } from './controllers/users.controller';
 import { MetricsController } from './controllers/metrics.controller';
 import { TenantsController } from './controllers/tenants.controller';
+import { AuthController } from './controllers/auth.controller';
 import { FinancialModule } from '../../modules/financial/financial.module';
 import { RbacModule } from '../../modules/rbac/rbac.module';
 import { TenantsModule } from '../../modules/tenants/tenants.module';
@@ -66,6 +67,7 @@ import { MetricsService } from '../../infrastructure/observability/metrics.servi
     UsersController,
     MetricsController,
     TenantsController,
+    AuthController,
   ],
   providers: [BranchGuard, RbacGuard, FeatureFlagGuard, MetricsService],
 })
