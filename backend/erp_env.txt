@@ -1,0 +1,38 @@
+NODE_ENV=development
+PORT=3001
+
+# Database (PostgreSQL externo via gateway Docker)
+DATABASE_URL=postgresql://postgres:postgres@172.17.0.1:32770/nexos_erp
+DATABASE_STATEMENT_TIMEOUT_MS=5000
+DATABASE_POOL_MAX=20
+DATABASE_POOL_IDLE_TIMEOUT_MS=30000
+DATABASE_POOL_CONNECTION_TIMEOUT_MS=10000
+
+# Redis (container redis no docker-compose)
+REDIS_URL=redis://:redis@redis:6379
+
+# Auth (ZonaDev — já está online)
+AUTH_JWKS_URL=https://auth.zonadev.tech/.well-known/jwks.json
+AUTH_JWT_AUDIENCE=erp.zonadev.tech
+AUTH_JWT_ISSUER=https://auth.zonadev.tech
+
+# Boletos (vazio = módulo inativo, sem erro)
+BOLETOS_GATEWAY_URL=
+
+# Storage R2 (vazio = upload inativo, sem erro)
+R2_ENDPOINT=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=
+R2_PUBLIC_BASE_URL=
+
+# Email (vazio = e-mail inativo, sem erro)
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASSWORD=
+
+# Observability (desligado em dev)
+OTEL_ENABLED=false
+SENTRY_DSN=
+LOG_LEVEL=info
