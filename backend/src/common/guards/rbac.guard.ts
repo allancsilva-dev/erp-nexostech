@@ -36,10 +36,6 @@ export class RbacGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<{ user?: AuthUser }>();
     const user = request.user;
 
-    if (user?.roles.includes('ADMIN')) {
-      return true;
-    }
-
     if (!user?.sub || !user.tenantId) {
       throw new ForbiddenException({
         error: {
