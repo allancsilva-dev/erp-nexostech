@@ -1,8 +1,8 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { Buffer } from 'node:buffer';
 
-const AUTH_URL = process.env.AUTH_URL ?? process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech';
-const APP_AUD = process.env.NEXT_PUBLIC_APP_AUDIENCE ?? 'erp.zonadev.tech';
+const AUTH_URL = process.env.AUTH_URL ?? 'https://auth.zonadev.tech';
+const APP_AUD = 'erp.zonadev.tech';
 const COOKIE_NAME = 'erp_access_token';
 const PUBLIC_PATHS = ['/login', '/api/auth/local-logout', '/_next', '/favicon.ico'];
 
