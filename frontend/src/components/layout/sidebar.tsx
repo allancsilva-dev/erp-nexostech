@@ -25,7 +25,16 @@ const ITEMS = [
   { label: 'Configuracoes', href: ROUTES.configuracoes, permission: 'financial.settings.manage' },
   { label: 'Regua de cobranca', href: ROUTES.reguaCobranca, permission: 'financial.settings.manage' },
   { label: 'Admin > Filiais', href: ROUTES.adminFiliais, permission: 'admin.branches.manage' },
-  { label: 'Admin > Usuarios', href: ROUTES.adminUsuarios, permission: 'admin.users.manage' },
+  {
+    label: 'Configuracoes > Usuarios',
+    href: ROUTES.configuracoesUsuarios,
+    permission: 'admin.users.manage',
+  },
+  {
+    label: 'Configuracoes > Roles',
+    href: ROUTES.configuracoesRoles,
+    permission: 'admin.users.manage',
+  },
 ] as const;
 
 export function Sidebar() {

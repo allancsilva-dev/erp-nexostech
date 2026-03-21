@@ -92,6 +92,13 @@ class ApiClient {
     });
   }
 
+  public patch<T>(endpoint: string, body: unknown): Promise<ApiResponse<T>> {
+    return this.request<ApiResponse<T>>(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
   public delete(endpoint: string): Promise<void> {
     return this.request<void>(endpoint, { method: 'DELETE' });
   }
