@@ -16,6 +16,8 @@ export const envSchema = Joi.object({
   AUTH_JWT_ISSUER: Joi.string().uri().required(),
   AUTH_AUDIENCE: Joi.string().optional(),
   AUTH_ISSUER: Joi.string().uri().optional(),
+  AUTH_URL: Joi.string().uri().optional(),
+  AUTH_INTERNAL_SECRET: Joi.string().optional(),
 
   BOLETOS_GATEWAY_URL: Joi.string().uri().optional(),
 

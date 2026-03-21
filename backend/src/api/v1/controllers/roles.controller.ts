@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   UseGuards,
@@ -16,6 +17,7 @@ import { RbacGuard } from '../../../common/guards/rbac.guard';
 import { CreateRoleDto } from '../../../modules/rbac/dto/create-role.dto';
 import { RoleResponse } from '../../../modules/rbac/dto/role.response';
 import { UpdateRoleDto } from '../../../modules/rbac/dto/update-role.dto';
+import { UpdateRolePermissionsDto } from '../../../modules/rbac/dto/update-role-permissions.dto';
 import { RolesService } from '../../../modules/rbac/roles.service';
 
 @Controller('roles')
@@ -52,6 +54,17 @@ export class RolesController {
   ): Promise<ApiResponse<RoleResponse>> {
     const updated = await this.rolesService.update(id, dto);
     return ApiResponse.ok(RoleResponse.from(updated));
+  }
+
+  @Patch(':id/permissions')
+  @RequirePermission('admin.users.manage')
+  async updatePermissions(
+    @Param('id') id: string,
+    @Body() dto: UpdateRolePermissionsDto,
+  ): Promise<ApiResponse<{ updated: true }>> {
+    return ApiResponse.ok(
+      await this.rolesService.updateRolePermissions(id, dto.permissionCodes),
+    );
   }
 
   @Delete(':id')

@@ -7,6 +7,7 @@ import { CategoriesController } from './controllers/categories.controller';
 import { ContactsController } from './controllers/contacts.controller';
 import { HealthController } from './controllers/health.controller';
 import { RolesController } from './controllers/roles.controller';
+import { PermissionsController } from './controllers/permissions.controller';
 import { BankAccountsController } from './controllers/bank-accounts.controller';
 import { AuditLogsController } from './controllers/audit-logs.controller';
 import { PaymentsController } from './controllers/payments.controller';
@@ -49,6 +50,7 @@ import { MetricsService } from '../../infrastructure/observability/metrics.servi
     EntriesController,
     BranchesController,
     RolesController,
+    PermissionsController,
     ContactsController,
     CategoriesController,
     BankAccountsController,

@@ -21,6 +21,19 @@ export type CurrentUserBranchRow = {
   branchName: string;
 };
 
+export type TenantUserRoleRow = {
+  userId: string;
+  email: string | null;
+  roleId: string;
+  roleName: string;
+};
+
+export type TenantUserBranchRow = {
+  userId: string;
+  branchId: string;
+  branchName: string;
+};
+
 @Injectable()
 export class RolesRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
@@ -125,7 +138,7 @@ export class RolesRepository {
     }
 
     if (dto.permissionCodes !== undefined) {
-      await this.replacePermissions(id, dto.permissionCodes);
+      await this.updateRolePermissions(id, dto.permissionCodes);
     }
 
     const updated = await this.findById(id);
@@ -189,8 +202,8 @@ export class RolesRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     await this.drizzleService.getClient().execute(
       sql.raw(`
-      INSERT INTO ${schema}.user_roles (user_id, role_id)
-      VALUES (${quoteLiteral(userId)}, ${quoteLiteral(roleId)})
+      INSERT INTO ${schema}.user_roles (user_id, role_id, email)
+      VALUES (${quoteLiteral(userId)}, ${quoteLiteral(roleId)}, NULL)
       ON CONFLICT (user_id, role_id) DO NOTHING
     `),
     );
@@ -279,6 +292,163 @@ export class RolesRepository {
     );
   }
 
+  async updateRolePermissions(
+    roleId: string,
+    permissionCodes: string[],
+  ): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const roleLiteral = quoteLiteral(roleId);
+
+    await this.drizzleService.transaction(async (tx) => {
+      await tx.execute(
+        sql.raw(`
+        DELETE FROM ${schema}.role_permissions
+        WHERE role_id = ${roleLiteral}
+      `),
+      );
+
+      if (permissionCodes.length === 0) {
+        return;
+      }
+
+      const values = permissionCodes
+        .map((permission) => `(${roleLiteral}, ${quoteLiteral(permission)})`)
+        .join(', ');
+
+      await tx.execute(
+        sql.raw(`
+        INSERT INTO ${schema}.role_permissions (role_id, permission_code)
+        VALUES ${values}
+      `),
+      );
+    });
+  }
+
+  async existsUserRole(userId: string): Promise<boolean> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT 1
+      FROM ${schema}.user_roles
+      WHERE user_id = ${quoteLiteral(userId)}
+      LIMIT 1
+    `),
+    );
+
+    return result.rows.length > 0;
+  }
+
+  async createUserWithRole(params: {
+    userId: string;
+    roleId: string;
+    email: string;
+  }): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
+      INSERT INTO ${schema}.user_roles (user_id, role_id, email)
+      VALUES (
+        ${quoteLiteral(params.userId)},
+        ${quoteLiteral(params.roleId)},
+        ${quoteLiteral(params.email)}
+      )
+    `),
+    );
+  }
+
+  async replaceUserBranches(userId: string, branchIds: string[]): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const userLiteral = quoteLiteral(userId);
+
+    await this.drizzleService.transaction(async (tx) => {
+      await tx.execute(
+        sql.raw(`
+        DELETE FROM ${schema}.user_branches
+        WHERE user_id = ${userLiteral}
+      `),
+      );
+
+      if (branchIds.length === 0) {
+        return;
+      }
+
+      const values = branchIds
+        .map((branchId) => `(${userLiteral}, ${quoteLiteral(branchId)})`)
+        .join(', ');
+
+      await tx.execute(
+        sql.raw(`
+        INSERT INTO ${schema}.user_branches (user_id, branch_id)
+        VALUES ${values}
+      `),
+      );
+    });
+  }
+
+  async listTenantUsers(): Promise<TenantUserRoleRow[]> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT DISTINCT
+        ur.user_id,
+        ur.email,
+        r.id AS role_id,
+        r.name AS role_name
+      FROM ${schema}.user_roles ur
+      JOIN ${schema}.roles r
+        ON r.id = ur.role_id
+       AND r.deleted_at IS NULL
+      ORDER BY ur.email NULLS LAST, ur.user_id ASC, r.name ASC
+    `),
+    );
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      userId: String(row.user_id),
+      email: row.email ? String(row.email) : null,
+      roleId: String(row.role_id),
+      roleName: String(row.role_name),
+    }));
+  }
+
+  async listBranchesByUserIds(userIds: string[]): Promise<TenantUserBranchRow[]> {
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const idsCsv = userIds.map((id) => quoteLiteral(id)).join(', ');
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT ub.user_id, ub.branch_id, b.name AS branch_name
+      FROM ${schema}.user_branches ub
+      JOIN ${schema}.branches b
+        ON b.id = ub.branch_id
+       AND b.active = true
+       AND b.deleted_at IS NULL
+      WHERE ub.user_id IN (${idsCsv})
+      ORDER BY b.name ASC
+    `),
+    );
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      userId: String(row.user_id),
+      branchId: String(row.branch_id),
+      branchName: String(row.branch_name),
+    }));
+  }
+
+  async syncUserEmail(userId: string, email: string): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
+      UPDATE ${schema}.user_roles
+      SET email = ${quoteLiteral(email)}
+      WHERE user_id = ${quoteLiteral(userId)}
+        AND (email IS DISTINCT FROM ${quoteLiteral(email)})
+    `),
+    );
+  }
+
   private async getPermissionsMap(
     roleIds: string[],
   ): Promise<Map<string, string[]>> {
@@ -312,28 +482,6 @@ export class RolesRepository {
     roleId: string,
     permissionCodes: string[],
   ): Promise<void> {
-    const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const roleLiteral = quoteLiteral(roleId);
-    await this.drizzleService.getClient().execute(
-      sql.raw(`
-      DELETE FROM ${schema}.role_permissions
-      WHERE role_id = ${roleLiteral}
-    `),
-    );
-
-    if (permissionCodes.length === 0) {
-      return;
-    }
-
-    const values = permissionCodes
-      .map((permission) => `(${roleLiteral}, ${quoteLiteral(permission)})`)
-      .join(', ');
-
-    await this.drizzleService.getClient().execute(
-      sql.raw(`
-      INSERT INTO ${schema}.role_permissions (role_id, permission_code)
-      VALUES ${values}
-    `),
-    );
+    await this.updateRolePermissions(roleId, permissionCodes);
   }
 }
