@@ -53,9 +53,11 @@ Prefixo global: `/api/v1`
 - `PORT`
 - `DATABASE_URL`
 - `REDIS_URL`
-- `JWT_ISSUER`
-- `JWT_AUDIENCE`
-- `JWKS_URL`
+- `AUTH_JWKS_URL`
+- `AUTH_JWT_AUDIENCE`
+- `AUTH_JWT_ISSUER`
+- `AUTH_URL`
+- `AUTH_INTERNAL_SECRET`
 - `R2_*` (quando upload estiver ativo)
 
 ## Modulos de Negocio
@@ -92,6 +94,36 @@ Prefixo global: `/api/v1`
 - `GET /api/v1/reports/dre`
 - `GET /api/v1/transfers`
 - `POST /api/v1/transfers`
+
+## Endpoints de Acesso (SSO + RBAC)
+
+Ja existentes:
+
+- `GET /api/v1/users/me/permissions`
+- `GET /api/v1/users/:id/roles`
+- `POST /api/v1/users/:id/roles`
+- `GET /api/v1/roles`
+- `POST /api/v1/roles`
+- `PUT /api/v1/roles/:id`
+- `DELETE /api/v1/roles/:id`
+- `DELETE /api/v1/roles/users/:id/roles/:roleId`
+
+Adicionados recentemente:
+
+- `GET /api/v1/users/me`
+- `GET /api/v1/users`
+- `POST /api/v1/users`
+- `PATCH /api/v1/users/:userId/branches`
+- `GET /api/v1/permissions`
+- `PATCH /api/v1/roles/:id/permissions`
+
+Regras aplicadas:
+
+- `GET /users/me` retorna `403 USER_NOT_PROVISIONED` quando usuario nao pertence ao tenant.
+- Atualizacao de permissoes de role usa transacao no repositorio.
+- `permission_code` validado contra catalogo `SYSTEM_PERMISSIONS`.
+- Invalida cache RBAC em alteracao de role/permissoes.
+- Integracao com Auth para resolver usuario por email em `POST /users` via `AUTH_URL` + `X-Internal-Secret`.
 
 ## Qualidade Atual
 
@@ -229,6 +261,15 @@ financial.approval_rules.manage
 admin.branches.manage
 admin.users.manage
 ```
+
+### SSO + Gestao de Usuarios e Roles (Mar/2026)
+
+Commits aplicados:
+
+- `d00363c`: GET `/users/me` com consulta otimizada de roles/permissoes e retorno de branches.
+- `b0ff818`: migration multi-tenant adicionando `email` em `user_roles`.
+- `2a99510`: catalogo central de permissoes + endpoint para listagem.
+- `35273f1`: criacao/listagem de usuarios, update de branches, patch de permissoes com transacao e invalidacao de cache.
 
 ## Aderencia ao prompt-backed.md
 

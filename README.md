@@ -66,20 +66,57 @@ Defina no minimo:
 - `PORT`
 - `DATABASE_URL`
 - `REDIS_URL`
-- `JWT_ISSUER`
-- `JWT_AUDIENCE`
-- `JWKS_URL`
+- `AUTH_JWKS_URL`
+- `AUTH_JWT_AUDIENCE`
+- `AUTH_JWT_ISSUER`
+- `AUTH_URL`
+- `AUTH_INTERNAL_SECRET`
 
 ### Frontend
 
-- `API_INTERNAL_URL` (SSR/serverFetch)
-- `NEXT_PUBLIC_SENTRY_DSN` (opcional em desenvolvimento)
+- `API_INTERNAL_URL`
+- `AUTH_URL`
+- `NEXT_PUBLIC_AUTH_URL`
+- `NEXT_PUBLIC_APP_AUDIENCE`
+- `AUTH_COOKIE_NAME` (default: `erp_access_token`)
+- `NEXT_PUBLIC_SENTRY_DSN` (opcional)
 
 ## Fluxo de Autenticacao (SSO)
 
-1. Frontend verifica cookie `access_token` no `middleware.ts`.
-2. Sem token ou token expirado: redirect para `https://auth.zonadev.tech`.
-3. Com token valido, frontend renderiza e backend valida JWT/JWKS.
+1. Frontend verifica cookie `erp_access_token` no `frontend/src/middleware.ts`.
+2. Sem token valido, tenta token exchange via cookie `zonadev_sid` em `AUTH_URL/oauth/token?aud=<APP_AUD>`.
+3. Se exchange falhar, redireciona para login do Auth.
+4. Chamadas client-side usam `/api/v1/*` no Next; o proxy `frontend/src/app/api/v1/[...path]/route.ts` injeta `Authorization: Bearer <erp_access_token>` quando necessario.
+5. Backend valida JWT via RS256/JWKS (JwtGuard) e aplica RBAC por tenant (RbacGuard + cache Redis).
+6. Logout local limpa cookie HttpOnly via `GET/POST /api/auth/local-logout`.
+
+## Gestao de Acesso (Usuarios e Roles)
+
+Backend (novos endpoints principais):
+
+- `GET /api/v1/users/me`
+- `GET /api/v1/users`
+- `POST /api/v1/users`
+- `PATCH /api/v1/users/:userId/branches`
+- `GET /api/v1/permissions`
+- `PATCH /api/v1/roles/:id/permissions`
+
+Observacoes importantes:
+
+- `GET /api/v1/users/me` retorna `user`, `permissions` e `branches`.
+- Quando usuario nao esta provisionado no tenant, retorna `403` com codigo `USER_NOT_PROVISIONED`.
+- `PATCH /api/v1/roles/:id/permissions` usa transacao para evitar estado parcial.
+- Permissoes sao validadas contra `SYSTEM_PERMISSIONS` antes de salvar.
+- Mudancas de role/permissoes invalidam cache RBAC (`rbac:<tenantId>:<userId>`).
+- Nao existe tabela `permissions`; os codigos ficam em `role_permissions` e no catalogo de sistema.
+- Migration multi-tenant adiciona `email` em `user_roles` para cache de exibicao.
+
+Frontend (novas telas):
+
+- `/configuracoes/usuarios`
+- `/configuracoes/roles`
+
+As paginas usam proxy `/api/v1/*`, TanStack Query e protecao por permissao `admin.users.manage`.
 
 ## Correcoes Aplicadas (Auditoria)
 
@@ -99,6 +136,18 @@ Apos auditoria completa de aderencia aos prompts de especificacao, as seguintes 
 | 9 | Backend | 19 permissoes financeiras corretamente seedadas no onboarding (verificado em BLOCO 2) | `48c295f` |
 | 10 | Frontend | usePayEntry ja possuia onMutate/onError/onSettled — hook duplicado sem callbacks removido | `811594d` |
 | 11 | Frontend | types/ criados em 8 features: approvals, audit, boletos, collection-rules, dashboard, reports, settings, transfers | `8ae5e6d` |
+
+## Atualizacoes SSO + Acesso (Mar/2026)
+
+| Scope | Descricao | Commit |
+|---|---|---|
+| Backend | GET `/users/me` com roles+permissions (query otimizada) e branches | `d00363c` |
+| Backend | Migration multi-tenant: coluna `email` em `user_roles` | `b0ff818` |
+| Backend | Catalogo `SYSTEM_PERMISSIONS` e endpoint `GET /permissions` | `2a99510` |
+| Backend | CRUD de usuarios + patch de permissions com transacao e invalidacao de cache | `35273f1` |
+| Frontend | AuthProvider com `/users/me`, proxy bearer injection e local-logout | `6aa92d8` |
+| Frontend | Pagina de gestao de usuarios | `b742e25` |
+| Frontend | Pagina de gestao de roles/permissoes | `baf0e39` |
 
 Para detalhes tecnicos de cada correcao, consulte:
 - [backend/README.md](backend/README.md)

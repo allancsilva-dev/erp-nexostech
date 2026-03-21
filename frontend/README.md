@@ -75,13 +75,20 @@ Aplicacao: `http://localhost:3000`
 
 ## Variaveis de Ambiente
 
-- `API_INTERNAL_URL` (serverFetch em Server Components)
+- `API_INTERNAL_URL` (proxy Next `/api/v1/*` -> backend)
+- `AUTH_URL`
+- `NEXT_PUBLIC_AUTH_URL`
+- `NEXT_PUBLIC_APP_AUDIENCE`
+- `AUTH_COOKIE_NAME` (default `erp_access_token`)
 - `NEXT_PUBLIC_SENTRY_DSN` (opcional no dev)
 
 ## Regras Implementadas (resumo)
 
-- SSO sem tela de login (middleware + cookie `access_token`)
-- Decode do JWT no server (`app/layout.tsx` + `lib/jwt.ts`)
+- SSO sem tela de login local (middleware + cookie `erp_access_token`)
+- Token exchange via `zonadev_sid` em `AUTH_URL/oauth/token`
+- `AuthProvider` client-side carregando `/api/v1/users/me`
+- Proxy Next em `app/api/v1/[...path]/route.ts` com injecao automatica de Bearer a partir de cookie HttpOnly
+- Logout local via `GET/POST /api/auth/local-logout`
 - Query keys centralizadas com isolamento por filial
 - Data fetching via TanStack Query e clients centralizados (`lib/api-client.ts`, `lib/api-server.ts`)
 - Formularios com RHF + Zod
@@ -105,8 +112,25 @@ Aplicacao: `http://localhost:3000`
 - `/financeiro/auditoria`
 - `/financeiro/regua-cobranca`
 - `/financeiro/configuracoes`
+- `/configuracoes/usuarios`
+- `/configuracoes/roles`
 - `/admin/filiais`
 - `/admin/usuarios`
+
+## Gestao de Acesso no Frontend
+
+- `AuthProvider` expoe `user`, `permissions`, `branches`, `hasPermission`, `isAdmin`, `reload` e `logout`.
+- `usePermissions` passa a usar o contexto de auth (nao consulta endpoint separado de permissoes do usuario).
+- Sidebar inclui atalhos para configuracoes de usuarios e roles, controlados por `admin.users.manage`.
+- Pagina `/configuracoes/usuarios` permite:
+  - listar usuarios do tenant
+  - adicionar usuario por email
+  - trocar role de usuario
+  - atualizar filiais vinculadas
+- Pagina `/configuracoes/roles` permite:
+  - listar/criar roles
+  - editar permissoes por modulo
+  - excluir role (quando permitido)
 
 ## Qualidade Atual
 
@@ -156,3 +180,11 @@ Implementacao funcional com cobertura ampla dos requisitos de arquitetura, UX, R
 - Optimistic updates implementados no fluxo critico de pagamento
 - `PermissionGate` aplicado em acoes criticas
 - TanStack Query com query keys isoladas por filial
+
+## Atualizacoes SSO + Acesso (Mar/2026)
+
+Commits aplicados:
+
+- `6aa92d8`: AuthProvider com `/users/me`, logout local e adaptacao de hooks/permissoes.
+- `b742e25`: layout de configuracoes e pagina de gestao de usuarios.
+- `baf0e39`: pagina de gestao de roles e permissoes.
