@@ -7,6 +7,10 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { EventBusService } from '../../infrastructure/events/event-bus.service';
 import { TenantContextService } from '../../infrastructure/database/tenant-context.service';
 import {
+  PermissionDef,
+  SYSTEM_PERMISSIONS,
+} from '../../common/constants/permissions';
+import {
   RbacRolePermissionsChangedEvent,
   RbacUserRoleChangedEvent,
 } from '../../common/events/rbac.events';
@@ -109,6 +113,19 @@ export class RolesService {
     }
 
     return this.rolesRepository.listUserPermissions(user.sub);
+  }
+
+  listSystemPermissions(): Record<string, PermissionDef[]> {
+    return SYSTEM_PERMISSIONS.reduce<Record<string, PermissionDef[]>>(
+      (acc, permission) => {
+        if (!acc[permission.module]) {
+          acc[permission.module] = [];
+        }
+        acc[permission.module].push(permission);
+        return acc;
+      },
+      {},
+    );
   }
 
   async getCurrentUserProfile(user: AuthUser): Promise<{

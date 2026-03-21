@@ -30,6 +30,12 @@ export class RolesController {
     return ApiResponse.ok(roles.map((role) => RoleResponse.from(role)));
   }
 
+  @Get('permissions')
+  @RequirePermission('admin.users.manage')
+  async listPermissions(): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(this.rolesService.listSystemPermissions());
+  }
+
   @Post()
   @RequirePermission('admin.users.manage')
   async create(@Body() dto: CreateRoleDto): Promise<ApiResponse<RoleResponse>> {
