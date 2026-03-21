@@ -10,11 +10,17 @@ import { AssignUserRoleDto } from '../../../modules/rbac/dto/assign-user-role.dt
 import { RolesService } from '../../../modules/rbac/roles.service';
 
 @Controller('users')
-@UseGuards(JwtGuard, RbacGuard)
 export class UsersController {
   constructor(private readonly rolesService: RolesService) {}
 
+  @Get('me')
+  @UseGuards(JwtGuard)
+  async me(@CurrentUser() user: AuthUser): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.rolesService.getCurrentUserProfile(user));
+  }
+
   @Get('me/permissions')
+  @UseGuards(JwtGuard, RbacGuard)
   async mePermissions(
     @CurrentUser() user: AuthUser,
   ): Promise<ApiResponse<string[]>> {
@@ -22,6 +28,7 @@ export class UsersController {
   }
 
   @Get(':id/roles')
+  @UseGuards(JwtGuard, RbacGuard)
   @RequirePermission('admin.users.manage')
   async listRoles(
     @Param('id') userId: string,
@@ -30,6 +37,7 @@ export class UsersController {
   }
 
   @Post(':id/roles')
+  @UseGuards(JwtGuard, RbacGuard)
   @Idempotent()
   @RequirePermission('admin.users.manage')
   async assignRole(

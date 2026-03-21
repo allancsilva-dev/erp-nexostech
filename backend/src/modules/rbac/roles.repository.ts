@@ -9,6 +9,18 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { RoleEntity } from './dto/role.response';
 import { UpdateRoleDto } from './dto/update-role.dto';
 
+export type CurrentUserRoleRow = {
+  roleId: string;
+  roleName: string;
+  isSystem: boolean;
+  permissionCode: string | null;
+};
+
+export type CurrentUserBranchRow = {
+  branchId: string;
+  branchName: string;
+};
+
 @Injectable()
 export class RolesRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
@@ -199,6 +211,57 @@ export class RolesRepository {
     return (result.rows as Array<Record<string, unknown>>).map((row) =>
       String(row.permission_code),
     );
+  }
+
+  async listCurrentUserRolesAndPermissions(
+    userId: string,
+  ): Promise<CurrentUserRoleRow[]> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT DISTINCT
+        ur.role_id,
+        r.name AS role_name,
+        r.is_system,
+        rp.permission_code
+      FROM ${schema}.user_roles ur
+      JOIN ${schema}.roles r
+        ON r.id = ur.role_id
+       AND r.deleted_at IS NULL
+      LEFT JOIN ${schema}.role_permissions rp
+        ON rp.role_id = ur.role_id
+      WHERE ur.user_id = ${quoteLiteral(userId)}
+      ORDER BY r.name ASC, rp.permission_code ASC
+    `),
+    );
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      roleId: String(row.role_id),
+      roleName: String(row.role_name),
+      isSystem: Boolean(row.is_system),
+      permissionCode: row.permission_code ? String(row.permission_code) : null,
+    }));
+  }
+
+  async listCurrentUserBranches(userId: string): Promise<CurrentUserBranchRow[]> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT ub.branch_id, b.name AS branch_name
+      FROM ${schema}.user_branches ub
+      JOIN ${schema}.branches b
+        ON b.id = ub.branch_id
+       AND b.active = true
+       AND b.deleted_at IS NULL
+      WHERE ub.user_id = ${quoteLiteral(userId)}
+      ORDER BY b.name ASC
+    `),
+    );
+
+    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+      branchId: String(row.branch_id),
+      branchName: String(row.branch_name),
+    }));
   }
 
   async listUserIdsByRole(roleId: string): Promise<string[]> {

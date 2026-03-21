@@ -111,6 +111,67 @@ export class RolesService {
     return this.rolesRepository.listUserPermissions(user.sub);
   }
 
+  async getCurrentUserProfile(user: AuthUser): Promise<{
+    user: {
+      id: string;
+      email: string | null;
+      tenantId: string;
+      roles: Array<{ id: string; name: string; isSystem: boolean }>;
+      active: true;
+    };
+    permissions: string[];
+    branches: Array<{ id: string; name: string }>;
+  }> {
+    const rows = await this.rolesRepository.listCurrentUserRolesAndPermissions(
+      user.sub,
+    );
+
+    if (rows.length === 0) {
+      throw new BusinessException(
+        'USER_NOT_PROVISIONED',
+        'Usuario nao configurado neste tenant. Contate o administrador.',
+        undefined,
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const rolesMap = new Map<string, { id: string; name: string; isSystem: boolean }>();
+    const permissionsSet = new Set<string>();
+
+    for (const row of rows) {
+      if (!rolesMap.has(row.roleId)) {
+        rolesMap.set(row.roleId, {
+          id: row.roleId,
+          name: row.roleName,
+          isSystem: row.isSystem,
+        });
+      }
+
+      if (row.permissionCode) {
+        permissionsSet.add(row.permissionCode);
+      }
+    }
+
+    const branchesRows = await this.rolesRepository.listCurrentUserBranches(
+      user.sub,
+    );
+
+    return {
+      user: {
+        id: user.sub,
+        email: user.email ?? null,
+        tenantId: user.tenantId,
+        roles: Array.from(rolesMap.values()),
+        active: true,
+      },
+      permissions: Array.from(permissionsSet.values()).sort(),
+      branches: branchesRows.map((branch) => ({
+        id: branch.branchId,
+        name: branch.branchName,
+      })),
+    };
+  }
+
   private emitUserRoleChanged(userId: string): void {
     this.eventBusService.emit(
       'rbac.user-role.changed',
