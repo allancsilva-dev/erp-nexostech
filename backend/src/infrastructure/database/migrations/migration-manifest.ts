@@ -513,4 +513,11 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
        REFERENCES ${schema}.bank_accounts(id, branch_id)`,
     ],
   },
+  {
+    name: '014_add_user_roles_email_cache',
+    run: (schema) => [
+      `ALTER TABLE ${schema}.user_roles
+       ADD COLUMN IF NOT EXISTS email VARCHAR(255)`,
+    ],
+  },
 ];
