@@ -33,6 +33,13 @@ async function proxy(req: NextRequest, params: { path: string[] }) {
   const authorization = req.headers.get('authorization');
   if (authorization) headers['authorization'] = authorization;
 
+  if (!headers.authorization) {
+    const token = req.cookies.get('erp_access_token')?.value;
+    if (token) {
+      headers.authorization = `Bearer ${token}`;
+    }
+  }
+
   const xBranchId = req.headers.get('x-branch-id');
   if (xBranchId) headers['x-branch-id'] = xBranchId;
 

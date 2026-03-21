@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { ChevronDown, LogOut, UserCircle2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { useAuthContext } from '@/providers/auth-provider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
-const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech';
-
 export function UserMenu() {
   const user = useAuth();
+  const { logout } = useAuthContext();
   const [open, setOpen] = useState(false);
 
   return (
@@ -23,7 +23,7 @@ export function UserMenu() {
         <span className="flex min-w-0 items-center gap-2 text-left">
           <UserCircle2 className="h-4 w-4 shrink-0" />
           <span className="min-w-0">
-            <span className="block truncate text-sm font-medium">{user?.name ?? 'Usuario'}</span>
+            <span className="block truncate text-sm font-medium">{user?.email ?? 'Usuario'}</span>
             <span className="block truncate text-xs text-slate-500">{user?.email ?? 'sem-email'}</span>
           </span>
         </span>
@@ -37,27 +37,7 @@ export function UserMenu() {
             className="flex items-center gap-2 text-red-600 dark:hover:bg-slate-800"
             onClick={async () => {
               setOpen(false);
-
-              try {
-                const res = await fetch(`${AUTH_URL}/auth/logout`, {
-                  method: 'POST',
-                  credentials: 'include',
-                });
-
-                const data = (await res.json()) as {
-                  logoutUrls?: string[];
-                };
-
-                if (data.logoutUrls?.length) {
-                  await Promise.allSettled(
-                    data.logoutUrls.map((url) =>
-                      fetch(url, { method: 'POST', credentials: 'include' }),
-                    ),
-                  );
-                }
-              } finally {
-                window.location.href = `${AUTH_URL}/login?app=erp.zonadev.tech`;
-              }
+              await logout();
             }}
           >
             <LogOut className="h-4 w-4" />
