@@ -42,6 +42,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return;
     }
 
+    console.error('[AllExceptionsFilter]', exception);
+
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       error: {
         code: 'INTERNAL_ERROR',
