@@ -13,7 +13,3 @@ export async function fetchMe(): Promise<UserMe> {
   const response = await api.get<UserMe>('/users/me');
   return unwrapData<UserMe>(response);
 }
-
-export async function fetchMyPermissions(): Promise<string[]> {
-  return [];
-}
