@@ -23,6 +23,11 @@ export class BranchGuard implements CanActivate {
       user?: AuthUser;
     }>();
 
+    // ADMIN tem acesso total - nao precisa de X-Branch-Id
+    if (request.user?.roles.includes('ADMIN')) {
+      return true;
+    }
+
     const branchId = request.headers['x-branch-id'];
     if (!branchId) {
       throw new BadRequestException({
@@ -31,10 +36,6 @@ export class BranchGuard implements CanActivate {
           message: 'Header X-Branch-Id ausente',
         },
       });
-    }
-
-    if (request.user?.roles.includes('ADMIN')) {
-      return true;
     }
 
     const userId = request.user?.sub;
