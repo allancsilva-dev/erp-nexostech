@@ -1,5 +1,5 @@
 import { api } from '@/lib/api-client';
-import type { MyPermissionsResponse, UserMe } from '@/lib/types/auth';
+import type { UserMe } from '@/lib/types/auth';
 
 function unwrapData<T>(payload: unknown): T {
   if (payload && typeof payload === 'object' && 'data' in payload) {
@@ -15,7 +15,5 @@ export async function fetchMe(): Promise<UserMe> {
 }
 
 export async function fetchMyPermissions(): Promise<string[]> {
-  const response = await api.get<MyPermissionsResponse>('/users/me/permissions');
-  const data = unwrapData<MyPermissionsResponse>(response);
-  return data.permissions ?? [];
+  return [];
 }
