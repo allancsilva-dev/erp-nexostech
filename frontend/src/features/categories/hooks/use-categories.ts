@@ -10,7 +10,7 @@ export function useCategories(type?: 'RECEITA' | 'DESPESA') {
   const { activeBranchId } = useBranch();
   return useQuery({
     queryKey: queryKeys.categories.tree(activeBranchId || 'default', type),
-    queryFn: () => api.get<Category[]>('/categories/tree', type ? { type } : undefined),
+    queryFn: () => api.get<Category[]>('/categories', type ? { type } : undefined),
     enabled: Boolean(activeBranchId),
   });
 }
