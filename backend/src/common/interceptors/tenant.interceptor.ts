@@ -52,6 +52,7 @@ export class TenantInterceptor implements NestInterceptor {
         '/tenants',
         '/admin',
         '/users/me/permissions',
+        '/users/me',
         '/branches/my',
       ];
 
