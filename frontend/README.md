@@ -64,7 +64,7 @@ npm install
 npm run dev
 ```
 
-Aplicacao: `http://localhost:3000`
+Aplicacao: `http://localhost:3003`
 
 ## Scripts
 
@@ -79,7 +79,7 @@ Aplicacao: `http://localhost:3000`
 - `AUTH_URL`
 - `NEXT_PUBLIC_AUTH_URL`
 - `NEXT_PUBLIC_APP_AUDIENCE`
-- `AUTH_COOKIE_NAME` (default `erp_access_token`)
+- `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_SENTRY_DSN` (opcional no dev)
 
 Observacoes importantes:
@@ -195,3 +195,49 @@ Commits aplicados:
 - `b742e25`: layout de configuracoes e pagina de gestao de usuarios.
 - `baf0e39`: pagina de gestao de roles e permissoes.
 - `3dcfe25`: middleware corrigido para token exchange em `/api/oauth/token`.
+
+## Fix Definitivo Pos-Redesign (Mar/2026)
+
+Aplicado com commits isolados, lint em cada etapa e build final validado.
+
+### Arquitetura de cookies confirmada
+
+- `zonadev_sid`: cookie de sessao central emitido pelo Auth (`domain: .zonadev.tech`)
+- `erp_access_token`: cookie scoped ao ERP, criado pelo middleware (`domain: erp.zonadev.tech`)
+- O frontend ERP nao deve criar cookie generico `access_token` em `.zonadev.tech`
+
+### Mudancas aplicadas
+
+- `fix(auth): restore erp_access_token cookie with domain erp.zonadev.tech`
+  - `src/middleware.ts` usa `COOKIE_NAME = 'erp_access_token'`
+  - token exchange via `zonadev_sid` em `${AUTH_URL}/api/oauth/token?aud=...`
+  - redirect para login com params `app` e `redirect`
+- `fix(api): use relative API_BASE for proxy route`
+  - `src/lib/api-client.ts` usa `const API_BASE = '/api/v1'`
+- `fix(permissions): proxy AuthContext instead of independent fetch`
+  - `src/providers/permission-provider.tsx` nao faz fetch proprio de permissoes
+  - permissao vem de `AuthProvider`
+- `fix(layout): fix hydration warnings and provider hierarchy`
+  - `src/app/layout.tsx` com `suppressHydrationWarning`
+  - `ThemeProvider` configurado com `attribute=class`, `defaultTheme=dark`, `enableSystem=false`
+- `fix(hydration): add mounted guard to all useTheme consumers`
+  - validado em todos consumidores atuais de `useTheme`
+- `fix(auth): remove unused fetchMyPermissions`
+  - `src/lib/api/auth.ts` sem fetch legado de permissoes
+
+### Infraestrutura de porta
+
+- Frontend padronizado na porta `3003`:
+  - `package.json`: `next dev -p 3003` e `next start -p 3003`
+  - `Dockerfile`: `EXPOSE 3003` + healthcheck em `localhost:3003`
+  - `docker-compose.yml`: mapeamento `3003:3003`
+
+### Validacao operacional recomendada
+
+1. Limpar cookies de `erp.zonadev.tech`
+2. Abrir `erp.zonadev.tech`
+3. Verificar redirect para `auth.zonadev.tech/login?app=erp.zonadev.tech&redirect=...`
+4. Login concluido deve retornar ao ERP com cookie `erp_access_token` no dominio `erp.zonadev.tech`
+5. Confirmar ausencia de cookie `access_token` generico criado pelo ERP
+6. Conferir chamadas para `/api/v1/branches/my` sem `401`
+7. Validar ausencia de erros de hidratacao no console
