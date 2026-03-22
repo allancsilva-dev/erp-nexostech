@@ -7,8 +7,8 @@ export function DropdownMenu({ className, ...props }: React.HTMLAttributes<HTMLD
   return <div className={cn('relative inline-block', className)} {...props} />;
 }
 export function DropdownMenuContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('min-w-44 rounded-md border bg-white p-1 shadow', className)} {...props} />;
+  return <div className={cn('min-w-44 rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] p-1 shadow', className)} {...props} />;
 }
 export function DropdownMenuItem({ className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button className={cn('block w-full rounded px-3 py-2 text-left text-sm hover:bg-slate-100', className)} {...props} />;
+  return <button className={cn('block w-full rounded px-3 py-2 text-left text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]', className)} {...props} />;
 }

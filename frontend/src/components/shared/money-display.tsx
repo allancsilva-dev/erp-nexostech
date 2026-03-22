@@ -13,7 +13,13 @@ export function MoneyDisplay({
   const negative = value.startsWith('-');
 
   return (
-    <span className={cn('font-mono tabular-nums', colored ? (negative ? 'text-red-600' : 'text-emerald-600') : '', className)}>
+    <span
+      className={cn(
+        'font-mono tabular-nums',
+        colored ? (negative ? 'text-[var(--danger)]' : 'text-[var(--success)]') : '',
+        className,
+      )}
+    >
       {formatCurrency(value)}
     </span>
   );

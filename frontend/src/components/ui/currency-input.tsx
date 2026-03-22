@@ -17,7 +17,7 @@ export function CurrencyInput({
       prefix="R$ "
       decimalScale={2}
       fixedDecimalScale
-      className="w-full rounded-xl border border-[#d3d8c5] bg-white px-3 py-2 text-sm"
+      className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-2 text-sm text-[var(--text-primary)]"
       onValueChange={(values) => {
         const decimal = values.floatValue ?? 0;
         onChange(decimal.toFixed(2));

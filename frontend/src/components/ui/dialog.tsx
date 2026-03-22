@@ -5,11 +5,11 @@ import { cn } from '@/lib/utils';
 
 export function Dialog({ open, children }: { open: boolean; children: React.ReactNode }) {
   if (!open) return null;
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">{children}</div>;
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--text-primary)]/30 p-4">{children}</div>;
 }
 
 export function DialogContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800', className)} {...props} />;
+  return <div className={cn('w-full max-w-lg rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-6 text-[var(--text-primary)] [box-shadow:var(--card-glow)]', className)} {...props} />;
 }
 
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
