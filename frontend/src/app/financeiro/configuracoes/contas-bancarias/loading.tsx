@@ -1,10 +1,10 @@
-﻿export default function Loading() {
+export default function Loading() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <div className="skeleton mb-2 h-6 w-40" />
-          <div className="skeleton h-4 w-56" />
+          <div className="skeleton h-4 w-52" />
         </div>
       </div>
       <div className="surface-card p-5">

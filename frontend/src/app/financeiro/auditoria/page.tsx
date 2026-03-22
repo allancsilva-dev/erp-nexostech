@@ -3,9 +3,11 @@ import { AuditLogTable } from '@/features/audit/components/audit-log-table';
 
 export default function AuditoriaPage() {
   return (
-    <div className="space-y-6">
+    <div>
       <PageHeader title="Auditoria" subtitle="Logs de alteracao no modulo financeiro" />
-      <AuditLogTable />
+      <div className="surface-card p-5">
+        <AuditLogTable />
+      </div>
     </div>
   );
 }

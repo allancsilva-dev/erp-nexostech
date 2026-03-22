@@ -2,9 +2,11 @@
 
 export default function AdminUsuariosPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader title="Admin - Usuarios" subtitle="Gestao de usuarios e acessos" />
-      <div className="rounded-xl border bg-white p-6 dark:bg-slate-800">Vinculacao de usuarios e roles.</div>
+    <div>
+      <PageHeader title="Usuarios" subtitle="Gestao de utilizadores e acessos" />
+      <div className="surface-card p-5" style={{ color: 'hsl(var(--text-secondary))' }}>
+        Vinculacao de usuarios e roles.
+      </div>
     </div>
   );
 }

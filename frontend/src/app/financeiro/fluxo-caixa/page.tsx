@@ -3,9 +3,11 @@ import { CashflowDetailed } from '@/features/reports/components/cashflow-detaile
 
 export default function FluxoCaixaPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader title="Fluxo de caixa" subtitle="Entradas, saidas e saldo acumulado" />
-      <CashflowDetailed />
+    <div>
+      <PageHeader title="Fluxo de caixa" subtitle="Entradas, saidas e projecao" />
+      <div className="surface-card p-5">
+        <CashflowDetailed />
+      </div>
     </div>
   );
 }

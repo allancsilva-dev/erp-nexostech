@@ -11,18 +11,25 @@ export default function BoletosPage() {
 
   if (!enabled) {
     return (
-      <EmptyState
-        title="Recurso nao disponivel no seu plano"
-        description="Boletos estao disponiveis apenas nos planos Pro e Enterprise."
-        action={<Link href="/configuracoes">Ver planos</Link>}
-      />
+      <div>
+        <PageHeader title="Boletos" subtitle="Emissao e acompanhamento" />
+        <div className="surface-card p-5">
+          <EmptyState
+            title="Recurso nao disponivel no seu plano"
+            description="Boletos estao disponiveis apenas nos planos Pro e Enterprise."
+            action={<Link href="/configuracoes">Ver planos</Link>}
+          />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Boletos" subtitle="Gestao de boletos emitidos e recebidos" />
-      <BoletoList />
+    <div>
+      <PageHeader title="Boletos" subtitle="Emissao e acompanhamento" />
+      <div className="surface-card p-5">
+        <BoletoList />
+      </div>
     </div>
   );
 }

@@ -12,19 +12,28 @@ export default function AprovacoesPage() {
 
   if (!enabled) {
     return (
-      <EmptyState
-        title="Recurso nao disponivel no seu plano"
-        description="Aprovacoes estao disponiveis apenas nos planos Pro e Enterprise."
-        action={<Link href="/configuracoes">Ver planos</Link>}
-      />
+      <div>
+        <PageHeader title="Aprovacoes" subtitle="Lancamentos aguardando aprovacao" />
+        <div className="surface-card p-5">
+          <EmptyState
+            title="Recurso nao disponivel no seu plano"
+            description="Aprovacoes estao disponiveis apenas nos planos Pro e Enterprise."
+            action={<Link href="/configuracoes">Ver planos</Link>}
+          />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Aprovacoes" subtitle="Fila de lancamentos pendentes de aprovacao" />
-      <ApprovalActions />
-      <ApprovalList />
+    <div>
+      <PageHeader title="Aprovacoes" subtitle="Lancamentos aguardando aprovacao" />
+      <div className="mb-4 surface-card p-5">
+        <ApprovalActions />
+      </div>
+      <div className="surface-card p-5">
+        <ApprovalList />
+      </div>
     </div>
   );
 }

@@ -12,19 +12,28 @@ export default function ReguaCobrancaPage() {
 
   if (!enabled) {
     return (
-      <EmptyState
-        title="Recurso nao disponivel no seu plano"
-        description="Regua de cobranca esta disponivel apenas nos planos Pro e Enterprise."
-        action={<Link href="/configuracoes">Ver planos</Link>}
-      />
+      <div>
+        <PageHeader title="Regua de cobranca" subtitle="Envio automatico de e-mails" />
+        <div className="surface-card p-5">
+          <EmptyState
+            title="Recurso nao disponivel no seu plano"
+            description="Regua de cobranca esta disponivel apenas nos planos Pro e Enterprise."
+            action={<Link href="/configuracoes">Ver planos</Link>}
+          />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Regua de cobranca" subtitle="Regras automaticas e templates" />
-      <RulesList />
-      <TemplateEditor />
+    <div>
+      <PageHeader title="Regua de cobranca" subtitle="Envio automatico de e-mails" />
+      <div className="mb-4 surface-card p-5">
+        <RulesList />
+      </div>
+      <div className="surface-card p-5">
+        <TemplateEditor />
+      </div>
     </div>
   );
 }

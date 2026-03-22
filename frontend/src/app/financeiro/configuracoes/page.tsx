@@ -6,12 +6,20 @@ import { RolesManager } from '@/features/settings/components/roles-manager';
 
 export default function ConfiguracoesPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader title="Configuracoes" subtitle="Contas, regras e bloqueios" />
-      <BankAccountsCrud />
-      <FinancialSettings />
-      <LockPeriodForm />
-      <RolesManager />
+    <div>
+      <PageHeader title="Configuracoes" subtitle="Configuracoes do modulo financeiro" />
+      <div className="mb-4 surface-card p-5">
+        <FinancialSettings />
+      </div>
+      <div className="mb-4 surface-card p-5">
+        <BankAccountsCrud />
+      </div>
+      <div className="mb-4 surface-card p-5">
+        <RolesManager />
+      </div>
+      <div className="surface-card p-5">
+        <LockPeriodForm />
+      </div>
     </div>
   );
 }

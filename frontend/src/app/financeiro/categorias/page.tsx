@@ -4,10 +4,14 @@ import { CategoryTree } from '@/features/categories/components/category-tree';
 
 export default function CategoriasPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader title="Categorias" subtitle="Estrutura hierarquica de receitas e despesas" />
-      <CategoryForm />
-      <CategoryTree categories={[]} />
+    <div>
+      <PageHeader title="Categorias" subtitle="Plano de contas da filial" />
+      <div className="mb-4 surface-card p-5">
+        <CategoryForm />
+      </div>
+      <div className="surface-card p-5">
+        <CategoryTree categories={[]} />
+      </div>
     </div>
   );
 }

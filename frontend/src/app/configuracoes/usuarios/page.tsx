@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AlertCircle, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 import { v4 as uuid } from 'uuid';
 import { api } from '@/lib/api-client';
@@ -62,6 +63,10 @@ export default function ConfiguracoesUsuariosPage() {
   const users = usersQuery.data?.data ?? [];
   const roles = rolesQuery.data?.data ?? [];
   const branches = branchesQuery.data?.data ?? [];
+  const isLoading = usersQuery.isLoading || rolesQuery.isLoading || branchesQuery.isLoading;
+  const isError = usersQuery.isError || rolesQuery.isError || branchesQuery.isError;
+  const errorMessage =
+    usersQuery.error?.message || rolesQuery.error?.message || branchesQuery.error?.message || 'Erro desconhecido';
 
   const createUser = useMutation({
     mutationFn: () =>
@@ -137,13 +142,10 @@ export default function ConfiguracoesUsuariosPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Usuarios"
-        subtitle="Vincule usuarios do Auth ao tenant e gerencie roles e filiais"
-      />
+    <div>
+      <PageHeader title="Usuarios" subtitle="Gestao de utilizadores e acessos" />
 
-      <Card className="space-y-4">
+      <Card className="surface-card mb-4 space-y-4 p-5">
         <h2 className="text-base font-semibold">Adicionar usuario</h2>
 
         <div className="grid gap-3 md:grid-cols-3">
@@ -175,7 +177,7 @@ export default function ConfiguracoesUsuariosPage() {
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-slate-600 dark:text-slate-300">
+          <p className="mb-2 text-sm" style={{ color: 'hsl(var(--text-secondary))' }}>
             Filiais iniciais (opcional)
           </p>
           <div className="flex flex-wrap gap-2">
@@ -184,7 +186,8 @@ export default function ConfiguracoesUsuariosPage() {
               return (
                 <label
                   key={branch.id}
-                  className="inline-flex items-center gap-2 rounded border px-3 py-1.5 text-sm"
+                  className="inline-flex items-center gap-2 rounded px-3 py-1.5 text-sm"
+                  style={{ border: '0.5px solid hsl(var(--border-default))', color: 'hsl(var(--text-secondary))' }}
                 >
                   <input
                     type="checkbox"
@@ -207,7 +210,53 @@ export default function ConfiguracoesUsuariosPage() {
         </div>
       </Card>
 
-      <Card className="overflow-x-auto">
+      <Card className="surface-card overflow-x-auto p-0">
+        {isLoading ? (
+          <div className="p-5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex gap-4 py-3">
+                <div className="skeleton h-4 w-32" />
+                <div className="skeleton h-4 flex-1" />
+                <div className="skeleton h-4 w-20" />
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {isError ? (
+          <div className="m-4 flex items-center justify-between rounded-lg p-4" style={{ background: 'hsl(var(--danger-muted))' }}>
+            <div className="flex items-center gap-3">
+              <AlertCircle size={18} style={{ color: 'hsl(var(--danger))' }} />
+              <div>
+                <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger))' }}>
+                  Falha ao carregar dados
+                </p>
+                <p className="text-xs" style={{ color: 'hsl(var(--text-secondary))' }}>
+                  {errorMessage}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                void usersQuery.refetch();
+                void rolesQuery.refetch();
+                void branchesQuery.refetch();
+              }}
+              className="rounded-md px-3 py-1.5 text-xs font-medium"
+              style={{
+                background: 'hsl(var(--bg-surface))',
+                color: 'hsl(var(--text-primary))',
+                border: '0.5px solid hsl(var(--border-default))',
+              }}
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : null}
+
+        {!isLoading && !isError ? (
+          <>
         <Table>
           <TableHeader>
             <TableRow>
@@ -221,7 +270,7 @@ export default function ConfiguracoesUsuariosPage() {
               <TableRow key={item.userId}>
                 <TableCell>
                   <div className="font-medium">{item.email}</div>
-                  <div className="text-xs text-slate-500">{item.userId}</div>
+                  <div className="text-xs" style={{ color: 'hsl(var(--text-muted))' }}>{item.userId}</div>
                 </TableCell>
 
                 <TableCell>
@@ -254,7 +303,8 @@ export default function ConfiguracoesUsuariosPage() {
                         return (
                           <label
                             key={branch.id}
-                            className="inline-flex items-center gap-2 rounded border px-2 py-1 text-xs"
+                            className="inline-flex items-center gap-2 rounded px-2 py-1 text-xs"
+                            style={{ border: '0.5px solid hsl(var(--border-default))', color: 'hsl(var(--text-secondary))' }}
                           >
                             <input
                               type="checkbox"
@@ -286,7 +336,17 @@ export default function ConfiguracoesUsuariosPage() {
         </Table>
 
         {users.length === 0 ? (
-          <p className="p-3 text-sm text-slate-500">Nenhum usuario vinculado ao tenant.</p>
+          <div className="flex flex-col items-center py-12 text-center">
+            <Inbox size={40} style={{ color: 'hsl(var(--text-muted))' }} strokeWidth={1} />
+            <p className="mt-4 text-sm font-medium" style={{ color: 'hsl(var(--text-secondary))' }}>
+              Nenhum usuario vinculado
+            </p>
+            <p className="mt-1 text-xs" style={{ color: 'hsl(var(--text-muted))' }}>
+              Adicione o primeiro utilizador para comecar
+            </p>
+          </div>
+        ) : null}
+          </>
         ) : null}
       </Card>
     </div>

@@ -3,9 +3,11 @@ import { DreTable } from '@/features/reports/components/dre-table';
 
 export default function DrePage() {
   return (
-    <div className="space-y-6">
-      <PageHeader title="DRE" subtitle="Receitas, despesas e resultado liquido" />
-      <DreTable />
+    <div>
+      <PageHeader title="DRE" subtitle="Demonstrativo de resultado" />
+      <div className="surface-card p-5">
+        <DreTable />
+      </div>
     </div>
   );
 }

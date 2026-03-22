@@ -3,9 +3,11 @@ import { BalanceSheetTable } from '@/features/reports/components/balance-sheet-t
 
 export default function BalancetePage() {
   return (
-    <div className="space-y-6">
-      <PageHeader title="Balancete" subtitle="Visao consolidada por categorias" />
-      <BalanceSheetTable />
+    <div>
+      <PageHeader title="Balancete" subtitle="Movimentacao por categoria" />
+      <div className="surface-card p-5">
+        <BalanceSheetTable />
+      </div>
     </div>
   );
 }

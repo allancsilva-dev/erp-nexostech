@@ -5,11 +5,17 @@ import { MatchActions } from '@/features/reconciliation/components/match-actions
 
 export default function ConciliacaoPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader title="Conciliacao bancaria" subtitle="Upload de extrato e vinculacao de lancamentos" />
-      <UploadStatement />
-      <SplitView />
-      <MatchActions />
+    <div>
+      <PageHeader title="Conciliacao bancaria" subtitle="Importar extrato e conciliar" />
+      <div className="mb-4 surface-card p-5">
+        <UploadStatement />
+      </div>
+      <div className="mb-4 surface-card p-5">
+        <SplitView />
+      </div>
+      <div className="surface-card p-5">
+        <MatchActions />
+      </div>
     </div>
   );
 }

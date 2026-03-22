@@ -1,30 +1,49 @@
 ﻿import Link from 'next/link';
-import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/layout/page-header';
 
 export default function RelatoriosPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader title="Relatorios" subtitle="DRE, Balancete e Aging" />
-      <div className="grid gap-4 md:grid-cols-3">
-        <Link href="/financeiro/relatorios/dre">
-          <Card>
-            <CardTitle>DRE</CardTitle>
-            <CardContent>Demonstrativo de resultado do exercicio.</CardContent>
-          </Card>
-        </Link>
-        <Link href="/financeiro/relatorios/balancete">
-          <Card>
-            <CardTitle>Balancete</CardTitle>
-            <CardContent>Saldos por categoria e periodo.</CardContent>
-          </Card>
-        </Link>
-        <Link href="/financeiro/relatorios/aging">
-          <Card>
-            <CardTitle>Aging</CardTitle>
-            <CardContent>Faixas de atraso por titulo.</CardContent>
-          </Card>
-        </Link>
+    <div>
+      <PageHeader title="Relatorios" subtitle="Relatorios financeiros" />
+      <div className="surface-card p-5">
+        <div className="grid gap-4 md:grid-cols-3">
+          <Link
+            href="/financeiro/relatorios/dre"
+            className="rounded-lg p-4 transition-colors"
+            style={{ border: '0.5px solid hsl(var(--border-default))', background: 'hsl(var(--bg-surface))' }}
+          >
+            <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--text-primary))' }}>
+              DRE
+            </h3>
+            <p className="mt-1 text-xs" style={{ color: 'hsl(var(--text-secondary))' }}>
+              Demonstrativo de resultado
+            </p>
+          </Link>
+          <Link
+            href="/financeiro/relatorios/balancete"
+            className="rounded-lg p-4 transition-colors"
+            style={{ border: '0.5px solid hsl(var(--border-default))', background: 'hsl(var(--bg-surface))' }}
+          >
+            <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--text-primary))' }}>
+              Balancete
+            </h3>
+            <p className="mt-1 text-xs" style={{ color: 'hsl(var(--text-secondary))' }}>
+              Movimentacao por categoria
+            </p>
+          </Link>
+          <Link
+            href="/financeiro/relatorios/aging"
+            className="rounded-lg p-4 transition-colors"
+            style={{ border: '0.5px solid hsl(var(--border-default))', background: 'hsl(var(--bg-surface))' }}
+          >
+            <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--text-primary))' }}>
+              Aging
+            </h3>
+            <p className="mt-1 text-xs" style={{ color: 'hsl(var(--text-secondary))' }}>
+              Analise de vencimentos
+            </p>
+          </Link>
+        </div>
       </div>
     </div>
   );

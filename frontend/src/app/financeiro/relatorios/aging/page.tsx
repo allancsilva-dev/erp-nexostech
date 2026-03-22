@@ -3,9 +3,11 @@ import { AgingTable } from '@/features/reports/components/aging-table';
 
 export default function AgingPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader title="Aging" subtitle="Titulos por faixa de vencimento" />
-      <AgingTable />
+    <div>
+      <PageHeader title="Aging" subtitle="Analise de vencimentos" />
+      <div className="surface-card p-5">
+        <AgingTable />
+      </div>
     </div>
   );
 }
