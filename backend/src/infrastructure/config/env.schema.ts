@@ -13,7 +13,7 @@ export const envSchema = Joi.object({
 
   AUTH_JWKS_URL: Joi.string().uri().required(),
   AUTH_JWT_AUDIENCE: Joi.string().required(),
-  AUTH_JWT_ISSUER: Joi.string().uri().required(),
+  AUTH_JWT_ISSUER: Joi.string().required(),
   AUTH_AUDIENCE: Joi.string().optional(),
   AUTH_ISSUER: Joi.string().uri().optional(),
   AUTH_URL: Joi.string().uri().optional(),
