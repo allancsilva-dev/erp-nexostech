@@ -1,59 +1,28 @@
 'use client';
 
-import { createContext, useContext, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchMe, fetchMyPermissions } from '@/lib/api/auth';
-import { queryKeys } from '@/lib/query-keys';
-import type { UserMe } from '@/lib/types/auth';
+import { createContext, useContext } from 'react';
+import { useAuthContext } from '@/providers/auth-provider';
 
 interface PermissionContextValue {
-  user: UserMe | null;
+  user: { plan?: string } | null;
   permissions: string[];
-  isAdmin: boolean;
   isLoading: boolean;
   hasPermission: (code: string) => boolean;
   hasAnyPermission: (codes: string[]) => boolean;
+  isAdmin: () => boolean;
 }
 
 const PermissionContext = createContext<PermissionContextValue | null>(null);
 
 export function PermissionProvider({ children }: { children: React.ReactNode }) {
-  const { data: me, isLoading: isLoadingMe } = useQuery({
-    queryKey: ['users', 'me'],
-    queryFn: fetchMe,
-    staleTime: 300_000,
-  });
-
-  const { data: permissions = [], isLoading: isLoadingPermissions } = useQuery({
-    queryKey: queryKeys.permissions.me,
-    queryFn: fetchMyPermissions,
-    staleTime: 300_000,
-  });
-
-  const isAdmin = useMemo(() => {
-    return (
-      me?.roles?.some(
-        (role) => role.isSystem && role.name.toLowerCase() === 'admin',
-      ) ?? false
-    );
-  }, [me?.roles]);
-
-  const value = useMemo<PermissionContextValue>(() => {
-    const hasPermission = (code: string) => isAdmin || permissions.includes(code);
-    const hasAnyPermission = (codes: string[]) => isAdmin || codes.some((code) => permissions.includes(code));
-
-    return {
-      user: me ?? null,
-      permissions,
-      isAdmin,
-      isLoading: isLoadingMe || isLoadingPermissions,
-      hasPermission,
-      hasAnyPermission,
-    };
-  }, [isAdmin, isLoadingMe, isLoadingPermissions, me, permissions]);
+  const { permissions, loading, user, hasPermission, hasAnyPermission, isAdmin } = useAuthContext();
 
   return (
-    <PermissionContext.Provider value={value}>{children}</PermissionContext.Provider>
+    <PermissionContext.Provider
+      value={{ permissions, isLoading: loading, user, hasPermission, hasAnyPermission, isAdmin }}
+    >
+      {children}
+    </PermissionContext.Provider>
   );
 }
 
