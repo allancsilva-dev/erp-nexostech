@@ -72,6 +72,10 @@ Defina no minimo:
 - `AUTH_URL`
 - `AUTH_INTERNAL_SECRET`
 
+Observacao importante:
+
+- `AUTH_JWT_ISSUER` deve ser o issuer literal do JWT (ex.: `auth.zonadev.tech`, sem `https://`).
+
 ### Frontend
 
 - `API_INTERNAL_URL`
@@ -84,11 +88,13 @@ Defina no minimo:
 ## Fluxo de Autenticacao (SSO)
 
 1. Frontend verifica cookie `erp_access_token` no `frontend/src/middleware.ts`.
-2. Sem token valido, tenta token exchange via cookie `zonadev_sid` em `AUTH_URL/oauth/token?aud=<APP_AUD>`.
+2. Sem token valido, tenta token exchange via cookie `zonadev_sid` em `AUTH_URL/api/oauth/token?aud=<APP_AUD>`.
 3. Se exchange falhar, redireciona para login do Auth.
 4. Chamadas client-side usam `/api/v1/*` no Next; o proxy `frontend/src/app/api/v1/[...path]/route.ts` injeta `Authorization: Bearer <erp_access_token>` quando necessario.
 5. Backend valida JWT via RS256/JWKS (JwtGuard) e aplica RBAC por tenant (RbacGuard + cache Redis).
-6. Logout local limpa cookie HttpOnly via `GET/POST /api/auth/local-logout`.
+6. `SUPERADMIN` sem tenant pode acessar rotas de bootstrap (ex.: `/users/me`) e recebe perfil administrativo com `permissions: ['*']`.
+7. `BranchGuard` aplica bypass para `ADMIN` antes de exigir `X-Branch-Id`.
+8. Logout local limpa cookie HttpOnly via `GET/POST /api/auth/local-logout`.
 
 ## Gestao de Acesso (Usuarios e Roles)
 
@@ -148,6 +154,18 @@ Apos auditoria completa de aderencia aos prompts de especificacao, as seguintes 
 | Frontend | AuthProvider com `/users/me`, proxy bearer injection e local-logout | `6aa92d8` |
 | Frontend | Pagina de gestao de usuarios | `b742e25` |
 | Frontend | Pagina de gestao de roles/permissoes | `baf0e39` |
+
+### Hotfixes de Autenticacao SSO (Mar/2026)
+
+| Scope | Descricao | Commit |
+|---|---|---|
+| Frontend | Middleware: token exchange corrigido para `/api/oauth/token` e redirect para URL atual da app | `3dcfe25` |
+| Backend | Config: `AUTH_JWT_ISSUER` sem validacao Joi `.uri()` | `1fa4f5a` |
+| Backend | TenantInterceptor: rota `/users/me` permitida para `SUPERADMIN` sem tenant | `f1d9c64` |
+| Backend | RolesService: early return em `/users/me` para `SUPERADMIN` sem tenant (`permissions: ['*']`) | `af573e5` |
+| Backend | BranchGuard: bypass de `ADMIN` antes da validacao de `X-Branch-Id` | `1bf4564` |
+| Backend | AllExceptionsFilter: log de erro interno com `console.error` antes do 500 | `5bd6348` |
+| Backend | Migration runner: sanitizacao de schema de tenant com `_` (consistente com TenantContextService) | `6e4b79a` |
 
 Para detalhes tecnicos de cada correcao, consulte:
 - [backend/README.md](backend/README.md)

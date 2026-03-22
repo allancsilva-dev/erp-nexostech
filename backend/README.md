@@ -60,6 +60,11 @@ Prefixo global: `/api/v1`
 - `AUTH_INTERNAL_SECRET`
 - `R2_*` (quando upload estiver ativo)
 
+Observacoes importantes:
+
+- `AUTH_JWT_ISSUER` deve corresponder ao claim `iss` do token (ex.: `auth.zonadev.tech`) e nao precisa ser URI.
+- Em ambiente local, alinhar `.env` com o issuer real emitido pelo ZonaDev Auth.
+
 ## Modulos de Negocio
 
 - `modules/branches`
@@ -120,10 +125,15 @@ Adicionados recentemente:
 Regras aplicadas:
 
 - `GET /users/me` retorna `403 USER_NOT_PROVISIONED` quando usuario nao pertence ao tenant.
+- Excecao: `SUPERADMIN` sem tenant recebe retorno imediato com `permissions: ['*']` e `branches: []`.
 - Atualizacao de permissoes de role usa transacao no repositorio.
 - `permission_code` validado contra catalogo `SYSTEM_PERMISSIONS`.
 - Invalida cache RBAC em alteracao de role/permissoes.
 - Integracao com Auth para resolver usuario por email em `POST /users` via `AUTH_URL` + `X-Internal-Secret`.
+- `TenantInterceptor` permite `SUPERADMIN` sem tenant em rotas de bootstrap (incluindo `/users/me`).
+- `BranchGuard` aplica bypass para `ADMIN` antes de validar header `X-Branch-Id`.
+- `AllExceptionsFilter` registra erro interno com `console.error` antes de responder `500`.
+- `tenant-migrations.runner.ts` usa o mesmo algoritmo de sanitizacao do tenant context (`replace(/[^a-zA-Z0-9_]/g, '_')`).
 
 ## Qualidade Atual
 
@@ -270,6 +280,15 @@ Commits aplicados:
 - `b0ff818`: migration multi-tenant adicionando `email` em `user_roles`.
 - `2a99510`: catalogo central de permissoes + endpoint para listagem.
 - `35273f1`: criacao/listagem de usuarios, update de branches, patch de permissoes com transacao e invalidacao de cache.
+
+Hotfixes adicionais (Mar/2026):
+
+- `1fa4f5a`: schema Joi ajustado para aceitar `AUTH_JWT_ISSUER` sem `.uri()`.
+- `f1d9c64`: `TenantInterceptor` liberando `/users/me` para `SUPERADMIN` sem tenant.
+- `af573e5`: early return em `RolesService.getCurrentUserProfile` para `SUPERADMIN` sem tenant.
+- `1bf4564`: `BranchGuard` com bypass de `ADMIN` antes da validacao de branch header.
+- `5bd6348`: log de excecoes internas em `AllExceptionsFilter`.
+- `6e4b79a`: migration runner com sanitizacao de schema via underscore.
 
 ## Aderencia ao prompt-backed.md
 

@@ -82,13 +82,19 @@ Aplicacao: `http://localhost:3000`
 - `AUTH_COOKIE_NAME` (default `erp_access_token`)
 - `NEXT_PUBLIC_SENTRY_DSN` (opcional no dev)
 
+Observacoes importantes:
+
+- `AUTH_URL` e necessario para o middleware fazer token exchange server-side.
+- `NEXT_PUBLIC_AUTH_URL` e usado em fluxos client-side (login/logout redirection).
+
 ## Regras Implementadas (resumo)
 
 - SSO sem tela de login local (middleware + cookie `erp_access_token`)
-- Token exchange via `zonadev_sid` em `AUTH_URL/oauth/token`
+- Token exchange via `zonadev_sid` em `AUTH_URL/api/oauth/token`
 - `AuthProvider` client-side carregando `/api/v1/users/me`
 - Proxy Next em `app/api/v1/[...path]/route.ts` com injecao automatica de Bearer a partir de cookie HttpOnly
 - Logout local via `GET/POST /api/auth/local-logout`
+- Redirect de login preserva path/query atual da app via `NEXT_PUBLIC_APP_URL` (fallback `https://erp.zonadev.tech`).
 - Query keys centralizadas com isolamento por filial
 - Data fetching via TanStack Query e clients centralizados (`lib/api-client.ts`, `lib/api-server.ts`)
 - Formularios com RHF + Zod
@@ -188,3 +194,4 @@ Commits aplicados:
 - `6aa92d8`: AuthProvider com `/users/me`, logout local e adaptacao de hooks/permissoes.
 - `b742e25`: layout de configuracoes e pagina de gestao de usuarios.
 - `baf0e39`: pagina de gestao de roles e permissoes.
+- `3dcfe25`: middleware corrigido para token exchange em `/api/oauth/token`.
