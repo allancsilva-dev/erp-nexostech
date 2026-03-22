@@ -3,7 +3,7 @@ import { Buffer } from 'node:buffer';
 
 const AUTH_URL = process.env.AUTH_URL ?? process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech';
 const APP_AUD = process.env.NEXT_PUBLIC_APP_AUDIENCE ?? 'erp.zonadev.tech';
-const COOKIE_NAME = 'erp_access_token';
+const COOKIE_NAME = 'access_token';
 const PUBLIC_PATHS = ['/login', '/api/auth/local-logout', '/_next', '/favicon.ico'];
 
 export async function middleware(req: NextRequest) {
@@ -36,7 +36,7 @@ export async function middleware(req: NextRequest) {
           httpOnly: true,
           secure: true,
           sameSite: 'lax',
-          domain: 'erp.zonadev.tech',
+          domain: '.zonadev.tech',
           maxAge: data.expires_in,
           path: '/',
         });
@@ -49,9 +49,9 @@ export async function middleware(req: NextRequest) {
   }
 
   const loginUrl = new URL(`${AUTH_URL}/login`);
-  loginUrl.searchParams.set('app', APP_AUD);
+  loginUrl.searchParams.set('aud', APP_AUD);
   loginUrl.searchParams.set(
-    'redirect',
+    'redirect_uri',
     (process.env.NEXT_PUBLIC_APP_URL ?? 'https://erp.zonadev.tech') +
       req.nextUrl.pathname +
       req.nextUrl.search,
