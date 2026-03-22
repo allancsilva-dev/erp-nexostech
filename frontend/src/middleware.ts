@@ -2,22 +2,26 @@
 import { Buffer } from 'node:buffer';
 
 const AUTH_URL = process.env.AUTH_URL ?? process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://erp.zonadev.tech';
 const APP_AUD = process.env.NEXT_PUBLIC_APP_AUDIENCE ?? 'erp.zonadev.tech';
-const COOKIE_NAME = 'access_token';
-const PUBLIC_PATHS = ['/login', '/api/auth/local-logout', '/_next', '/favicon.ico'];
+const COOKIE_NAME = 'erp_access_token';
+const PUBLIC_PATHS = ['/login', '/api/', '/_next', '/favicon.ico'];
 
 export async function middleware(req: NextRequest) {
+  // Rotas publicas - nao verificar auth.
   if (PUBLIC_PATHS.some((p) => req.nextUrl.pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
   const accessToken = req.cookies.get(COOKIE_NAME)?.value;
-  const sid = req.cookies.get('zonadev_sid')?.value;
 
+  // Cookie do ERP existe e nao expirou.
   if (accessToken && !isTokenExpired(accessToken)) {
     return NextResponse.next();
   }
 
+  // Token exchange: zonadev_sid -> erp_access_token.
+  const sid = req.cookies.get('zonadev_sid')?.value;
   if (sid) {
     try {
       const tokenRes = await fetch(`${AUTH_URL}/api/oauth/token?aud=${APP_AUD}`, {
@@ -36,7 +40,7 @@ export async function middleware(req: NextRequest) {
           httpOnly: true,
           secure: true,
           sameSite: 'lax',
-          domain: '.zonadev.tech',
+          domain: 'erp.zonadev.tech',
           maxAge: data.expires_in,
           path: '/',
         });
@@ -49,13 +53,12 @@ export async function middleware(req: NextRequest) {
   }
 
   const loginUrl = new URL(`${AUTH_URL}/login`);
-  loginUrl.searchParams.set('aud', APP_AUD);
+  loginUrl.searchParams.set('app', APP_AUD);
   loginUrl.searchParams.set(
-    'redirect_uri',
-    (process.env.NEXT_PUBLIC_APP_URL ?? 'https://erp.zonadev.tech') +
-      req.nextUrl.pathname +
-      req.nextUrl.search,
+    'redirect',
+    APP_URL + req.nextUrl.pathname + req.nextUrl.search,
   );
+
   return NextResponse.redirect(loginUrl);
 }
 
