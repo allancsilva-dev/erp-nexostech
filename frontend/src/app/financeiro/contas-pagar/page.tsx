@@ -14,6 +14,8 @@ import { EntryFilters } from '@/features/entries/components/entry-filters';
 import { EntriesTable } from '@/features/entries/components/entries-table';
 import { BatchPayBar } from '@/features/entries/components/batch-pay-bar';
 import { useEntries } from '@/features/entries/hooks/use-entries';
+import { useLockPeriods } from '@/hooks/use-lock-periods';
+import { checkLockPeriod } from '@/components/shared/lock-period-guard';
 
 export default function ContasPagarPage() {
   const [page, setPage] = useQueryState('page', { defaultValue: '1' });
@@ -28,6 +30,7 @@ export default function ContasPagarPage() {
     sortBy,
     sortOrder: sortOrder === 'desc' ? 'desc' : 'asc',
   });
+  const lockPeriods = useLockPeriods();
 
   return (
     <div className="space-y-6">
@@ -85,6 +88,17 @@ export default function ContasPagarPage() {
         <BatchPayBar
           selectedCount={selectedIds.length}
           onPay={() => {
+            const periods = lockPeriods.data?.data ?? lockPeriods.data ?? [];
+            const selectedEntries = (entries.data?.data ?? []).filter((entry) => selectedIds.includes(entry.id));
+            const lockedEntries = selectedEntries.filter(
+              (entry) => checkLockPeriod(periods, entry.issueDate).isLocked,
+            );
+
+            if (lockedEntries.length > 0) {
+              toast.error(`${lockedEntries.length} lancamento(s) em periodo contabil fechado`);
+              return;
+            }
+
             toast.success(`${selectedIds.length} pagamentos registrados`);
             setSelectedIds([]);
           }}

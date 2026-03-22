@@ -1,1 +1,1 @@
-﻿export { useLockPeriods } from '@/features/settings/hooks/use-settings';
+﻿export { useLockPeriods } from '@/hooks/use-lock-periods';

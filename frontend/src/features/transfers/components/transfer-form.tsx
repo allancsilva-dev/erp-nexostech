@@ -7,8 +7,10 @@ import { DatePicker } from '@/components/shared/date-picker';
 import { Select } from '@/components/ui/select';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { useLockPeriodCheck } from '@/components/shared/lock-period-guard';
 import { useBankAccounts } from '@/features/settings/hooks/use-bank-accounts';
 import { useCreateTransfer } from '@/features/transfers/hooks/use-transfers';
+import { toast } from 'sonner';
 
 interface BankAccountOption {
   id: string;
@@ -36,6 +38,7 @@ export function TransferForm() {
 
   const bankAccounts = useBankAccounts();
   const createTransfer = useCreateTransfer();
+  const lockCheck = useLockPeriodCheck(date);
 
   const accountOptions = toBankAccountOptions(bankAccounts.data?.data);
 
@@ -49,6 +52,7 @@ export function TransferForm() {
 
   const isDisabled =
     createTransfer.isPending ||
+    lockCheck.isLocked ||
     !fromBankAccountId ||
     !toBankAccountId ||
     fromBankAccountId === toBankAccountId ||
@@ -56,6 +60,12 @@ export function TransferForm() {
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>): void {
     event.preventDefault();
+
+    if (lockCheck.isLocked) {
+      toast.error(lockCheck.message ?? 'Periodo contabil fechado');
+      return;
+    }
+
     createTransfer.mutate(
       {
         fromBankAccountId,
@@ -91,6 +101,9 @@ export function TransferForm() {
       </Select>
       <CurrencyInput value={amount} onChange={setAmount} />
       <DatePicker value={date} onChange={setDate} />
+      {lockCheck.isLocked && lockCheck.message ? (
+        <p className="md:col-span-2 text-sm text-amber-700 dark:text-amber-400">{lockCheck.message}</p>
+      ) : null}
       <Button type="submit" className="md:col-span-2" disabled={isDisabled}>
         {createTransfer.isPending ? 'Transferindo...' : 'Transferir'}
       </Button>

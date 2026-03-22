@@ -4,9 +4,11 @@ import { useEntry } from '@/features/entries/hooks/use-entries';
 import { MoneyDisplay } from '@/components/shared/money-display';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { PermissionGate } from '@/components/shared/permission-gate';
+import { LockPeriodGuard } from '@/components/shared/lock-period-guard';
 import { PaymentModal } from '@/features/entries/components/payment-modal';
 import { CancelModal } from '@/features/entries/components/cancel-modal';
 import { RefundModal } from '@/features/entries/components/refund-modal';
+import { Button } from '@/components/ui/button';
 
 export function EntryDetail({ id }: { id: string }) {
   const { data, isLoading } = useEntry(id);
@@ -27,15 +29,34 @@ export function EntryDetail({ id }: { id: string }) {
         <StatusBadge status={entry.status} type={entry.type} />
       </div>
       <div className="flex flex-wrap gap-2">
+        {entry.status === 'PENDING' ? (
+          <PermissionGate permission="financial.entries.edit">
+            <LockPeriodGuard date={entry.issueDate}>
+              <Button type="button" variant="outline" disabled>
+                Editar
+              </Button>
+            </LockPeriodGuard>
+          </PermissionGate>
+        ) : null}
         <PermissionGate permission="financial.entries.pay">
-          <PaymentModal entryId={entry.id} />
+          <LockPeriodGuard date={new Date().toISOString().slice(0, 10)}>
+            <PaymentModal entryId={entry.id} />
+          </LockPeriodGuard>
         </PermissionGate>
-        <PermissionGate permission="financial.entries.cancel">
-          <RefundModal entryId={entry.id} />
-        </PermissionGate>
-        <PermissionGate permission="financial.entries.cancel">
-          <CancelModal entryId={entry.id} />
-        </PermissionGate>
+        {entry.status !== 'PAID' && entry.status !== 'CANCELLED' ? (
+          <PermissionGate permission="financial.entries.cancel">
+            <LockPeriodGuard date={entry.issueDate}>
+              <CancelModal entryId={entry.id} />
+            </LockPeriodGuard>
+          </PermissionGate>
+        ) : null}
+        {entry.paidDate ? (
+          <PermissionGate permission="financial.entries.cancel">
+            <LockPeriodGuard date={entry.paidDate}>
+              <RefundModal entryId={entry.id} />
+            </LockPeriodGuard>
+          </PermissionGate>
+        ) : null}
       </div>
       <p>{entry.description}</p>
       <MoneyDisplay value={entry.amount} className="text-lg" />

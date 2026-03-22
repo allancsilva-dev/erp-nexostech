@@ -5,13 +5,59 @@ import { formatDate } from '@/lib/format';
 import { useLockPeriods } from '@/hooks/use-lock-periods';
 import type { LockPeriod } from '@/features/settings/types/settings.types';
 
-function findBlockingPeriod(periods: LockPeriod[], operationDate: Date): LockPeriod | null {
-  return (
-    periods.find((period) => {
-      const endDate = new Date(period.endDate);
-      return operationDate <= endDate;
-    }) ?? null
-  );
+function resolveLockedUntil(period: LockPeriod): string | null {
+  const candidate =
+    (period as LockPeriod & { lockedUntil?: string; locked_until?: string }).lockedUntil ??
+    (period as LockPeriod & { lockedUntil?: string; locked_until?: string }).locked_until ??
+    period.endDate;
+
+  return candidate ?? null;
+}
+
+export function checkLockPeriod(periods: LockPeriod[], date?: string): {
+  isLocked: boolean;
+  lockedUntil: string | null;
+  message: string | null;
+} {
+  if (!date) {
+    return { isLocked: false, lockedUntil: null, message: null };
+  }
+
+  const operationDate = new Date(date);
+  if (Number.isNaN(operationDate.getTime())) {
+    return { isLocked: false, lockedUntil: null, message: null };
+  }
+
+  const blockingLockedUntil = periods
+    .map(resolveLockedUntil)
+    .filter((value): value is string => Boolean(value))
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+    .find((lockedUntil) => operationDate <= new Date(lockedUntil));
+
+  if (!blockingLockedUntil) {
+    return { isLocked: false, lockedUntil: null, message: null };
+  }
+
+  return {
+    isLocked: true,
+    lockedUntil: blockingLockedUntil,
+    message: `Periodo contabil fechado ate ${formatDate(blockingLockedUntil)}`,
+  };
+}
+
+export function useLockPeriodCheck(date?: string): {
+  isLocked: boolean;
+  lockedUntil: string | null;
+  message: string | null;
+} {
+  const lockPeriodsQuery = useLockPeriods();
+
+  if (lockPeriodsQuery.isLoading || lockPeriodsQuery.isError) {
+    return { isLocked: false, lockedUntil: null, message: null };
+  }
+
+  const periods = lockPeriodsQuery.data?.data ?? lockPeriodsQuery.data ?? [];
+  return checkLockPeriod(periods, date);
 }
 
 export function LockPeriodGuard({
@@ -19,24 +65,21 @@ export function LockPeriodGuard({
   children,
   fallback,
 }: {
-  date: string;
+  date?: string;
   children: ReactNode;
   fallback?: ReactNode;
 }) {
-  const lockPeriodsQuery = useLockPeriods();
+  const lockCheck = useLockPeriodCheck(date);
 
-  if (lockPeriodsQuery.isLoading || lockPeriodsQuery.isError) {
+  if (!date) {
     return <>{children}</>;
   }
 
-  const periods = lockPeriodsQuery.data?.data ?? [];
-  const blockingPeriod = findBlockingPeriod(periods, new Date(date));
+  const { isLocked, message } = lockCheck;
 
-  if (!blockingPeriod) {
+  if (!isLocked || !message) {
     return <>{children}</>;
   }
-
-  const message = `Periodo contabil fechado ate ${formatDate(blockingPeriod.endDate)}`;
 
   if (fallback) {
     return <>{fallback}</>;
