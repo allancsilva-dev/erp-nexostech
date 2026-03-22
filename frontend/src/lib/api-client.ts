@@ -1,5 +1,13 @@
 ﻿import { ApiError, type ApiResponse, type PaginatedResponse } from '@/lib/api-types';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+
+const TENANT_LEVEL_ENDPOINTS = ['/contacts', '/branches', '/roles', '/users', '/tenants'];
+
+function isTenantLevelEndpoint(endpoint: string): boolean {
+  return TENANT_LEVEL_ENDPOINTS.some((prefix) => endpoint.startsWith(prefix));
+}
+
 function getCookieValue(name: string): string | null {
   if (typeof document === 'undefined') {
     return null;
@@ -24,7 +32,7 @@ function cleanParams(params: Record<string, unknown>): Record<string, string> {
 }
 
 class ApiClient {
-  private readonly baseUrl = '/api/v1';
+  private readonly baseUrl = API_BASE;
 
   private async request<T>(
     endpoint: string,
@@ -34,7 +42,7 @@ class ApiClient {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(branchId ? { 'X-Branch-Id': branchId } : {}),
+      ...(branchId && !isTenantLevelEndpoint(endpoint) ? { 'X-Branch-Id': branchId } : {}),
       ...(options?.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}),
     };
 
@@ -51,12 +59,20 @@ class ApiClient {
       return undefined as T;
     }
 
+    if (response.status === 401 && typeof window !== 'undefined') {
+      const currentUrl = window.location.href;
+      window.location.href =
+        'https://auth.zonadev.tech/login?aud=erp.zonadev.tech&redirect_uri=' +
+        encodeURIComponent(currentUrl);
+      throw new ApiError('UNAUTHORIZED', 'Sessao expirada', undefined, 401);
+    }
+
     if (!response.ok) {
       const body = await response.json().catch(() => null);
       throw new ApiError(
-        body?.error?.code ?? 'UNKNOWN',
-        body?.error?.message ?? 'Erro na API',
-        body?.error?.details,
+        body?.error?.code ?? body?.code ?? 'UNKNOWN',
+        body?.error?.message ?? body?.message ?? 'Erro na API',
+        body?.error?.details ?? body?.details,
         response.status,
       );
     }

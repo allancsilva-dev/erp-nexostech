@@ -3,7 +3,7 @@ import { ApiError } from '@/lib/api-types';
 import { redirect } from 'next/navigation';
 
 const BASE_URL = process.env.API_INTERNAL_URL ?? 'http://localhost:3001/api/v1';
-const COOKIE_NAME = 'erp_access_token';
+const COOKIE_NAME = 'access_token';
 
 export async function serverFetch<T>(endpoint: string, init?: RequestInit): Promise<T> {
   const cookieStore = await cookies();
@@ -11,7 +11,7 @@ export async function serverFetch<T>(endpoint: string, init?: RequestInit): Prom
   const branchId = cookieStore.get('branch_id')?.value;
 
   if (!token) {
-    redirect('/login');
+    redirect('https://auth.zonadev.tech/login?aud=erp.zonadev.tech&redirect_uri=https://erp.zonadev.tech/dashboard');
   }
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -27,7 +27,7 @@ export async function serverFetch<T>(endpoint: string, init?: RequestInit): Prom
   });
 
   if (response.status === 401) {
-    redirect('/login');
+    redirect('https://auth.zonadev.tech/login?aud=erp.zonadev.tech&redirect_uri=https://erp.zonadev.tech/dashboard');
   }
 
   if (!response.ok) {
