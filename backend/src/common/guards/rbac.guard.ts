@@ -5,6 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { ClsService } from 'nestjs-cls';
 import { sql } from 'drizzle-orm';
 import { REQUIRED_PERMISSION_KEY } from '../decorators/require-permission.decorator';
 import type { AuthUser } from '../types/auth-user.type';
@@ -23,6 +24,7 @@ export class RbacGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly drizzleService: DrizzleService,
     private readonly cacheService: CacheService,
+    private readonly clsService: ClsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -43,6 +45,10 @@ export class RbacGuard implements CanActivate {
           message: 'Usuario sem contexto de permissao',
         },
       });
+    }
+
+    if (!this.clsService.get('tenantId')) {
+      this.clsService.set('tenantId', user.tenantId);
     }
 
     const permissions = await this.loadUserPermissions(user);
