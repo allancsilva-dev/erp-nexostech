@@ -147,6 +147,22 @@ export class RolesService {
     permissions: string[];
     branches: Array<{ id: string; name: string }>;
   }> {
+    // Early return para SUPERADMIN sem tenant — nao esta provisionado em nenhum schema.
+    const isSuperAdmin = user.roles?.includes('SUPERADMIN') ?? false;
+    if (isSuperAdmin && !user.tenantId) {
+      return {
+        user: {
+          id: user.sub,
+          email: user.email ?? null,
+          tenantId: '',
+          roles: [{ id: 'superadmin', name: 'SUPERADMIN', isSystem: true }],
+          active: true,
+        },
+        permissions: ['*'],
+        branches: [],
+      };
+    }
+
     const rows = await this.rolesRepository.listCurrentUserRolesAndPermissions(
       user.sub,
     );
