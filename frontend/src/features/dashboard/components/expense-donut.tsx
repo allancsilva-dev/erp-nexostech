@@ -5,7 +5,12 @@ import Decimal from 'decimal.js';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/format';
-import type { ExpenseBreakdownItem } from '@/features/dashboard/hooks/use-dashboard';
+
+type ExpenseBreakdownItem = {
+  category: string;
+  value: string;
+  color: string;
+};
 
 function ExpenseDonutComponent({ data }: { data: ExpenseBreakdownItem[] }) {
   const limited = useMemo(

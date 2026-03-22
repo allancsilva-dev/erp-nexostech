@@ -18,12 +18,6 @@ export interface CashflowPoint {
   outgoing: string;
 }
 
-export interface ExpenseBreakdownItem {
-  category: string;
-  value: string;
-  color: string;
-}
-
 export interface OverdueItem {
   id: string;
   documentNumber: string;
@@ -56,15 +50,6 @@ export function useDashboardCashflowChart() {
   return useQuery({
     queryKey: [...queryKeys.dashboard.all(activeBranchId || 'default'), 'cashflow'],
     queryFn: () => api.get<CashflowPoint[]>('/dashboard/cashflow-chart'),
-    enabled: Boolean(activeBranchId),
-  });
-}
-
-export function useDashboardExpenseBreakdown() {
-  const { activeBranchId } = useBranch();
-  return useQuery({
-    queryKey: [...queryKeys.dashboard.all(activeBranchId || 'default'), 'expense-breakdown'],
-    queryFn: () => api.get<ExpenseBreakdownItem[]>('/dashboard/expense-breakdown'),
     enabled: Boolean(activeBranchId),
   });
 }
