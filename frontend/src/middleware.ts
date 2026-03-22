@@ -20,7 +20,7 @@ export async function middleware(req: NextRequest) {
 
   if (sid) {
     try {
-      const tokenRes = await fetch(`${AUTH_URL}/oauth/token?aud=${APP_AUD}`, {
+      const tokenRes = await fetch(`${AUTH_URL}/api/oauth/token?aud=${APP_AUD}`, {
         headers: { Cookie: `zonadev_sid=${sid}` },
         signal: AbortSignal.timeout(3000),
       });
@@ -50,7 +50,12 @@ export async function middleware(req: NextRequest) {
 
   const loginUrl = new URL(`${AUTH_URL}/login`);
   loginUrl.searchParams.set('app', APP_AUD);
-  loginUrl.searchParams.set('redirect', req.url);
+  loginUrl.searchParams.set(
+    'redirect',
+    (process.env.NEXT_PUBLIC_APP_URL ?? 'https://erp.zonadev.tech') +
+      req.nextUrl.pathname +
+      req.nextUrl.search,
+  );
   return NextResponse.redirect(loginUrl);
 }
 
