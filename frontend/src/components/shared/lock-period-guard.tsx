@@ -56,7 +56,7 @@ export function useLockPeriodCheck(date?: string): {
     return { isLocked: false, lockedUntil: null, message: null };
   }
 
-  const periods = lockPeriodsQuery.data?.data ?? lockPeriodsQuery.data ?? [];
+  const periods = lockPeriodsQuery.data ?? [];
   return checkLockPeriod(periods, date);
 }
 

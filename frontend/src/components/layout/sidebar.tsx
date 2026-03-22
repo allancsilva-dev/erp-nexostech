@@ -11,7 +11,18 @@ import { useFeatureFlag } from '@/hooks/use-feature-flags';
 import { useApprovals } from '@/features/approvals/hooks/use-approvals';
 import { Button } from '@/components/ui/button';
 
-const ITEMS = [
+type SidebarItem = {
+  label: string;
+  href: string;
+  permission: string;
+  featureFlag?:
+    | 'boletos_enabled'
+    | 'approval_flow_enabled'
+    | 'branches_enabled'
+    | 'collection_rules_enabled';
+};
+
+const ITEMS: SidebarItem[] = [
   { label: 'Dashboard', href: ROUTES.dashboard, permission: 'financial.dashboard.view' },
   { label: 'Contas a pagar', href: ROUTES.contasPagar, permission: 'financial.entries.view' },
   { label: 'Contas a receber', href: ROUTES.contasReceber, permission: 'financial.entries.view' },
@@ -56,7 +67,7 @@ const ITEMS = [
     href: ROUTES.configuracoesRoles,
     permission: 'admin.users.manage',
   },
-] as const;
+];
 
 export function Sidebar({ isVisible }: { isVisible: boolean }) {
   const { hasPermission } = usePermissions();

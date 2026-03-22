@@ -88,7 +88,7 @@ export default function ContasPagarPage() {
         <BatchPayBar
           selectedCount={selectedIds.length}
           onPay={() => {
-            const periods = lockPeriods.data?.data ?? lockPeriods.data ?? [];
+            const periods = lockPeriods.data ?? [];
             const selectedEntries = (entries.data?.data ?? []).filter((entry) => selectedIds.includes(entry.id));
             const lockedEntries = selectedEntries.filter(
               (entry) => checkLockPeriod(periods, entry.issueDate).isLocked,
