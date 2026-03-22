@@ -1,7 +1,26 @@
 import type { NextConfig } from 'next';
 
+const isWindows = process.platform === 'win32';
+
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  output: isWindows ? undefined : 'standalone',
+  webpack(config) {
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings ?? []),
+      {
+        module: /@opentelemetry\/instrumentation/,
+        message:
+          /Critical dependency: the request of a dependency is an expression/,
+      },
+      {
+        module: /require-in-the-middle/,
+        message:
+          /Critical dependency: require function is used in a way in which dependencies cannot be statically extracted/,
+      },
+    ];
+
+    return config;
+  },
   async rewrites() {
     return [
       {

@@ -16,6 +16,31 @@ import {
   quoteLiteral,
 } from '../../infrastructure/database/sql-builder.util';
 
+function getRows(result: unknown): Array<Record<string, unknown>> {
+  if (!result || typeof result !== 'object' || !('rows' in result)) {
+    return [];
+  }
+
+  const rows = (result as { rows?: unknown }).rows;
+  return Array.isArray(rows) ? (rows as Array<Record<string, unknown>>) : [];
+}
+
+function toText(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value instanceof Date
+  ) {
+    return String(value);
+  }
+
+  return '';
+}
+
 const RBAC_CACHE_TTL_MS = 300_000;
 
 @Injectable()
@@ -73,7 +98,7 @@ export class RbacGuard implements CanActivate {
 
     const tenantSchema = quoteIdent(this.drizzleService.getTenantSchema());
     const userId = quoteLiteral(user.sub);
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT DISTINCT rp.permission_code
       FROM ${tenantSchema}.user_roles ur
@@ -82,8 +107,8 @@ export class RbacGuard implements CanActivate {
     `),
     );
 
-    const permissions = (result.rows as Array<Record<string, unknown>>).map(
-      (row) => String(row.permission_code),
+    const permissions = getRows(result).map((row) =>
+      toText(row.permission_code),
     );
     await this.cacheService.set(cacheKey, permissions, RBAC_CACHE_TTL_MS);
 

@@ -23,18 +23,36 @@ type BoletoRow = {
 export class BoletosRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   private mapRow(row: Record<string, unknown>): BoletoRow {
     return {
-      id: String(row.id),
-      entryId: String(row.entry_id),
-      branchId: String(row.branch_id),
-      gatewayBoletoId: String(row.gateway_boleto_id),
-      status: String(row.status),
-      amount: String(row.amount),
-      dueDate: String(row.due_date),
-      pdfUrl: row.pdf_url ? String(row.pdf_url) : null,
-      paidAt: row.paid_at ? new Date(String(row.paid_at)).toISOString() : null,
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      id: this.toText(row.id),
+      entryId: this.toText(row.entry_id),
+      branchId: this.toText(row.branch_id),
+      gatewayBoletoId: this.toText(row.gateway_boleto_id),
+      status: this.toText(row.status),
+      amount: this.toText(row.amount),
+      dueDate: this.toText(row.due_date),
+      pdfUrl: this.toNullableText(row.pdf_url),
+      paidAt: this.toNullableText(row.paid_at)
+        ? new Date(this.toText(row.paid_at)).toISOString()
+        : null,
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     };
   }
 
@@ -52,9 +70,7 @@ export class BoletosRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      this.mapRow(row),
-    );
+    return result.rows.map((row) => this.mapRow(row));
   }
 
   async findByEntryId(

@@ -25,6 +25,55 @@ export type EntryRecord = {
   createdAt: string;
 };
 
+type QueryRow = Record<string, unknown>;
+
+function getRows(result: unknown): QueryRow[] {
+  if (!result || typeof result !== 'object' || !('rows' in result)) {
+    return [];
+  }
+
+  const rows = (result as { rows?: unknown }).rows;
+  return Array.isArray(rows) ? (rows as QueryRow[]) : [];
+}
+
+function toText(value: unknown, fallback = ''): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value instanceof Date
+  ) {
+    return String(value);
+  }
+
+  return fallback;
+}
+
+function toNullableText(value: unknown): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const text = toText(value);
+  return text.length > 0 ? text : null;
+}
+
+function toNullableNumber(value: unknown): number | null {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  return null;
+}
+
 @Injectable()
 export class EntriesRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
@@ -32,7 +81,7 @@ export class EntriesRepository {
   async list(branchId: string): Promise<EntryRecord[]> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchIdLiteral = quoteLiteral(branchId);
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
         e.id,
@@ -61,9 +110,7 @@ export class EntriesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      this.mapRow(row),
-    );
+    return getRows(result).map((row) => this.mapRow(row));
   }
 
   async findById(
@@ -74,7 +121,7 @@ export class EntriesRepository {
     const entryIdLiteral = quoteLiteral(entryId);
     const branchIdLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
         e.id,
@@ -103,7 +150,7 @@ export class EntriesRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown> | undefined;
+    const row = getRows(result)[0];
     if (!row) {
       return null;
     }
@@ -119,7 +166,7 @@ export class EntriesRepository {
     const entryIdLiteral = quoteLiteral(entryId);
     const branchIdLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
         e.id,
@@ -148,7 +195,7 @@ export class EntriesRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown> | undefined;
+    const row = getRows(result)[0];
     return row ? this.mapRow(row) : null;
   }
 
@@ -173,7 +220,7 @@ export class EntriesRepository {
     const installmentNumber = quoteLiteral(data.installmentNumber);
     const installmentTotal = quoteLiteral(data.installmentTotal);
 
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       INSERT INTO ${schema}.financial_entries (
         branch_id,
@@ -211,29 +258,28 @@ export class EntriesRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown>;
+    const row = getRows(result)[0];
+    if (!row) {
+      throw new Error('Created entry could not be reloaded');
+    }
 
     return {
-      id: String(row.id),
-      branchId: String(row.branch_id),
-      documentNumber: String(row.document_number),
-      type: String(row.type),
-      description: String(row.description),
-      amount: String(row.amount),
-      issueDate: String(row.issue_date),
-      dueDate: String(row.due_date),
-      status: String(row.status),
+      id: toText(row.id),
+      branchId: toText(row.branch_id),
+      documentNumber: toText(row.document_number),
+      type: toText(row.type),
+      description: toText(row.description),
+      amount: toText(row.amount),
+      issueDate: toText(row.issue_date),
+      dueDate: toText(row.due_date),
+      status: toText(row.status),
       categoryName: data.categoryName,
       contactName: data.contactName,
-      paidAmount: row.paid_amount ? String(row.paid_amount) : null,
-      remainingBalance: String(row.amount),
-      installmentNumber: row.installment_number
-        ? Number(row.installment_number)
-        : null,
-      installmentTotal: row.installment_total
-        ? Number(row.installment_total)
-        : null,
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      paidAmount: toNullableText(row.paid_amount),
+      remainingBalance: toText(row.amount),
+      installmentNumber: toNullableNumber(row.installment_number),
+      installmentTotal: toNullableNumber(row.installment_total),
+      createdAt: new Date(toText(row.created_at)).toISOString(),
     };
   }
 
@@ -348,28 +394,22 @@ export class EntriesRepository {
 
   private mapRow(row: Record<string, unknown>): EntryRecord {
     return {
-      id: String(row.id),
-      branchId: String(row.branch_id),
-      documentNumber: String(row.document_number),
-      type: String(row.type),
-      description: String(row.description),
-      amount: String(row.amount),
-      issueDate: String(row.issue_date),
-      dueDate: String(row.due_date),
-      status: String(row.status),
-      categoryName: row.category_name
-        ? String(row.category_name)
-        : 'Sem categoria',
-      contactName: row.contact_name ? String(row.contact_name) : null,
-      paidAmount: row.paid_amount ? String(row.paid_amount) : null,
-      remainingBalance: String(row.remaining_balance),
-      installmentNumber: row.installment_number
-        ? Number(row.installment_number)
-        : null,
-      installmentTotal: row.installment_total
-        ? Number(row.installment_total)
-        : null,
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      id: toText(row.id),
+      branchId: toText(row.branch_id),
+      documentNumber: toText(row.document_number),
+      type: toText(row.type),
+      description: toText(row.description),
+      amount: toText(row.amount),
+      issueDate: toText(row.issue_date),
+      dueDate: toText(row.due_date),
+      status: toText(row.status),
+      categoryName: toNullableText(row.category_name) ?? 'Sem categoria',
+      contactName: toNullableText(row.contact_name),
+      paidAmount: toNullableText(row.paid_amount),
+      remainingBalance: toText(row.remaining_balance),
+      installmentNumber: toNullableNumber(row.installment_number),
+      installmentTotal: toNullableNumber(row.installment_total),
+      createdAt: new Date(toText(row.created_at)).toISOString(),
     };
   }
 }

@@ -26,13 +26,29 @@ export class PaymentThanksProcessor implements OnModuleInit {
     private readonly drizzleService: DrizzleService,
   ) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   onModuleInit(): void {
     this.queueService.registerProcessor(
       'financial.payment-thanks',
       async (payload) => {
         const schema = resolveTenantSchema(payload);
-        const entryId = String(payload.entryId ?? '');
-        const branchId = String(payload.branchId ?? '');
+        const entryId = this.toText(payload.entryId);
+        const branchId = this.toText(payload.branchId);
 
         if (!entryId || !branchId) {
           this.logger.warn('payment-thanks: payload inválido', payload);
@@ -60,7 +76,7 @@ export class PaymentThanksProcessor implements OnModuleInit {
           return;
         }
 
-        const rule = ruleResult.rows[0] as Record<string, unknown>;
+        const rule = ruleResult.rows[0];
 
         // Registra o dispatch como agendado para envio imediato
         await this.drizzleService.getClient().execute(
@@ -75,10 +91,10 @@ export class PaymentThanksProcessor implements OnModuleInit {
             status,
             scheduled_for
           ) VALUES (
-            ${quoteLiteral(String(rule.rule_id))}::uuid,
+            ${quoteLiteral(this.toText(rule.rule_id))}::uuid,
             ${quoteLiteral(entryId)}::uuid,
             ${quoteLiteral(branchId)}::uuid,
-            ${rule.email_template_id ? `${quoteLiteral(String(rule.email_template_id))}::uuid` : 'NULL'},
+            ${this.toNullableText(rule.email_template_id) ? `${quoteLiteral(this.toText(rule.email_template_id))}::uuid` : 'NULL'},
             'EMAIL',
             CURRENT_DATE,
             'SCHEDULED',

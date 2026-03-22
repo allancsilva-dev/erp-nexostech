@@ -63,7 +63,7 @@ describe('V1 Contract (e2e)', () => {
       ]),
     assignRoleToUser: jest
       .fn()
-      .mockImplementation(async (userId: string, roleId: string) => ({
+      .mockImplementation((userId: string, roleId: string) => ({
         userId,
         roleId,
       })),
@@ -81,7 +81,7 @@ describe('V1 Contract (e2e)', () => {
       .mockResolvedValue([{ userId: '22222222-2222-4222-8222-222222222222' }]),
     assignUser: jest
       .fn()
-      .mockImplementation(async (branchId: string, userId: string) => ({
+      .mockImplementation((branchId: string, userId: string) => ({
         branchId,
         userId,
       })),
@@ -100,7 +100,7 @@ describe('V1 Contract (e2e)', () => {
 
   const tenantsServiceMock = {
     list: jest.fn().mockResolvedValue([]),
-    onboard: jest.fn().mockImplementation(async (dto: { name: string }) => ({
+    onboard: jest.fn().mockImplementation((dto: { name: string }) => ({
       id: '88888888-8888-4888-8888-888888888888',
       name: dto.name,
       slug: 'tenant-gamma',

@@ -4,7 +4,7 @@ import { BusinessException } from '../../../common/exceptions/business.exception
 import { EventBusService } from '../../../infrastructure/events/event-bus.service';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
 import { AuthUser } from '../../../common/types/auth-user.type';
-import { CreateEntryDto } from './dto/create-entry.dto';
+import { CreateEntryDto, EntryType } from './dto/create-entry.dto';
 import { UpdateEntryDto } from './dto/update-entry.dto';
 import { EntryCalculator } from './domain/entry.calculator';
 import { EntryRules } from './domain/entry.rules';
@@ -53,7 +53,7 @@ export class EntriesService {
       const firstInstallmentAmount = installments[0] ?? dto.amount;
       return this.entriesRepository.create({
         branchId,
-        documentNumber: `${dto.type === 'PAYABLE' ? 'PAY' : 'REC'}-${new Date().getFullYear()}-00001`,
+        documentNumber: `${dto.type === EntryType.PAYABLE ? 'PAY' : 'REC'}-${new Date().getFullYear()}-00001`,
         type: dto.type,
         description: dto.description,
         amount: firstInstallmentAmount,

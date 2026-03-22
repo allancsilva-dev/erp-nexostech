@@ -8,21 +8,57 @@ import {
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { TransferEntity } from './dto/transfer.response';
 
+type QueryRow = Record<string, unknown>;
+
+function getRows(result: unknown): QueryRow[] {
+  if (!result || typeof result !== 'object' || !('rows' in result)) {
+    return [];
+  }
+
+  const rows = (result as { rows?: unknown }).rows;
+  return Array.isArray(rows) ? (rows as QueryRow[]) : [];
+}
+
+function toText(value: unknown, fallback = ''): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value instanceof Date
+  ) {
+    return String(value);
+  }
+
+  return fallback;
+}
+
+function toNullableText(value: unknown): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const text = toText(value);
+  return text.length > 0 ? text : null;
+}
+
 @Injectable()
 export class TransfersRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
   private mapRow(row: Record<string, unknown>): TransferEntity {
     return {
-      id: String(row.id),
-      branchId: String(row.branch_id),
-      fromAccountId: String(row.from_account_id),
-      toAccountId: String(row.to_account_id),
-      amount: String(row.amount),
-      transferDate: String(row.transfer_date),
-      description: row.description ? String(row.description) : null,
-      createdBy: String(row.created_by),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      id: toText(row.id),
+      branchId: toText(row.branch_id),
+      fromAccountId: toText(row.from_account_id),
+      toAccountId: toText(row.to_account_id),
+      amount: toText(row.amount),
+      transferDate: toText(row.transfer_date),
+      description: toNullableText(row.description),
+      createdBy: toText(row.created_by),
+      createdAt: new Date(toText(row.created_at)).toISOString(),
     };
   }
 
@@ -30,7 +66,7 @@ export class TransfersRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT id, branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by, created_at
       FROM ${schema}.financial_transfers
@@ -41,9 +77,7 @@ export class TransfersRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      this.mapRow(row),
-    );
+    return getRows(result).map((row) => this.mapRow(row));
   }
 
   async findById(id: string, branchId: string): Promise<TransferEntity | null> {
@@ -51,7 +85,7 @@ export class TransfersRepository {
     const idLiteral = quoteLiteral(id);
     const branchLiteral = quoteLiteral(branchId);
 
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT id, branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by, created_at
       FROM ${schema}.financial_transfers
@@ -62,7 +96,7 @@ export class TransfersRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown> | undefined;
+    const row = getRows(result)[0];
     return row ? this.mapRow(row) : null;
   }
 
@@ -80,7 +114,7 @@ export class TransfersRepository {
     const descriptionLiteral = quoteLiteral(dto.description ?? null);
     const userLiteral = quoteLiteral(userId);
 
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       INSERT INTO ${schema}.financial_transfers (
         branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by
@@ -91,7 +125,11 @@ export class TransfersRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown>;
+    const row = getRows(result)[0];
+    if (!row) {
+      throw new Error('Transfer creation failed');
+    }
+
     return this.mapRow(row);
   }
 

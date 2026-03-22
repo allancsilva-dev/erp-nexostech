@@ -6,18 +6,21 @@ import { StorageService } from '../../../infrastructure/storage/storage.service'
 describe('BoletosService', () => {
   it('acknowledges webhook and persists status update', async () => {
     const gateway = {} as BoletosGatewayClient;
+    const getPublicUrlMock = jest
+      .fn()
+      .mockReturnValue('https://r2.local/boletos/entry_1.pdf');
     const storage = {
-      getPublicUrl: jest
-        .fn()
-        .mockReturnValue('https://r2.local/boletos/entry_1.pdf'),
+      getPublicUrl: getPublicUrlMock,
     } as unknown as StorageService;
+
+    const markWebhookStatusMock = jest.fn().mockResolvedValue(undefined);
 
     const repository: jest.Mocked<BoletosRepository> = {
       listByBranch: jest.fn(),
       findByEntryId: jest.fn(),
       upsertGenerated: jest.fn(),
       markCancelled: jest.fn(),
-      markWebhookStatus: jest.fn().mockResolvedValue(undefined),
+      markWebhookStatus: markWebhookStatusMock,
     } as unknown as jest.Mocked<BoletosRepository>;
 
     const service = new BoletosService(gateway, repository, storage);
@@ -29,7 +32,7 @@ describe('BoletosService', () => {
       paidAt: '2026-03-14T12:00:00.000Z',
     });
 
-    expect(repository.markWebhookStatus).toHaveBeenCalledWith(
+    expect(markWebhookStatusMock).toHaveBeenCalledWith(
       'entry_1',
       'PAID',
       '2026-03-14T12:00:00.000Z',
@@ -39,10 +42,11 @@ describe('BoletosService', () => {
 
   it('uses storage public url fallback when boleto has no persisted pdf', async () => {
     const gateway = {} as BoletosGatewayClient;
+    const getPublicUrlMock = jest
+      .fn()
+      .mockReturnValue('https://r2.local/boletos/entry_2.pdf');
     const storage = {
-      getPublicUrl: jest
-        .fn()
-        .mockReturnValue('https://r2.local/boletos/entry_2.pdf'),
+      getPublicUrl: getPublicUrlMock,
     } as unknown as StorageService;
 
     const repository: jest.Mocked<BoletosRepository> = {
@@ -56,7 +60,7 @@ describe('BoletosService', () => {
     const service = new BoletosService(gateway, repository, storage);
     const result = await service.getPdfLink('entry_2', 'branch_1');
 
-    expect(storage.getPublicUrl).toHaveBeenCalledWith('boletos/entry_2.pdf');
+    expect(getPublicUrlMock).toHaveBeenCalledWith('boletos/entry_2.pdf');
     expect(result.url).toBe('https://r2.local/boletos/entry_2.pdf');
   });
 });

@@ -1,6 +1,5 @@
 import {
   registerDecorator,
-  ValidationArguments,
   ValidationOptions,
   ValidatorConstraint,
   ValidatorConstraintInterface,
@@ -17,7 +16,7 @@ export class IsValidDocumentConstraint implements ValidatorConstraintInterface {
     return false;
   }
 
-  defaultMessage(_args: ValidationArguments): string {
+  defaultMessage(): string {
     return 'CPF ou CNPJ invalido (digito verificador incorreto)';
   }
 }

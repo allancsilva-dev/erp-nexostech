@@ -12,16 +12,32 @@ import { ContactEntity } from './dto/contact.response';
 export class ContactsRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   private mapRow(row: Record<string, unknown>): ContactEntity {
     return {
-      id: String(row.id),
-      name: String(row.name),
-      type: String(row.type),
-      document: row.document ? String(row.document) : null,
-      phone: row.phone ? String(row.phone) : null,
-      email: row.email ? String(row.email) : null,
+      id: this.toText(row.id),
+      name: this.toText(row.name),
+      type: this.toText(row.type),
+      document: this.toNullableText(row.document),
+      phone: this.toNullableText(row.phone),
+      email: this.toNullableText(row.email),
       active: Boolean(row.active),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     };
   }
 
@@ -50,13 +66,9 @@ export class ContactsRepository {
     `),
     );
 
-    const items = (rowsResult.rows as Array<Record<string, unknown>>).map(
-      (row) => this.mapRow(row),
-    );
+    const items = rowsResult.rows.map((row) => this.mapRow(row));
 
-    const total = Number(
-      (countResult.rows[0] as Record<string, unknown>)?.total ?? 0,
-    );
+    const total = Number(countResult.rows[0]?.total ?? 0);
     return { items, total };
   }
 
@@ -76,7 +88,7 @@ export class ContactsRepository {
     `),
     );
 
-    return this.mapRow(result.rows[0] as Record<string, unknown>);
+    return this.mapRow(result.rows[0]);
   }
 
   async findById(id: string): Promise<ContactEntity | null> {

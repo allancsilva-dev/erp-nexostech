@@ -12,7 +12,7 @@ export class PermissionsController {
 
   @Get()
   @RequirePermission('admin.users.manage')
-  async list(): Promise<ApiResponse<unknown>> {
+  list(): ApiResponse<unknown> {
     return ApiResponse.ok(this.rolesService.listSystemPermissions());
   }
 }

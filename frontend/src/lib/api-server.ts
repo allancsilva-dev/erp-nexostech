@@ -4,6 +4,12 @@ import { redirect } from 'next/navigation';
 
 const BASE_URL = process.env.API_INTERNAL_URL ?? 'http://localhost:3001/api/v1';
 const COOKIE_NAME = 'erp_access_token';
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech/login';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://erp.zonadev.tech';
+
+function buildAuthRedirectUrl(redirectTo: string): string {
+  return `${AUTH_URL}?app=erp&redirect=${encodeURIComponent(redirectTo)}`;
+}
 
 export async function serverFetch<T>(endpoint: string, init?: RequestInit): Promise<T> {
   const cookieStore = await cookies();
@@ -11,7 +17,7 @@ export async function serverFetch<T>(endpoint: string, init?: RequestInit): Prom
   const branchId = cookieStore.get('branch_id')?.value;
 
   if (!token) {
-    redirect('https://auth.zonadev.tech/login?aud=erp.zonadev.tech&redirect_uri=https://erp.zonadev.tech/dashboard');
+    redirect(buildAuthRedirectUrl(`${APP_URL}/dashboard`));
   }
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -27,7 +33,7 @@ export async function serverFetch<T>(endpoint: string, init?: RequestInit): Prom
   });
 
   if (response.status === 401) {
-    redirect('https://auth.zonadev.tech/login?aud=erp.zonadev.tech&redirect_uri=https://erp.zonadev.tech/dashboard');
+    redirect(buildAuthRedirectUrl(`${APP_URL}/dashboard`));
   }
 
   if (!response.ok) {

@@ -10,7 +10,10 @@ export class TenantsService {
     return this.tenantsRepository.list();
   }
 
-  async onboard(dto: CreateTenantDto, adminUserId?: string): Promise<TenantEntity> {
+  async onboard(
+    dto: CreateTenantDto,
+    adminUserId?: string,
+  ): Promise<TenantEntity> {
     return this.tenantsRepository.create(dto, adminUserId);
   }
 }

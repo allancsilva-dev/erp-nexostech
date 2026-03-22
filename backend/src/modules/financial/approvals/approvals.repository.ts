@@ -10,6 +10,22 @@ import {
 export class ApprovalsRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   async listPending(branchId: string) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
@@ -35,15 +51,15 @@ export class ApprovalsRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      entryId: String(row.entry_id),
-      documentNumber: String(row.document_number),
-      description: String(row.description),
-      amount: String(row.amount),
-      dueDate: String(row.due_date),
-      status: String(row.status),
-      categoryName: row.category_name ? String(row.category_name) : null,
-      contactName: row.contact_name ? String(row.contact_name) : null,
+    return result.rows.map((row) => ({
+      entryId: this.toText(row.entry_id),
+      documentNumber: this.toText(row.document_number),
+      description: this.toText(row.description),
+      amount: this.toText(row.amount),
+      dueDate: this.toText(row.due_date),
+      status: this.toText(row.status),
+      categoryName: this.toNullableText(row.category_name),
+      contactName: this.toNullableText(row.contact_name),
     }));
   }
 
@@ -63,7 +79,7 @@ export class ApprovalsRepository {
     `),
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;
-    return row ? { createdBy: String(row.created_by) } : null;
+    return row ? { createdBy: this.toText(row.created_by) } : null;
   }
 
   async createApprovalRecord(
@@ -102,14 +118,14 @@ export class ApprovalsRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown>;
+    const row = result.rows[0];
     return {
-      id: String(row.id),
-      entryId: String(row.entry_id),
-      userId: String(row.approved_by),
-      action: String(row.action),
-      notes: row.notes ? String(row.notes) : null,
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      id: this.toText(row.id),
+      entryId: this.toText(row.entry_id),
+      userId: this.toText(row.approved_by),
+      action: this.toText(row.action),
+      notes: this.toNullableText(row.notes),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     };
   }
 
@@ -127,13 +143,13 @@ export class ApprovalsRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      id: String(row.id),
-      entryId: String(row.entry_id),
-      userId: String(row.approved_by),
-      action: String(row.action),
-      notes: row.notes ? String(row.notes) : null,
-      createdAt: new Date(String(row.created_at)).toISOString(),
+    return result.rows.map((row) => ({
+      id: this.toText(row.id),
+      entryId: this.toText(row.entry_id),
+      userId: this.toText(row.approved_by),
+      action: this.toText(row.action),
+      notes: this.toNullableText(row.notes),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     }));
   }
 }

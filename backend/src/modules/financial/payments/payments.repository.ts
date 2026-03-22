@@ -17,7 +17,6 @@ export type EntryStub = {
 
 /** Executor mínimo compatível com NodePgDatabase e com tx do drizzle.transaction() */
 type SqlExecutor = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   execute(query: any): Promise<{ rows: unknown[] }>;
 };
 
@@ -25,12 +24,33 @@ type SqlExecutor = {
 export class PaymentsRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   /** Leitura simples (fora de transação) — usado apenas para listagem */
   async findEntryById(
     entryId: string,
     branchId: string,
   ): Promise<EntryStub | null> {
-    return this._findEntry(entryId, branchId, this.drizzleService.getClient(), false);
+    return this._findEntry(
+      entryId,
+      branchId,
+      this.drizzleService.getClient(),
+      false,
+    );
   }
 
   /**
@@ -80,12 +100,10 @@ export class PaymentsRepository {
     }
 
     return {
-      id: String(row.id),
-      amount: String(row.amount),
-      remainingBalance: String(row.remaining_balance),
-      lastPaymentDate: row.last_payment_date
-        ? String(row.last_payment_date)
-        : undefined,
+      id: this.toText(row.id),
+      amount: this.toText(row.amount),
+      remainingBalance: this.toText(row.remaining_balance),
+      lastPaymentDate: this.toNullableText(row.last_payment_date) ?? undefined,
     };
   }
 
@@ -118,19 +136,22 @@ export class PaymentsRepository {
 
     const row = result.rows[0] as Record<string, unknown>;
     return {
-      id: String(row.id),
-      entryId: String(row.entry_id),
-      amount: String(row.amount),
-      paymentDate: String(row.payment_date),
-      paymentMethod: row.payment_method ? String(row.payment_method) : null,
-      bankAccountId: row.bank_account_id ? String(row.bank_account_id) : null,
-      notes: row.notes ? String(row.notes) : null,
-      createdBy: String(row.created_by),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      id: this.toText(row.id),
+      entryId: this.toText(row.entry_id),
+      amount: this.toText(row.amount),
+      paymentDate: this.toText(row.payment_date),
+      paymentMethod: this.toNullableText(row.payment_method),
+      bankAccountId: this.toNullableText(row.bank_account_id),
+      notes: this.toNullableText(row.notes),
+      createdBy: this.toText(row.created_by),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     };
   }
 
-  async listPaymentAmounts(entryId: string, tx?: SqlExecutor): Promise<string[]> {
+  async listPaymentAmounts(
+    entryId: string,
+    tx?: SqlExecutor,
+  ): Promise<string[]> {
     const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const entry = quoteLiteral(entryId);
@@ -144,11 +165,14 @@ export class PaymentsRepository {
     );
 
     return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      String(row.amount),
+      this.toText(row.amount),
     );
   }
 
-  async removeLastPayment(entryId: string, tx?: SqlExecutor): Promise<PaymentEntity | null> {
+  async removeLastPayment(
+    entryId: string,
+    tx?: SqlExecutor,
+  ): Promise<PaymentEntity | null> {
     const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const entry = quoteLiteral(entryId);
@@ -170,15 +194,15 @@ export class PaymentsRepository {
     if (!result.rows.length) return null;
     const row = result.rows[0] as Record<string, unknown>;
     return {
-      id: String(row.id),
-      entryId: String(row.entry_id),
-      amount: String(row.amount),
-      paymentDate: String(row.payment_date),
-      paymentMethod: row.payment_method ? String(row.payment_method) : null,
-      bankAccountId: row.bank_account_id ? String(row.bank_account_id) : null,
-      notes: row.notes ? String(row.notes) : null,
-      createdBy: String(row.created_by),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      id: this.toText(row.id),
+      entryId: this.toText(row.entry_id),
+      amount: this.toText(row.amount),
+      paymentDate: this.toText(row.payment_date),
+      paymentMethod: this.toNullableText(row.payment_method),
+      bankAccountId: this.toNullableText(row.bank_account_id),
+      notes: this.toNullableText(row.notes),
+      createdBy: this.toText(row.created_by),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     };
   }
 
@@ -226,16 +250,16 @@ export class PaymentsRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      id: String(row.id),
-      entryId: String(row.entry_id),
-      amount: String(row.amount),
-      paymentDate: String(row.payment_date),
-      paymentMethod: row.payment_method ? String(row.payment_method) : null,
-      bankAccountId: row.bank_account_id ? String(row.bank_account_id) : null,
-      notes: row.notes ? String(row.notes) : null,
-      createdBy: String(row.created_by),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+    return result.rows.map((row) => ({
+      id: this.toText(row.id),
+      entryId: this.toText(row.entry_id),
+      amount: this.toText(row.amount),
+      paymentDate: this.toText(row.payment_date),
+      paymentMethod: this.toNullableText(row.payment_method),
+      bankAccountId: this.toNullableText(row.bank_account_id),
+      notes: this.toNullableText(row.notes),
+      createdBy: this.toText(row.created_by),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     }));
   }
 }

@@ -79,7 +79,7 @@ async function wasApplied(
     [tenantId, migrationName],
   );
 
-  return result.rowCount > 0;
+  return (result.rowCount ?? 0) > 0;
 }
 
 async function saveMigrationStatus(

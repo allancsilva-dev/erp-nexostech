@@ -11,7 +11,7 @@ import {
 } from './infrastructure/observability/otel.bootstrap';
 
 async function bootstrap() {
-  await startOpenTelemetry();
+  startOpenTelemetry();
 
   const app = await NestFactory.create(AppModule);
 
@@ -37,10 +37,10 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api/v1');
 
-  process.on('SIGTERM', async () => {
-    await shutdownOpenTelemetry();
+  process.on('SIGTERM', () => {
+    void shutdownOpenTelemetry();
   });
 
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap();

@@ -114,12 +114,37 @@ const DEFAULT_COLLECTION_RULES: Array<{
   offsetDays: number;
   channel: string;
 }> = [
-  { name: 'Aviso 7 dias antes', trigger: 'BEFORE_DUE', offsetDays: -7, channel: 'EMAIL' },
-  { name: 'Aviso 1 dia antes', trigger: 'BEFORE_DUE', offsetDays: -1, channel: 'EMAIL' },
+  {
+    name: 'Aviso 7 dias antes',
+    trigger: 'BEFORE_DUE',
+    offsetDays: -7,
+    channel: 'EMAIL',
+  },
+  {
+    name: 'Aviso 1 dia antes',
+    trigger: 'BEFORE_DUE',
+    offsetDays: -1,
+    channel: 'EMAIL',
+  },
   { name: 'No vencimento', trigger: 'ON_DUE', offsetDays: 0, channel: 'EMAIL' },
-  { name: 'Atraso 3 dias', trigger: 'AFTER_DUE', offsetDays: 3, channel: 'EMAIL' },
-  { name: 'Atraso 10 dias', trigger: 'AFTER_DUE', offsetDays: 10, channel: 'EMAIL' },
-  { name: 'Confirmação de pagamento', trigger: 'ON_PAYMENT', offsetDays: 0, channel: 'EMAIL' },
+  {
+    name: 'Atraso 3 dias',
+    trigger: 'AFTER_DUE',
+    offsetDays: 3,
+    channel: 'EMAIL',
+  },
+  {
+    name: 'Atraso 10 dias',
+    trigger: 'AFTER_DUE',
+    offsetDays: 10,
+    channel: 'EMAIL',
+  },
+  {
+    name: 'Confirmação de pagamento',
+    trigger: 'ON_PAYMENT',
+    offsetDays: 0,
+    channel: 'EMAIL',
+  },
 ];
 
 @Injectable()
@@ -139,7 +164,7 @@ export class TenantsRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
+    return result.rows.map((row) => ({
       id: String(row.id),
       name: String(row.name),
       slug: String(row.slug),
@@ -153,7 +178,10 @@ export class TenantsRepository {
    * Cria e onboarda um novo tenant com todos os 12 passos.
    * Em caso de falha em qualquer passo, executa DROP SCHEMA CASCADE.
    */
-  async create(dto: CreateTenantDto, adminUserId?: string): Promise<TenantEntity> {
+  async create(
+    dto: CreateTenantDto,
+    adminUserId?: string,
+  ): Promise<TenantEntity> {
     await this.ensureTenantsTable();
 
     const tenantIdResult = await this.drizzleService
@@ -163,9 +191,7 @@ export class TenantsRepository {
           `SELECT COALESCE(${quoteLiteral(dto.id ?? null)}::uuid, gen_random_uuid()) AS id`,
         ),
       );
-    const tenantId = String(
-      (tenantIdResult.rows[0] as Record<string, unknown>).id,
-    );
+    const tenantId = String(tenantIdResult.rows[0].id);
     const schemaName = this.schemaFromTenant(tenantId);
     const quotedSchema = quoteIdent(schemaName);
     const baseSlug = this.slugify(dto.slug ?? dto.name);
@@ -199,43 +225,51 @@ export class TenantsRepository {
       // PASSOS 2-12 — Seed de dados dentro de uma única transação (DML)
       await this.drizzleService.transaction(async (tx) => {
         // PASSO 2 — Criar filial "Matriz" com is_headquarters=true
-        const branchResult = await tx.execute(sql.raw(`
+        const branchResult = await tx.execute(
+          sql.raw(`
           INSERT INTO ${quotedSchema}.branches (name, legal_name, is_headquarters, active)
           SELECT 'Matriz', ${quoteLiteral(dto.name)}, true, true
           WHERE NOT EXISTS (
             SELECT 1 FROM ${quotedSchema}.branches WHERE is_headquarters = true AND deleted_at IS NULL
           )
           RETURNING id
-        `));
+        `),
+        );
 
         let matrizId: string;
         if (branchResult.rows.length > 0) {
-          matrizId = String((branchResult.rows[0] as Record<string, unknown>).id);
+          matrizId = String(branchResult.rows[0].id);
         } else {
-          const existing = await tx.execute(sql.raw(`
+          const existing = await tx.execute(
+            sql.raw(`
             SELECT id FROM ${quotedSchema}.branches WHERE is_headquarters = true AND deleted_at IS NULL LIMIT 1
-          `));
-          matrizId = String((existing.rows[0] as Record<string, unknown>).id);
+          `),
+          );
+          matrizId = String(existing.rows[0].id);
         }
 
         // PASSO 3 — Criar roles padrão (Admin, Financeiro, Vendas, Auditor) com is_system=true
         const roleIds: Record<string, string> = {};
         for (const roleDef of DEFAULT_ROLES) {
-          const result = await tx.execute(sql.raw(`
+          const result = await tx.execute(
+            sql.raw(`
             INSERT INTO ${quotedSchema}.roles (name, description, is_system)
             VALUES (${quoteLiteral(roleDef.name)}, ${quoteLiteral(roleDef.description)}, true)
             ON CONFLICT DO NOTHING
             RETURNING id
-          `));
+          `),
+          );
 
           let roleId: string;
           if (result.rows.length > 0) {
-            roleId = String((result.rows[0] as Record<string, unknown>).id);
+            roleId = String(result.rows[0].id);
           } else {
-            const existing = await tx.execute(sql.raw(`
+            const existing = await tx.execute(
+              sql.raw(`
               SELECT id FROM ${quotedSchema}.roles WHERE name = ${quoteLiteral(roleDef.name)} LIMIT 1
-            `));
-            roleId = String((existing.rows[0] as Record<string, unknown>).id);
+            `),
+            );
+            roleId = String(existing.rows[0].id);
           }
           roleIds[roleDef.name] = roleId;
         }
@@ -245,11 +279,13 @@ export class TenantsRepository {
           const roleId = roleIds[roleDef.name];
           if (!roleId) continue;
           for (const perm of roleDef.permissions) {
-            await tx.execute(sql.raw(`
+            await tx.execute(
+              sql.raw(`
               INSERT INTO ${quotedSchema}.role_permissions (role_id, permission_code)
               VALUES (${quoteLiteral(roleId)}::uuid, ${quoteLiteral(perm)})
               ON CONFLICT DO NOTHING
-            `));
+            `),
+            );
           }
         }
 
@@ -257,11 +293,13 @@ export class TenantsRepository {
         if (adminUserId) {
           const adminRoleId = roleIds['Admin'];
           if (adminRoleId) {
-            await tx.execute(sql.raw(`
+            await tx.execute(
+              sql.raw(`
               INSERT INTO ${quotedSchema}.user_roles (user_id, role_id)
               VALUES (${quoteLiteral(adminUserId)}, ${quoteLiteral(adminRoleId)}::uuid)
               ON CONFLICT DO NOTHING
-            `));
+            `),
+            );
           }
         }
 
@@ -269,16 +307,19 @@ export class TenantsRepository {
 
         // PASSO 8 — Vincular usuário Admin à Matriz via user_branches
         if (adminUserId) {
-          await tx.execute(sql.raw(`
+          await tx.execute(
+            sql.raw(`
             INSERT INTO ${quotedSchema}.user_branches (user_id, branch_id)
             VALUES (${quoteLiteral(adminUserId)}, ${quoteLiteral(matrizId)}::uuid)
             ON CONFLICT DO NOTHING
-          `));
+          `),
+          );
         }
 
         // PASSO 9 — Criar categorias padrão na filial Matriz
         for (const cat of DEFAULT_CATEGORIES) {
-          await tx.execute(sql.raw(`
+          await tx.execute(
+            sql.raw(`
             INSERT INTO ${quotedSchema}.categories (branch_id, name, type, active)
             VALUES (
               ${quoteLiteral(matrizId)}::uuid,
@@ -287,11 +328,13 @@ export class TenantsRepository {
               true
             )
             ON CONFLICT DO NOTHING
-          `));
+          `),
+          );
         }
 
         // PASSO 10 — Criar financial_settings para a Matriz com defaults
-        await tx.execute(sql.raw(`
+        await tx.execute(
+          sql.raw(`
           INSERT INTO ${quotedSchema}.financial_settings (
             branch_id,
             closing_day,
@@ -310,21 +353,25 @@ export class TenantsRepository {
             180
           )
           ON CONFLICT (branch_id) DO NOTHING
-        `));
+        `),
+        );
 
         // PASSO 11 — Inicializar document_sequences para a Matriz (PAYABLE + RECEIVABLE)
         const currentYear = new Date().getFullYear();
         for (const type of ['PAYABLE', 'RECEIVABLE']) {
-          await tx.execute(sql.raw(`
+          await tx.execute(
+            sql.raw(`
             INSERT INTO ${quotedSchema}.document_sequences (branch_id, type, year, last_sequence)
             VALUES (${quoteLiteral(matrizId)}::uuid, ${quoteLiteral(type)}, ${currentYear}, 0)
             ON CONFLICT (branch_id, type, year) DO NOTHING
-          `));
+          `),
+          );
         }
 
         // PASSO 12 — Criar collection_rules padrão (régua de cobrança)
         for (const rule of DEFAULT_COLLECTION_RULES) {
-          await tx.execute(sql.raw(`
+          await tx.execute(
+            sql.raw(`
             INSERT INTO ${quotedSchema}.collection_rules (
               branch_id, name, trigger_event, offset_days, channel, active
             ) VALUES (
@@ -336,10 +383,10 @@ export class TenantsRepository {
               true
             )
             ON CONFLICT DO NOTHING
-          `));
+          `),
+          );
         }
       });
-
     } catch (error) {
       // Falha em qualquer passo: DROP SCHEMA CASCADE (remove schema + todas as tabelas)
       this.logger.error(
@@ -347,9 +394,9 @@ export class TenantsRepository {
         error instanceof Error ? error.stack : String(error),
       );
       try {
-        await this.drizzleService.getClient().execute(
-          sql.raw(`DROP SCHEMA IF EXISTS ${quotedSchema} CASCADE`),
-        );
+        await this.drizzleService
+          .getClient()
+          .execute(sql.raw(`DROP SCHEMA IF EXISTS ${quotedSchema} CASCADE`));
       } catch (dropError) {
         this.logger.error(
           `Falha ao fazer DROP SCHEMA ${schemaName} durante rollback:`,
@@ -359,7 +406,10 @@ export class TenantsRepository {
       throw new BusinessException(
         'ONBOARDING_FAILED',
         'Falha ao configurar empresa. Tente novamente.',
-        { tenantId, cause: error instanceof Error ? error.message : String(error) },
+        {
+          tenantId,
+          cause: error instanceof Error ? error.message : String(error),
+        },
       );
     }
 
@@ -381,7 +431,7 @@ export class TenantsRepository {
       return [];
     }
 
-    const row = result.rows[0] as Record<string, unknown>;
+    const row = result.rows[0];
     return [
       {
         id: String(row.id),

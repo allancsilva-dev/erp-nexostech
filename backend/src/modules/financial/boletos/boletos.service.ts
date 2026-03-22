@@ -20,7 +20,10 @@ export class BoletosService {
 
   async generate(entryId: string, branchId: string, dto: GenerateBoletoDto) {
     // Verifica se já existe boleto ativo para este lançamento
-    const existing = await this.boletosRepository.findByEntryId(entryId, branchId);
+    const existing = await this.boletosRepository.findByEntryId(
+      entryId,
+      branchId,
+    );
     if (existing && existing.status === 'ACTIVE') {
       throw new BusinessException(
         'BOLETO_ALREADY_GENERATED',

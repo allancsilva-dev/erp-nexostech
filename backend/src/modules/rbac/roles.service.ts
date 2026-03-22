@@ -176,7 +176,10 @@ export class RolesService {
       );
     }
 
-    const rolesMap = new Map<string, { id: string; name: string; isSystem: boolean }>();
+    const rolesMap = new Map<
+      string,
+      { id: string; name: string; isSystem: boolean }
+    >();
     const permissionsSet = new Set<string>();
 
     for (const row of rows) {
@@ -217,7 +220,7 @@ export class RolesService {
     };
   }
 
-  async createUser(dto: CreateUserDto, actor: AuthUser): Promise<{ userId: string }> {
+  async createUser(dto: CreateUserDto): Promise<{ userId: string }> {
     const authUser = await this.authApiService.findUserByEmail(dto.email);
     if (!authUser) {
       throw new BusinessException(
@@ -228,7 +231,9 @@ export class RolesService {
       );
     }
 
-    const alreadyLinked = await this.rolesRepository.existsUserRole(authUser.id);
+    const alreadyLinked = await this.rolesRepository.existsUserRole(
+      authUser.id,
+    );
     if (alreadyLinked) {
       throw new BusinessException(
         'USER_ALREADY_LINKED',
@@ -245,7 +250,10 @@ export class RolesService {
     });
 
     if (dto.branchIds && dto.branchIds.length > 0) {
-      await this.rolesRepository.replaceUserBranches(authUser.id, dto.branchIds);
+      await this.rolesRepository.replaceUserBranches(
+        authUser.id,
+        dto.branchIds,
+      );
     }
 
     this.emitUserRoleChanged(authUser.id);
@@ -263,7 +271,8 @@ export class RolesService {
   > {
     const rows = await this.rolesRepository.listTenantUsers();
     const userIds = Array.from(new Set(rows.map((row) => row.userId)));
-    const branchesRows = await this.rolesRepository.listBranchesByUserIds(userIds);
+    const branchesRows =
+      await this.rolesRepository.listBranchesByUserIds(userIds);
 
     const usersMap = new Map<
       string,
@@ -294,8 +303,13 @@ export class RolesService {
       const current = usersMap.get(branchRow.userId);
       if (!current) continue;
 
-      if (!current.branches.some((branch) => branch.id === branchRow.branchId)) {
-        current.branches.push({ id: branchRow.branchId, name: branchRow.branchName });
+      if (
+        !current.branches.some((branch) => branch.id === branchRow.branchId)
+      ) {
+        current.branches.push({
+          id: branchRow.branchId,
+          name: branchRow.branchName,
+        });
       }
     }
 
@@ -346,7 +360,9 @@ export class RolesService {
   }
 
   private assertValidPermissionCodes(permissionCodes: string[]): void {
-    const validCodes = new Set(SYSTEM_PERMISSIONS.map((permission) => permission.code));
+    const validCodes = new Set(
+      SYSTEM_PERMISSIONS.map((permission) => permission.code),
+    );
     const invalid = permissionCodes.filter((code) => !validCodes.has(code));
 
     if (invalid.length > 0) {

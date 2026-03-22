@@ -34,7 +34,9 @@ export class UsersController {
   async mePermissions(
     @CurrentUser() user: AuthUser,
   ): Promise<ApiResponse<string[]>> {
-    return ApiResponse.ok(await this.rolesService.listCurrentUserPermissions(user));
+    return ApiResponse.ok(
+      await this.rolesService.listCurrentUserPermissions(user),
+    );
   }
 
   @Get(':id/roles')
@@ -59,9 +61,8 @@ export class UsersController {
   @RequirePermission('admin.users.manage')
   async createUser(
     @Body() dto: CreateUserDto,
-    @CurrentUser() user: AuthUser,
   ): Promise<ApiResponse<{ userId: string }>> {
-    return ApiResponse.created(await this.rolesService.createUser(dto, user));
+    return ApiResponse.created(await this.rolesService.createUser(dto));
   }
 
   @Patch(':userId/branches')

@@ -12,15 +12,31 @@ import { UpdateApprovalRuleDto } from './dto/update-approval-rule.dto';
 export class ApprovalRulesRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   private mapRow(row: Record<string, unknown>) {
     return {
-      id: String(row.id),
-      branchId: String(row.branch_id),
-      entryType: row.entry_type ? String(row.entry_type) : null,
-      minAmount: String(row.min_amount),
-      approverRoleId: String(row.approver_role_id),
+      id: this.toText(row.id),
+      branchId: this.toText(row.branch_id),
+      entryType: this.toNullableText(row.entry_type),
+      minAmount: this.toText(row.min_amount),
+      approverRoleId: this.toText(row.approver_role_id),
       active: Boolean(row.active),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     };
   }
 
@@ -38,9 +54,7 @@ export class ApprovalRulesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      this.mapRow(row),
-    );
+    return result.rows.map((row) => this.mapRow(row));
   }
 
   async create(branchId: string, dto: CreateApprovalRuleDto) {
@@ -62,7 +76,7 @@ export class ApprovalRulesRepository {
     `),
     );
 
-    return this.mapRow(result.rows[0] as Record<string, unknown>);
+    return this.mapRow(result.rows[0]);
   }
 
   async findById(id: string, branchId: string) {

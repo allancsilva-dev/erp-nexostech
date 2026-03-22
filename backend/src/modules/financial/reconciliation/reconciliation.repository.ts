@@ -6,13 +6,40 @@ import {
   quoteLiteral,
 } from '../../../infrastructure/database/sql-builder.util';
 
+type QueryRow = Record<string, unknown>;
+
+function getRows(result: unknown): QueryRow[] {
+  if (!result || typeof result !== 'object' || !('rows' in result)) {
+    return [];
+  }
+
+  const rows = (result as { rows?: unknown }).rows;
+  return Array.isArray(rows) ? (rows as QueryRow[]) : [];
+}
+
+function toText(value: unknown, fallback = ''): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value instanceof Date
+  ) {
+    return String(value);
+  }
+
+  return fallback;
+}
+
 @Injectable()
 export class ReconciliationRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
   async listPending(branchId: string) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
         i.id,
@@ -33,15 +60,15 @@ export class ReconciliationRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      id: String(row.id),
-      batchId: String(row.batch_id),
-      paymentId: String(row.payment_id),
-      entryId: String(row.entry_id),
-      amount: String(row.amount),
-      paymentDate: String(row.payment_date),
+    return getRows(result).map((row) => ({
+      id: toText(row.id),
+      batchId: toText(row.batch_id),
+      paymentId: toText(row.payment_id),
+      entryId: toText(row.entry_id),
+      amount: toText(row.amount),
+      paymentDate: toText(row.payment_date),
       reconciled: Boolean(row.reconciled),
-      batchCreatedAt: new Date(String(row.batch_created_at)).toISOString(),
+      batchCreatedAt: new Date(toText(row.batch_created_at)).toISOString(),
     }));
   }
 
@@ -53,7 +80,7 @@ export class ReconciliationRepository {
     endDate: string,
   ) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       INSERT INTO ${schema}.reconciliation_batches (
         branch_id, bank_account_id, start_date, end_date, created_by
@@ -68,15 +95,19 @@ export class ReconciliationRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown>;
+    const row = getRows(result)[0];
+    if (!row) {
+      throw new Error('Batch creation failed');
+    }
+
     return {
-      id: String(row.id),
-      branchId: String(row.branch_id),
-      bankAccountId: String(row.bank_account_id),
-      startDate: String(row.start_date),
-      endDate: String(row.end_date),
-      createdBy: String(row.created_by),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      id: toText(row.id),
+      branchId: toText(row.branch_id),
+      bankAccountId: toText(row.bank_account_id),
+      startDate: toText(row.start_date),
+      endDate: toText(row.end_date),
+      createdBy: toText(row.created_by),
+      createdAt: new Date(toText(row.created_at)).toISOString(),
     };
   }
 
@@ -88,7 +119,7 @@ export class ReconciliationRepository {
     endDate: string,
   ): Promise<number> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       INSERT INTO ${schema}.reconciliation_items (
         batch_id, branch_id, payment_id, entry_id, amount, payment_date, reconciled
@@ -113,7 +144,7 @@ export class ReconciliationRepository {
     `),
     );
 
-    return result.rows.length;
+    return getRows(result).length;
   }
 
   async undoBatch(batchId: string, branchId: string): Promise<void> {
@@ -141,7 +172,7 @@ export class ReconciliationRepository {
 
   async getBatchItems(batchId: string, branchId: string) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
         id,
@@ -160,15 +191,15 @@ export class ReconciliationRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      id: String(row.id),
-      batchId: String(row.batch_id),
-      paymentId: String(row.payment_id),
-      entryId: String(row.entry_id),
-      amount: String(row.amount),
-      paymentDate: String(row.payment_date),
+    return getRows(result).map((row) => ({
+      id: toText(row.id),
+      batchId: toText(row.batch_id),
+      paymentId: toText(row.payment_id),
+      entryId: toText(row.entry_id),
+      amount: toText(row.amount),
+      paymentDate: toText(row.payment_date),
       reconciled: Boolean(row.reconciled),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      createdAt: new Date(toText(row.created_at)).toISOString(),
     }));
   }
 
@@ -181,7 +212,7 @@ export class ReconciliationRepository {
     const entryClause =
       entryId !== undefined ? `entry_id = ${quoteLiteral(entryId)},` : '';
 
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       UPDATE ${schema}.reconciliation_items
       SET ${entryClause}
@@ -194,16 +225,20 @@ export class ReconciliationRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown>;
+    const row = getRows(result)[0];
+    if (!row) {
+      throw new Error('Match update failed');
+    }
+
     return {
-      id: String(row.id),
-      batchId: String(row.batch_id),
-      paymentId: String(row.payment_id),
-      entryId: String(row.entry_id),
-      amount: String(row.amount),
-      paymentDate: String(row.payment_date),
+      id: toText(row.id),
+      batchId: toText(row.batch_id),
+      paymentId: toText(row.payment_id),
+      entryId: toText(row.entry_id),
+      amount: toText(row.amount),
+      paymentDate: toText(row.payment_date),
       reconciled: Boolean(row.reconciled),
-      updatedAt: new Date(String(row.updated_at)).toISOString(),
+      updatedAt: new Date(toText(row.updated_at)).toISOString(),
     };
   }
 }

@@ -14,7 +14,9 @@ export class AuthApiService {
 
   async findUserByEmail(email: string): Promise<AuthUserRecord | null> {
     const authUrl = this.configService.getOrThrow<string>('AUTH_URL');
-    const secret = this.configService.getOrThrow<string>('AUTH_INTERNAL_SECRET');
+    const secret = this.configService.getOrThrow<string>(
+      'AUTH_INTERNAL_SECRET',
+    );
 
     const response = await fetch(
       `${authUrl}/users?email=${encodeURIComponent(email)}`,
@@ -27,11 +29,11 @@ export class AuthApiService {
       },
     );
 
-    if (response.status === HttpStatus.NOT_FOUND) {
+    if (response.status === 404) {
       return null;
     }
 
-    if (response.status === HttpStatus.FORBIDDEN) {
+    if (response.status === 403) {
       throw new BusinessException(
         'AUTH_FORBIDDEN',
         'Usuario nao tem acesso ao ERP no Auth.',
@@ -93,9 +95,26 @@ export class AuthApiService {
       return null;
     }
 
+    const id =
+      typeof idRaw === 'string'
+        ? idRaw
+        : typeof idRaw === 'number' || typeof idRaw === 'bigint'
+          ? String(idRaw)
+          : null;
+    const email =
+      typeof emailRaw === 'string'
+        ? emailRaw
+        : typeof emailRaw === 'number' || typeof emailRaw === 'bigint'
+          ? String(emailRaw)
+          : null;
+
+    if (!id || !email) {
+      return null;
+    }
+
     return {
-      id: String(idRaw),
-      email: String(emailRaw),
+      id,
+      email,
     };
   }
 }

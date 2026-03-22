@@ -53,7 +53,7 @@ export async function middleware(req: NextRequest) {
   }
 
   const loginUrl = new URL(`${AUTH_URL}/login`);
-  loginUrl.searchParams.set('app', APP_AUD);
+  loginUrl.searchParams.set('app', 'erp');
   loginUrl.searchParams.set(
     'redirect',
     APP_URL + req.nextUrl.pathname + req.nextUrl.search,

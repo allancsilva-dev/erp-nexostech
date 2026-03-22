@@ -11,6 +11,22 @@ import { CreateLockPeriodDto } from './dto/create-lock-period.dto';
 export class LockPeriodsRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   async list(branchId: string) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
@@ -24,13 +40,13 @@ export class LockPeriodsRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      id: String(row.id),
-      branchId: String(row.branch_id),
-      lockedUntil: String(row.locked_until),
-      reason: row.reason ? String(row.reason) : null,
-      lockedBy: String(row.locked_by),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+    return result.rows.map((row) => ({
+      id: this.toText(row.id),
+      branchId: this.toText(row.branch_id),
+      lockedUntil: this.toText(row.locked_until),
+      reason: this.toNullableText(row.reason),
+      lockedBy: this.toText(row.locked_by),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     }));
   }
 
@@ -49,14 +65,14 @@ export class LockPeriodsRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown>;
+    const row = result.rows[0];
     return {
-      id: String(row.id),
-      branchId: String(row.branch_id),
-      lockedUntil: String(row.locked_until),
-      reason: row.reason ? String(row.reason) : null,
-      lockedBy: String(row.locked_by),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      id: this.toText(row.id),
+      branchId: this.toText(row.branch_id),
+      lockedUntil: this.toText(row.locked_until),
+      reason: this.toNullableText(row.reason),
+      lockedBy: this.toText(row.locked_by),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     };
   }
 

@@ -17,6 +17,18 @@ export type DashboardSummary = {
 export class DashboardRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
+  private toText(value: unknown): string {
+    return this.toNullableText(value) ?? '';
+  }
+
   async getSummary(branchId: string): Promise<DashboardSummary> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
@@ -48,14 +60,10 @@ export class DashboardRepository {
 
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return {
-      currentBalance: row?.current_balance
-        ? String(row.current_balance)
-        : '0.00',
-      totalReceivable30d: row?.receivable_30d
-        ? String(row.receivable_30d)
-        : '0.00',
-      totalPayable30d: row?.payable_30d ? String(row.payable_30d) : '0.00',
-      monthResult: row?.month_result ? String(row.month_result) : '0.00',
+      currentBalance: this.toNullableText(row?.current_balance) ?? '0.00',
+      totalReceivable30d: this.toNullableText(row?.receivable_30d) ?? '0.00',
+      totalPayable30d: this.toNullableText(row?.payable_30d) ?? '0.00',
+      monthResult: this.toNullableText(row?.month_result) ?? '0.00',
     };
   }
 
@@ -77,10 +85,10 @@ export class DashboardRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      id: String(row.id),
-      description: String(row.description),
-      amount: String(row.amount),
+    return result.rows.map((row) => ({
+      id: this.toText(row.id),
+      description: this.toText(row.description),
+      amount: this.toText(row.amount),
     }));
   }
 
@@ -107,10 +115,10 @@ export class DashboardRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      month: String(row.month),
-      inflow: String(row.inflow),
-      outflow: String(row.outflow),
+    return result.rows.map((row) => ({
+      month: this.toText(row.month),
+      inflow: this.toText(row.inflow),
+      outflow: this.toText(row.outflow),
     }));
   }
 }

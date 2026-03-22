@@ -17,7 +17,10 @@ export class ApprovalsService {
 
   async approve(entryId: string, branchId: string, user: AuthUser) {
     // Verifica se o aprovador é o mesmo que criou o lançamento (proibido pela especificação)
-    const entry = await this.approvalsRepository.findEntryCreator(entryId, branchId);
+    const entry = await this.approvalsRepository.findEntryCreator(
+      entryId,
+      branchId,
+    );
     if (entry && entry.createdBy === user.sub) {
       throw new BusinessException(
         'APPROVAL_SELF_FORBIDDEN',

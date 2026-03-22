@@ -7,6 +7,33 @@ import {
   quoteLiteral,
 } from '../../../infrastructure/database/sql-builder.util';
 
+type QueryRow = Record<string, unknown>;
+
+function getRows(result: unknown): QueryRow[] {
+  if (!result || typeof result !== 'object' || !('rows' in result)) {
+    return [];
+  }
+
+  const rows = (result as { rows?: unknown }).rows;
+  return Array.isArray(rows) ? (rows as QueryRow[]) : [];
+}
+
+function toText(value: unknown, fallback = ''): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value instanceof Date
+  ) {
+    return String(value);
+  }
+
+  return fallback;
+}
+
 @Injectable()
 export class ReportsRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
@@ -17,7 +44,7 @@ export class ReportsRepository {
     const startLiteral = quoteLiteral(startDate);
     const endLiteral = quoteLiteral(endDate);
 
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
         COALESCE(SUM(CASE WHEN type = 'RECEIVABLE' THEN amount ELSE 0 END), 0)::text AS revenue_total,
@@ -30,10 +57,10 @@ export class ReportsRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown> | undefined;
+    const row = getRows(result)[0];
     return {
-      revenueTotal: row?.revenue_total ? String(row.revenue_total) : '0.00',
-      expenseTotal: row?.expense_total ? String(row.expense_total) : '0.00',
+      revenueTotal: row ? toText(row.revenue_total, '0.00') : '0.00',
+      expenseTotal: row ? toText(row.expense_total, '0.00') : '0.00',
     };
   }
 
@@ -43,8 +70,10 @@ export class ReportsRepository {
     const startLiteral = quoteLiteral(startDate);
     const endLiteral = quoteLiteral(endDate);
 
-    const balanceResult = await this.drizzleService.getClient().execute(
-      sql.raw(`
+    const balanceResult: unknown = await this.drizzleService
+      .getClient()
+      .execute(
+        sql.raw(`
       SELECT
         (
           COALESCE((SELECT SUM(initial_balance) FROM ${schema}.bank_accounts WHERE branch_id = ${branchLiteral} AND deleted_at IS NULL), 0)
@@ -55,9 +84,9 @@ export class ReportsRepository {
                         AND deleted_at IS NULL), 0)
         )::text AS start_balance
     `),
-    );
+      );
 
-    const rowsResult = await this.drizzleService.getClient().execute(
+    const rowsResult: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
         due_date::text AS row_date,
@@ -73,17 +102,15 @@ export class ReportsRepository {
     `),
     );
 
-    const balanceRow = balanceResult.rows[0] as
-      | Record<string, unknown>
-      | undefined;
+    const balanceRow = getRows(balanceResult)[0];
     return {
-      startBalance: balanceRow?.start_balance
-        ? String(balanceRow.start_balance)
+      startBalance: balanceRow
+        ? toText(balanceRow.start_balance, '0.00')
         : '0.00',
-      rows: (rowsResult.rows as Array<Record<string, unknown>>).map((row) => ({
-        date: String(row.row_date),
-        inflow: String(row.inflow),
-        outflow: String(row.outflow),
+      rows: getRows(rowsResult).map((row) => ({
+        date: toText(row.row_date),
+        inflow: toText(row.inflow),
+        outflow: toText(row.outflow),
       })),
     };
   }
@@ -94,7 +121,7 @@ export class ReportsRepository {
     const startLiteral = quoteLiteral(startDate);
     const endLiteral = quoteLiteral(endDate);
 
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
         COALESCE(c.name, 'Sem categoria') AS category_name,
@@ -112,11 +139,11 @@ export class ReportsRepository {
     `),
     );
 
-    const rows = (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      categoryName: String(row.category_name),
-      inflow: String(row.inflow),
-      outflow: String(row.outflow),
-      net: String(row.net),
+    const rows = getRows(result).map((row) => ({
+      categoryName: toText(row.category_name),
+      inflow: toText(row.inflow),
+      outflow: toText(row.outflow),
+      net: toText(row.net),
     }));
 
     const totals = rows.reduce(
@@ -137,7 +164,7 @@ export class ReportsRepository {
     const startLiteral = quoteLiteral(startDate);
     const endLiteral = quoteLiteral(endDate);
 
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
         CASE
@@ -161,10 +188,10 @@ export class ReportsRepository {
     );
 
     return {
-      ranges: (result.rows as Array<Record<string, unknown>>).map((row) => ({
-        range: String(row.aging_range),
-        total: String(row.total),
-        count: Number(row.count),
+      ranges: getRows(result).map((row) => ({
+        range: toText(row.aging_range),
+        total: toText(row.total),
+        count: Number(toText(row.count, '0')),
       })),
     };
   }

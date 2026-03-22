@@ -52,7 +52,7 @@ export class RecurrenceProcessor implements OnModuleInit {
       `),
         );
 
-        for (const raw of dueRows.rows as Array<Record<string, unknown>>) {
+        for (const raw of dueRows.rows) {
           const row = raw as unknown as RecurrenceRow;
           const dueDate = String(row.next_due_date);
           const issueDate = new Date().toISOString().slice(0, 10);
@@ -135,7 +135,7 @@ export class RecurrenceProcessor implements OnModuleInit {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown>;
+    const row = result.rows[0];
     return Number(row.current_number);
   }
 

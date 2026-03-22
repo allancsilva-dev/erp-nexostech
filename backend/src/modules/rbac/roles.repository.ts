@@ -38,6 +38,22 @@ export type TenantUserBranchRow = {
 export class RolesRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   async list(): Promise<RoleEntity[]> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const rows = await this.drizzleService.getClient().execute(
@@ -49,16 +65,16 @@ export class RolesRepository {
     `),
     );
 
-    const items = rows.rows as Array<Record<string, unknown>>;
+    const items = rows.rows;
     const roleIds = items.map((row) => String(row.id));
     const permissionsByRole = await this.getPermissionsMap(roleIds);
 
     return items.map((row) => ({
-      id: String(row.id),
-      name: String(row.name),
-      description: row.description ? String(row.description) : '',
+      id: this.toText(row.id),
+      name: this.toText(row.name),
+      description: this.toNullableText(row.description) ?? '',
       isSystem: Boolean(row.is_system),
-      permissions: permissionsByRole.get(String(row.id)) ?? [],
+      permissions: permissionsByRole.get(this.toText(row.id)) ?? [],
     }));
   }
 
@@ -75,14 +91,14 @@ export class RolesRepository {
     `),
     );
 
-    const row = inserted.rows[0] as Record<string, unknown>;
-    const roleId = String(row.id);
+    const row = inserted.rows[0];
+    const roleId = this.toText(row.id);
     await this.replacePermissions(roleId, dto.permissionCodes);
 
     return {
       id: roleId,
-      name: String(row.name),
-      description: row.description ? String(row.description) : '',
+      name: this.toText(row.name),
+      description: this.toNullableText(row.description) ?? '',
       isSystem: Boolean(row.is_system),
       permissions: dto.permissionCodes,
     };
@@ -110,8 +126,8 @@ export class RolesRepository {
     const permissionsMap = await this.getPermissionsMap([id]);
     return {
       id,
-      name: String(row.name),
-      description: row.description ? String(row.description) : '',
+      name: this.toText(row.name),
+      description: this.toNullableText(row.description) ?? '',
       isSystem: Boolean(row.is_system),
       permissions: permissionsMap.get(id) ?? [],
     };
@@ -192,9 +208,9 @@ export class RolesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      roleId: String(row.role_id),
-      roleName: String(row.role_name),
+    return result.rows.map((row) => ({
+      roleId: this.toText(row.role_id),
+      roleName: this.toText(row.role_name),
     }));
   }
 
@@ -221,9 +237,7 @@ export class RolesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      String(row.permission_code),
-    );
+    return result.rows.map((row) => this.toText(row.permission_code));
   }
 
   async listCurrentUserRolesAndPermissions(
@@ -248,15 +262,17 @@ export class RolesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      roleId: String(row.role_id),
-      roleName: String(row.role_name),
+    return result.rows.map((row) => ({
+      roleId: this.toText(row.role_id),
+      roleName: this.toText(row.role_name),
       isSystem: Boolean(row.is_system),
-      permissionCode: row.permission_code ? String(row.permission_code) : null,
+      permissionCode: this.toNullableText(row.permission_code),
     }));
   }
 
-  async listCurrentUserBranches(userId: string): Promise<CurrentUserBranchRow[]> {
+  async listCurrentUserBranches(
+    userId: string,
+  ): Promise<CurrentUserBranchRow[]> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const result = await this.drizzleService.getClient().execute(
       sql.raw(`
@@ -271,9 +287,9 @@ export class RolesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      branchId: String(row.branch_id),
-      branchName: String(row.branch_name),
+    return result.rows.map((row) => ({
+      branchId: this.toText(row.branch_id),
+      branchName: this.toText(row.branch_name),
     }));
   }
 
@@ -287,9 +303,7 @@ export class RolesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      String(row.user_id),
-    );
+    return result.rows.map((row) => this.toText(row.user_id));
   }
 
   async updateRolePermissions(
@@ -356,7 +370,10 @@ export class RolesRepository {
     );
   }
 
-  async replaceUserBranches(userId: string, branchIds: string[]): Promise<void> {
+  async replaceUserBranches(
+    userId: string,
+    branchIds: string[],
+  ): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const userLiteral = quoteLiteral(userId);
 
@@ -402,15 +419,17 @@ export class RolesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      userId: String(row.user_id),
-      email: row.email ? String(row.email) : null,
-      roleId: String(row.role_id),
-      roleName: String(row.role_name),
+    return result.rows.map((row) => ({
+      userId: this.toText(row.user_id),
+      email: this.toNullableText(row.email),
+      roleId: this.toText(row.role_id),
+      roleName: this.toText(row.role_name),
     }));
   }
 
-  async listBranchesByUserIds(userIds: string[]): Promise<TenantUserBranchRow[]> {
+  async listBranchesByUserIds(
+    userIds: string[],
+  ): Promise<TenantUserBranchRow[]> {
     if (userIds.length === 0) {
       return [];
     }
@@ -430,10 +449,10 @@ export class RolesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      userId: String(row.user_id),
-      branchId: String(row.branch_id),
-      branchName: String(row.branch_name),
+    return result.rows.map((row) => ({
+      userId: this.toText(row.user_id),
+      branchId: this.toText(row.branch_id),
+      branchName: this.toText(row.branch_name),
     }));
   }
 
@@ -467,9 +486,9 @@ export class RolesRepository {
     `),
     );
 
-    (result.rows as Array<Record<string, unknown>>).forEach((row) => {
-      const roleId = String(row.role_id);
-      const permission = String(row.permission_code);
+    result.rows.forEach((row) => {
+      const roleId = this.toText(row.role_id);
+      const permission = this.toText(row.permission_code);
       const current = map.get(roleId) ?? [];
       current.push(permission);
       map.set(roleId, current);

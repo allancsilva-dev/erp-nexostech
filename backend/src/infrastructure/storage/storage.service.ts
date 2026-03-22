@@ -50,21 +50,27 @@ export class StorageService implements OnModuleInit {
           }),
         ),
       {
-        timeout: 10_000,       // 10s por upload
+        timeout: 10_000, // 10s por upload
         errorThresholdPercentage: 50,
-        resetTimeout: 30_000,  // tenta reabrir após 30s
-        volumeThreshold: 5,    // mínimo de requests antes de abrir
+        resetTimeout: 30_000, // tenta reabrir após 30s
+        volumeThreshold: 5, // mínimo de requests antes de abrir
       },
     );
 
     this.uploadBreaker.on('open', () =>
-      this.logger.warn('StorageService: circuit breaker ABERTO — R2 indisponível'),
+      this.logger.warn(
+        'StorageService: circuit breaker ABERTO — R2 indisponível',
+      ),
     );
     this.uploadBreaker.on('halfOpen', () =>
-      this.logger.log('StorageService: circuit breaker SEMI-ABERTO — testando R2'),
+      this.logger.log(
+        'StorageService: circuit breaker SEMI-ABERTO — testando R2',
+      ),
     );
     this.uploadBreaker.on('close', () =>
-      this.logger.log('StorageService: circuit breaker FECHADO — R2 recuperado'),
+      this.logger.log(
+        'StorageService: circuit breaker FECHADO — R2 recuperado',
+      ),
     );
   }
 

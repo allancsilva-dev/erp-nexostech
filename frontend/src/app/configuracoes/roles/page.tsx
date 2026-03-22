@@ -90,12 +90,15 @@ export default function ConfiguracoesRolesPage() {
   });
 
   const roles = rolesQuery.data?.data ?? [];
-  const permissionsByModule = permissionsQuery.data?.data ?? {};
+  const permissionsData = permissionsQuery.data?.data;
   const isLoading = rolesQuery.isLoading || permissionsQuery.isLoading;
   const isError = rolesQuery.isError || permissionsQuery.isError;
   const errorMessage = rolesQuery.error?.message || permissionsQuery.error?.message || 'Erro desconhecido';
 
-  const groupedPermissions = useMemo(() => Object.entries(permissionsByModule), [permissionsByModule]);
+  const groupedPermissions = useMemo(
+    () => Object.entries(permissionsData ?? {}),
+    [permissionsData],
+  );
 
   return (
     <div>

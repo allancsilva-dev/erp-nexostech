@@ -5,9 +5,9 @@ type CacheResultOptions = {
   ttlSeconds: number;
 };
 
-const LOCK_TTL_MS = 5_000;   // lock expira em 5s (evita deadlock)
+const LOCK_TTL_MS = 5_000; // lock expira em 5s (evita deadlock)
 const RETRY_INTERVAL_MS = 50; // polling enquanto lock está ativo
-const MAX_RETRIES = 60;       // máx 3s de espera (60 × 50ms)
+const MAX_RETRIES = 60; // máx 3s de espera (60 × 50ms)
 
 /** Jitter: ±10% do TTL para evitar thundering herd no expiry */
 function withJitter(ttlSeconds: number): number {
@@ -25,9 +25,7 @@ export function CacheResult(options: CacheResultOptions) {
     _propertyKey: string,
     descriptor: PropertyDescriptor,
   ): PropertyDescriptor => {
-    const original = descriptor.value as (
-      ...args: unknown[]
-    ) => Promise<unknown>;
+    const original = descriptor.value as (...args: unknown[]) => unknown;
 
     descriptor.value = async function wrapped(
       this: unknown,
@@ -36,7 +34,7 @@ export function CacheResult(options: CacheResultOptions) {
       const self = this as { cacheService?: CacheService };
       const cache = self.cacheService;
       if (!cache) {
-        return original.apply(this, args);
+        return Promise.resolve(original.apply(this, args) as unknown);
       }
 
       const cacheKey = `${options.keyPrefix}:${JSON.stringify(args)}`;
@@ -58,7 +56,9 @@ export function CacheResult(options: CacheResultOptions) {
             return recheck;
           }
 
-          const result = await original.apply(this, args);
+          const result = await Promise.resolve(
+            original.apply(this, args) as unknown,
+          );
           const ttlWithJitter = withJitter(options.ttlSeconds);
           await cache.set(cacheKey, result, ttlWithJitter * 1000);
           return result;
@@ -77,7 +77,7 @@ export function CacheResult(options: CacheResultOptions) {
       }
 
       // 4. Fallback: computa diretamente se lock expirou sem resultado
-      return original.apply(this, args);
+      return Promise.resolve(original.apply(this, args) as unknown);
     };
 
     return descriptor;

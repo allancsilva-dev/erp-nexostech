@@ -12,17 +12,33 @@ import { CategoryEntity } from './dto/category.response';
 export class CategoriesRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   private mapRow(row: Record<string, unknown>): CategoryEntity {
     return {
-      id: String(row.id),
-      branchId: String(row.branch_id),
-      name: String(row.name),
-      type: String(row.type),
-      parentId: row.parent_id ? String(row.parent_id) : null,
-      color: row.color ? String(row.color) : null,
+      id: this.toText(row.id),
+      branchId: this.toText(row.branch_id),
+      name: this.toText(row.name),
+      type: this.toText(row.type),
+      parentId: this.toNullableText(row.parent_id),
+      color: this.toNullableText(row.color),
       active: Boolean(row.active),
       sortOrder: Number(row.sort_order),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     };
   }
 
@@ -40,9 +56,7 @@ export class CategoriesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      this.mapRow(row),
-    );
+    return result.rows.map((row) => this.mapRow(row));
   }
 
   async findById(id: string, branchId: string): Promise<CategoryEntity | null> {
@@ -88,7 +102,7 @@ export class CategoriesRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown>;
+    const row = result.rows[0];
     return this.mapRow(row);
   }
 

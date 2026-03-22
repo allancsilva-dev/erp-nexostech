@@ -24,6 +24,22 @@ export type AuditLogEntity = {
 export class AuditRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   async list(
     page: number,
     pageSize: number,
@@ -51,23 +67,21 @@ export class AuditRepository {
     );
 
     const totalRow = totalResult.rows[0] as Record<string, unknown> | undefined;
-    const items = (rowsResult.rows as Array<Record<string, unknown>>).map(
-      (row) => ({
-        id: String(row.id),
-        branchId: row.branch_id ? String(row.branch_id) : null,
-        userId: String(row.user_id),
-        userEmail: row.user_email ? String(row.user_email) : null,
-        action: String(row.action),
-        entity: String(row.entity),
-        entityId: String(row.entity_id),
-        requestId: row.request_id ? String(row.request_id) : null,
-        ipAddress: row.ip_address ? String(row.ip_address) : null,
-        fieldChanges: Array.isArray(row.field_changes)
-          ? (row.field_changes as unknown[])
-          : [],
-        createdAt: new Date(String(row.created_at)).toISOString(),
-      }),
-    );
+    const items = rowsResult.rows.map((row) => ({
+      id: this.toText(row.id),
+      branchId: this.toNullableText(row.branch_id),
+      userId: this.toText(row.user_id),
+      userEmail: this.toNullableText(row.user_email),
+      action: this.toText(row.action),
+      entity: this.toText(row.entity),
+      entityId: this.toText(row.entity_id),
+      requestId: this.toNullableText(row.request_id),
+      ipAddress: this.toNullableText(row.ip_address),
+      fieldChanges: Array.isArray(row.field_changes)
+        ? (row.field_changes as unknown[])
+        : [],
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
+    }));
 
     return {
       items,
@@ -92,19 +106,19 @@ export class AuditRepository {
     }
 
     return {
-      id: String(row.id),
-      branchId: row.branch_id ? String(row.branch_id) : null,
-      userId: String(row.user_id),
-      userEmail: row.user_email ? String(row.user_email) : null,
-      action: String(row.action),
-      entity: String(row.entity),
-      entityId: String(row.entity_id),
-      requestId: row.request_id ? String(row.request_id) : null,
-      ipAddress: row.ip_address ? String(row.ip_address) : null,
+      id: this.toText(row.id),
+      branchId: this.toNullableText(row.branch_id),
+      userId: this.toText(row.user_id),
+      userEmail: this.toNullableText(row.user_email),
+      action: this.toText(row.action),
+      entity: this.toText(row.entity),
+      entityId: this.toText(row.entity_id),
+      requestId: this.toNullableText(row.request_id),
+      ipAddress: this.toNullableText(row.ip_address),
       fieldChanges: Array.isArray(row.field_changes)
         ? (row.field_changes as unknown[])
         : [],
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     };
   }
 }

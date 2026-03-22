@@ -41,16 +41,12 @@ export class NotificationListener {
   @OnEvent('entry.approved')
   async onEntryApproved(payload: EntryApprovedPayload): Promise<void> {
     try {
-      await this.queueService.add(
-        'financial.notifications',
-        'entry-approved',
-        {
-          tenantId: payload.tenantId,
-          entryId: payload.entryId,
-          approverId: payload.approverId,
-          notificationType: 'ENTRY_APPROVED',
-        },
-      );
+      await this.queueService.add('financial.notifications', 'entry-approved', {
+        tenantId: payload.tenantId,
+        entryId: payload.entryId,
+        approverId: payload.approverId,
+        notificationType: 'ENTRY_APPROVED',
+      });
     } catch (error) {
       // Falha de notificação não deve bloquear o fluxo principal
       this.logger.error(
@@ -63,17 +59,13 @@ export class NotificationListener {
   @OnEvent('entry.rejected')
   async onEntryRejected(payload: EntryRejectedPayload): Promise<void> {
     try {
-      await this.queueService.add(
-        'financial.notifications',
-        'entry-rejected',
-        {
-          tenantId: payload.tenantId,
-          entryId: payload.entryId,
-          approverId: payload.approverId,
-          reason: payload.reason ?? null,
-          notificationType: 'ENTRY_REJECTED',
-        },
-      );
+      await this.queueService.add('financial.notifications', 'entry-rejected', {
+        tenantId: payload.tenantId,
+        entryId: payload.entryId,
+        approverId: payload.approverId,
+        reason: payload.reason ?? null,
+        notificationType: 'ENTRY_REJECTED',
+      });
     } catch (error) {
       this.logger.error(
         `Falha ao enfileirar notificação de rejeição para entry ${payload.entryId}`,

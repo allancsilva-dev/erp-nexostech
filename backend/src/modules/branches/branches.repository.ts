@@ -13,17 +13,33 @@ import { UpdateBranchDto } from './dto/update-branch.dto';
 export class BranchesRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   private mapRow(row: Record<string, unknown>): BranchEntity {
     return {
-      id: String(row.id),
-      name: String(row.name),
-      legalName: row.legal_name ? String(row.legal_name) : null,
-      document: row.document ? String(row.document) : null,
-      phone: row.phone ? String(row.phone) : null,
-      email: row.email ? String(row.email) : null,
-      addressCity: row.address_city ? String(row.address_city) : null,
-      addressState: row.address_state ? String(row.address_state) : null,
-      addressZip: row.address_zip ? String(row.address_zip) : null,
+      id: this.toText(row.id),
+      name: this.toText(row.name),
+      legalName: this.toNullableText(row.legal_name),
+      document: this.toNullableText(row.document),
+      phone: this.toNullableText(row.phone),
+      email: this.toNullableText(row.email),
+      addressCity: this.toNullableText(row.address_city),
+      addressState: this.toNullableText(row.address_state),
+      addressZip: this.toNullableText(row.address_zip),
       isHeadquarters: Boolean(row.is_headquarters),
       active: Boolean(row.active),
     };
@@ -43,9 +59,7 @@ export class BranchesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      this.mapRow(row),
-    );
+    return result.rows.map((row) => this.mapRow(row));
   }
 
   async listByUser(userId: string): Promise<BranchEntity[]> {
@@ -64,9 +78,7 @@ export class BranchesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      this.mapRow(row),
-    );
+    return result.rows.map((row) => this.mapRow(row));
   }
 
   async create(dto: CreateBranchDto): Promise<BranchEntity> {
@@ -96,7 +108,7 @@ export class BranchesRepository {
     `),
     );
 
-    return this.mapRow(result.rows[0] as Record<string, unknown>);
+    return this.mapRow(result.rows[0]);
   }
 
   async findById(id: string): Promise<BranchEntity | null> {
@@ -199,8 +211,8 @@ export class BranchesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) => ({
-      userId: String(row.user_id),
+    return result.rows.map((row) => ({
+      userId: this.toText(row.user_id),
     }));
   }
 

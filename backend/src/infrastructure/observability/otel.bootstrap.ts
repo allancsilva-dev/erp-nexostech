@@ -2,7 +2,7 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 
 let sdk: NodeSDK | undefined;
 
-export async function startOpenTelemetry(): Promise<void> {
+export function startOpenTelemetry(): void {
   if (process.env.OTEL_ENABLED === 'false') {
     return;
   }
@@ -12,7 +12,7 @@ export async function startOpenTelemetry(): Promise<void> {
   }
 
   sdk = new NodeSDK();
-  await sdk.start();
+  sdk.start();
 }
 
 export async function shutdownOpenTelemetry(): Promise<void> {

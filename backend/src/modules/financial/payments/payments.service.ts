@@ -53,7 +53,10 @@ export class PaymentsService {
       }
 
       // 2. Valida com saldo REAL (dentro do lock) — evita aceitar pagamento acima do saldo
-      this.paymentRules.validatePaymentAmount(entry.remainingBalance, dto.amount);
+      this.paymentRules.validatePaymentAmount(
+        entry.remainingBalance,
+        dto.amount,
+      );
 
       // 3. Cria o pagamento dentro da transação
       const created = await this.paymentsRepository.createPayment(
@@ -64,8 +67,14 @@ export class PaymentsService {
       );
 
       // 4. Calcula novo status com os pagamentos atualizados
-      const amounts = await this.paymentsRepository.listPaymentAmounts(entryId, tx);
-      const status = this.paymentCalculator.determineStatus(entry.amount, amounts);
+      const amounts = await this.paymentsRepository.listPaymentAmounts(
+        entryId,
+        tx,
+      );
+      const status = this.paymentCalculator.determineStatus(
+        entry.amount,
+        amounts,
+      );
 
       // 5. Atualiza status e valor pago dentro da transação
       await this.paymentsRepository.updateEntryPaidStatus(entryId, status, tx);
@@ -144,11 +153,20 @@ export class PaymentsService {
       );
 
       // 2. Remove último pagamento dentro da transação
-      const removed = await this.paymentsRepository.removeLastPayment(entryId, tx);
+      const removed = await this.paymentsRepository.removeLastPayment(
+        entryId,
+        tx,
+      );
 
       // 3. Recalcula status com pagamentos restantes
-      const amounts = await this.paymentsRepository.listPaymentAmounts(entryId, tx);
-      const status = this.paymentCalculator.determineStatus(entry.amount, amounts);
+      const amounts = await this.paymentsRepository.listPaymentAmounts(
+        entryId,
+        tx,
+      );
+      const status = this.paymentCalculator.determineStatus(
+        entry.amount,
+        amounts,
+      );
       await this.paymentsRepository.updateEntryPaidStatus(entryId, status, tx);
 
       return removed;

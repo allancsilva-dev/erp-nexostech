@@ -5,18 +5,20 @@ import { ImportReconciliationDto } from './dto/import-reconciliation.dto';
 
 describe('ReconciliationService', () => {
   it('imports batch and returns imported count', async () => {
+    const createBatchMock = jest.fn().mockResolvedValue({
+      id: 'batch-1',
+      branchId: 'branch-1',
+      bankAccountId: 'acc-1',
+      startDate: '2026-03-01',
+      endDate: '2026-03-31',
+      createdBy: 'user-1',
+      createdAt: '2026-03-14T00:00:00.000Z',
+    });
+    const importFromPaymentsMock = jest.fn().mockResolvedValue(7);
     const repository: jest.Mocked<ReconciliationRepository> = {
       listPending: jest.fn(),
-      createBatch: jest.fn().mockResolvedValue({
-        id: 'batch-1',
-        branchId: 'branch-1',
-        bankAccountId: 'acc-1',
-        startDate: '2026-03-01',
-        endDate: '2026-03-31',
-        createdBy: 'user-1',
-        createdAt: '2026-03-14T00:00:00.000Z',
-      }),
-      importFromPayments: jest.fn().mockResolvedValue(7),
+      createBatch: createBatchMock,
+      importFromPayments: importFromPaymentsMock,
       undoBatch: jest.fn(),
       getBatchItems: jest.fn(),
       matchItem: jest.fn(),
@@ -52,8 +54,8 @@ describe('ReconciliationService', () => {
 
     const result = await service.importBatch('branch-1', user, dto);
 
-    expect(repository.createBatch).toHaveBeenCalled();
-    expect(repository.importFromPayments).toHaveBeenCalledWith(
+    expect(createBatchMock).toHaveBeenCalled();
+    expect(importFromPaymentsMock).toHaveBeenCalledWith(
       'batch-1',
       'branch-1',
       'acc-1',

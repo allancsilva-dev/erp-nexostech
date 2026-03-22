@@ -12,18 +12,34 @@ import { BankAccountEntity } from './dto/bank-account.response';
 export class BankAccountsRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private toText(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+      return String(value);
+    }
+    return null;
+  }
+
   private mapRow(row: Record<string, unknown>): BankAccountEntity {
     return {
-      id: String(row.id),
-      branchId: String(row.branch_id),
-      name: String(row.name),
-      bankCode: row.bank_code ? String(row.bank_code) : null,
-      agency: row.agency ? String(row.agency) : null,
-      accountNumber: row.account_number ? String(row.account_number) : null,
-      type: String(row.type),
-      initialBalance: String(row.initial_balance),
+      id: this.toText(row.id),
+      branchId: this.toText(row.branch_id),
+      name: this.toText(row.name),
+      bankCode: this.toNullableText(row.bank_code),
+      agency: this.toNullableText(row.agency),
+      accountNumber: this.toNullableText(row.account_number),
+      type: this.toText(row.type),
+      initialBalance: this.toText(row.initial_balance),
       active: Boolean(row.active),
-      createdAt: new Date(String(row.created_at)).toISOString(),
+      createdAt: new Date(this.toText(row.created_at)).toISOString(),
     };
   }
 
@@ -41,9 +57,7 @@ export class BankAccountsRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      this.mapRow(row),
-    );
+    return result.rows.map((row) => this.mapRow(row));
   }
 
   async findById(
@@ -93,7 +107,7 @@ export class BankAccountsRepository {
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown>;
+    const row = result.rows[0];
     return this.mapRow(row);
   }
 

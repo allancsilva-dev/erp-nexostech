@@ -30,7 +30,9 @@ export class AuditLogListener {
   constructor(private readonly drizzleService: DrizzleService) {}
 
   @OnEvent('entry.created')
-  async onEntryCreated(payload: AuditableEvent & { type?: string }): Promise<void> {
+  async onEntryCreated(
+    payload: AuditableEvent & { type?: string },
+  ): Promise<void> {
     await this.writeAuditLog('CREATE', 'financial_entries', payload);
   }
 
@@ -40,7 +42,9 @@ export class AuditLogListener {
   }
 
   @OnEvent('entry.cancelled')
-  async onEntryCancelled(payload: AuditableEvent & { reason?: string }): Promise<void> {
+  async onEntryCancelled(
+    payload: AuditableEvent & { reason?: string },
+  ): Promise<void> {
     await this.writeAuditLog('CANCEL', 'financial_entries', payload);
   }
 
@@ -55,17 +59,23 @@ export class AuditLogListener {
   }
 
   @OnEvent('payment.created')
-  async onPaymentCreated(payload: AuditableEvent & { amount?: string }): Promise<void> {
+  async onPaymentCreated(
+    payload: AuditableEvent & { amount?: string },
+  ): Promise<void> {
     await this.writeAuditLog('PAY', 'financial_entry_payments', payload);
   }
 
   @OnEvent('payment.refunded')
-  async onPaymentRefunded(payload: AuditableEvent & { amount?: string }): Promise<void> {
+  async onPaymentRefunded(
+    payload: AuditableEvent & { amount?: string },
+  ): Promise<void> {
     await this.writeAuditLog('REFUND', 'financial_entry_payments', payload);
   }
 
   @OnEvent('reconciliation.matched')
-  async onReconciliationMatched(payload: AuditableEvent & { itemId?: string }): Promise<void> {
+  async onReconciliationMatched(
+    payload: AuditableEvent & { itemId?: string },
+  ): Promise<void> {
     await this.writeAuditLog('RECONCILE', 'reconciliation_items', {
       ...payload,
       entityId: payload.itemId ?? payload.entityId,
@@ -80,7 +90,9 @@ export class AuditLogListener {
     try {
       if (!payload.tenantId) return;
 
-      const schema = quoteIdent(`tenant_${payload.tenantId.replace(/[^a-zA-Z0-9_]/g, '_')}`);
+      const schema = quoteIdent(
+        `tenant_${payload.tenantId.replace(/[^a-zA-Z0-9_]/g, '_')}`,
+      );
       const eventId = payload.eventId ?? null;
 
       // Idempotência: verifica se já foi processado (evita duplicidade em retries)

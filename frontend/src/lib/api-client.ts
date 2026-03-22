@@ -1,6 +1,7 @@
 ﻿import { ApiError, type ApiResponse, type PaginatedResponse } from '@/lib/api-types';
 
 const API_BASE = '/api/v1';
+const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech/login';
 let rateLimitRemaining: number | null = null;
 let throttleUntil = 0;
 
@@ -89,9 +90,7 @@ class ApiClient {
 
     if (response.status === 401 && typeof window !== 'undefined') {
       const currentUrl = window.location.href;
-      window.location.href =
-        'https://auth.zonadev.tech/login?aud=erp.zonadev.tech&redirect_uri=' +
-        encodeURIComponent(currentUrl);
+      window.location.href = `${AUTH_URL}?app=erp&redirect=${encodeURIComponent(currentUrl)}`;
       throw new ApiError('UNAUTHORIZED', 'Sessao expirada', undefined, 401);
     }
 

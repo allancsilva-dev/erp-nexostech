@@ -27,6 +27,8 @@ export class TenantsController {
     @Body() dto: CreateTenantDto,
     @CurrentUser() user: AuthUser,
   ): Promise<ApiResponse<unknown>> {
-    return ApiResponse.created(await this.tenantsService.onboard(dto, user.sub));
+    return ApiResponse.created(
+      await this.tenantsService.onboard(dto, user.sub),
+    );
   }
 }

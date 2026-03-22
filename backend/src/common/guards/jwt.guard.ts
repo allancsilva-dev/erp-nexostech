@@ -8,6 +8,22 @@ import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify, JWTPayload } from 'jose';
 import { AuthUser } from '../types/auth-user.type';
 
+function toText(value: unknown, fallback = ''): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value instanceof Date
+  ) {
+    return String(value);
+  }
+
+  return fallback;
+}
+
 @Injectable()
 export class JwtGuard implements CanActivate {
   constructor(private readonly configService: ConfigService) {}
@@ -68,17 +84,25 @@ export class JwtGuard implements CanActivate {
   }
 
   private mapPayload(payload: JWTPayload): AuthUser {
+    const roles = Array.isArray(payload.roles)
+      ? payload.roles
+          .map((role) => toText(role))
+          .filter((role) => role.length > 0)
+      : [];
+
+    const aud = Array.isArray(payload.aud)
+      ? toText(payload.aud[0])
+      : toText(payload.aud);
+
+    const email = toText(payload.email);
+
     return {
-      sub: String(payload.sub ?? ''),
-      tenantId: String(payload.tenantId ?? ''),
-      roles: Array.isArray(payload.roles)
-        ? payload.roles.map((role) => String(role))
-        : [],
-      plan: String(payload.plan ?? 'STARTER'),
-      aud: Array.isArray(payload.aud)
-        ? payload.aud[0]
-        : String(payload.aud ?? ''),
-      email: payload.email ? String(payload.email) : undefined,
+      sub: toText(payload.sub),
+      tenantId: toText(payload.tenantId),
+      roles,
+      plan: toText(payload.plan, 'STARTER'),
+      aud,
+      email: email.length > 0 ? email : undefined,
     };
   }
 }

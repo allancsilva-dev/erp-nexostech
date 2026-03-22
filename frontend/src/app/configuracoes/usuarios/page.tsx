@@ -60,7 +60,8 @@ export default function ConfiguracoesUsuariosPage() {
     queryFn: () => api.get<Branch[]>('/branches'),
   });
 
-  const users = usersQuery.data?.data ?? [];
+  const usersData = usersQuery.data?.data;
+  const users = usersData ?? [];
   const roles = rolesQuery.data?.data ?? [];
   const branches = branchesQuery.data?.data ?? [];
   const isLoading = usersQuery.isLoading || rolesQuery.isLoading || branchesQuery.isLoading;
@@ -134,11 +135,11 @@ export default function ConfiguracoesUsuariosPage() {
 
   const branchIdsByUser = useMemo(
     () =>
-      users.reduce<Record<string, string[]>>((acc, item) => {
+      (usersData ?? []).reduce<Record<string, string[]>>((acc, item) => {
         acc[item.userId] = item.branches.map((branch) => branch.id);
         return acc;
       }, {}),
-    [users],
+    [usersData],
   );
 
   return (

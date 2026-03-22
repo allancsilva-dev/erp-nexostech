@@ -13,6 +13,15 @@ import {
   quoteLiteral,
 } from '../../infrastructure/database/sql-builder.util';
 
+function getRows(result: unknown): Array<Record<string, unknown>> {
+  if (!result || typeof result !== 'object' || !('rows' in result)) {
+    return [];
+  }
+
+  const rows = (result as { rows?: unknown }).rows;
+  return Array.isArray(rows) ? (rows as Array<Record<string, unknown>>) : [];
+}
+
 @Injectable()
 export class BranchGuard implements CanActivate {
   constructor(private readonly drizzleService: DrizzleService) {}
@@ -46,7 +55,7 @@ export class BranchGuard implements CanActivate {
     }
 
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result = await this.drizzleService.getClient().execute(
+    const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT 1
       FROM ${schema}.user_branches
@@ -56,7 +65,7 @@ export class BranchGuard implements CanActivate {
     `),
     );
 
-    if (result.rows.length === 0) {
+    if (getRows(result).length === 0) {
       throw new ForbiddenException({
         error: { code: 'FORBIDDEN', message: 'Sem acesso a filial' },
       });

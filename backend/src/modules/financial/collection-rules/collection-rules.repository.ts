@@ -54,9 +54,7 @@ export class CollectionRulesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      this.mapRow(row),
-    );
+    return result.rows.map((row) => this.mapRow(row));
   }
 
   async create(branchId: string, dto: CreateCollectionRuleDto) {
@@ -79,7 +77,7 @@ export class CollectionRulesRepository {
     `),
     );
 
-    return this.mapRow(result.rows[0] as Record<string, unknown>);
+    return this.mapRow(result.rows[0]);
   }
 
   async findById(id: string, branchId: string) {
@@ -168,9 +166,7 @@ export class CollectionRulesRepository {
     `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      this.mapEmailTemplateRow(row),
-    );
+    return result.rows.map((row) => this.mapEmailTemplateRow(row));
   }
 
   async findEmailTemplateById(id: string, branchId: string) {

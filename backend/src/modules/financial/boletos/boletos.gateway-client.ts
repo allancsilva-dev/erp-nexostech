@@ -34,15 +34,12 @@ export class BoletosGatewayClient {
       resetTimeout: 30_000,
     };
 
-    this.generateBreaker = new CircuitBreaker(
-      async (payload: GeneratePayload) => {
-        return withRetry(async () => this.generateOnGateway(payload));
-      },
-      options,
-    );
+    this.generateBreaker = new CircuitBreaker((payload: GeneratePayload) => {
+      return withRetry(() => Promise.resolve(this.generateOnGateway(payload)));
+    }, options);
 
-    this.cancelBreaker = new CircuitBreaker(async (boletoId: string) => {
-      return withRetry(async () => this.cancelOnGateway(boletoId));
+    this.cancelBreaker = new CircuitBreaker((boletoId: string) => {
+      return withRetry(() => Promise.resolve(this.cancelOnGateway(boletoId)));
     }, options);
 
     this.generateBreaker.fallback(() => {
@@ -68,9 +65,7 @@ export class BoletosGatewayClient {
     return this.cancelBreaker.fire(boletoId);
   }
 
-  private async generateOnGateway(
-    payload: GeneratePayload,
-  ): Promise<GatewayResponse> {
+  private generateOnGateway(payload: GeneratePayload): GatewayResponse {
     const gatewayUrl =
       this.configService.get<string>('BOLETOS_GATEWAY_URL') ??
       'https://gateway.local';
@@ -82,9 +77,8 @@ export class BoletosGatewayClient {
     };
   }
 
-  private async cancelOnGateway(
-    _boletoId: string,
-  ): Promise<{ success: boolean }> {
+  private cancelOnGateway(boletoId: string): { success: boolean } {
+    void boletoId;
     return { success: true };
   }
 }

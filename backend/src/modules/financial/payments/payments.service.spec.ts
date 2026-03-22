@@ -6,6 +6,8 @@ import { RegisterPaymentDto } from './dto/register-payment.dto';
 
 describe('PaymentsService', () => {
   it('uses persisted payment amounts to determine status (no double count)', async () => {
+    const listPaymentAmountsMock = jest.fn().mockResolvedValue(['100.00']);
+    const updateEntryPaidStatusMock = jest.fn().mockResolvedValue(undefined);
     const repository: jest.Mocked<PaymentsRepository> = {
       findEntryById: jest.fn().mockResolvedValue({
         id: 'entry-1',
@@ -24,8 +26,8 @@ describe('PaymentsService', () => {
         createdBy: 'u1',
         createdAt: '2026-03-14T00:00:00.000Z',
       }),
-      listPaymentAmounts: jest.fn().mockResolvedValue(['100.00']),
-      updateEntryPaidStatus: jest.fn().mockResolvedValue(undefined),
+      listPaymentAmounts: listPaymentAmountsMock,
+      updateEntryPaidStatus: updateEntryPaidStatusMock,
       removeLastPayment: jest.fn(),
     } as unknown as jest.Mocked<PaymentsRepository>;
 
@@ -54,10 +56,7 @@ describe('PaymentsService', () => {
 
     await service.registerPayment('entry-1', dto, user, 'branch-1');
 
-    expect(repository.listPaymentAmounts).toHaveBeenCalledWith('entry-1');
-    expect(repository.updateEntryPaidStatus).toHaveBeenCalledWith(
-      'entry-1',
-      'PAID',
-    );
+    expect(listPaymentAmountsMock).toHaveBeenCalledWith('entry-1');
+    expect(updateEntryPaidStatusMock).toHaveBeenCalledWith('entry-1', 'PAID');
   });
 });

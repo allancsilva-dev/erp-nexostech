@@ -23,8 +23,10 @@ export class LockPeriodsService {
       // e começa antes do fim de um existente.
       // Como lock_periods só têm lockedUntil (sem start), consideramos
       // sobreposição quando a nova data cai dentro de um período ativo.
-      return Math.abs(newUntil.getTime() - existingUntil.getTime()) < 86_400_000 * 30
-        && newUntil <= existingUntil;
+      return (
+        Math.abs(newUntil.getTime() - existingUntil.getTime()) <
+          86_400_000 * 30 && newUntil <= existingUntil
+      );
     });
 
     if (overlap) {

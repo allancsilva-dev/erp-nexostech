@@ -4,6 +4,10 @@ import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { TenantContextService } from './tenant-context.service';
 
+type SchemaAwareDatabase = NodePgDatabase & {
+  withSchema: (schema: string) => NodePgDatabase;
+};
+
 @Injectable()
 export class DrizzleService implements OnModuleDestroy {
   private readonly pool: Pool;
@@ -40,7 +44,7 @@ export class DrizzleService implements OnModuleDestroy {
   getTenantDb(): NodePgDatabase {
     const schema = this.getTenantSchema();
     // pgBouncer removido temporariamente: manter schema explícito por query builder, sem SET search_path.
-    return (this.db as any).withSchema(schema);
+    return (this.db as unknown as SchemaAwareDatabase).withSchema(schema);
   }
 
   getTenantSchema(): string {

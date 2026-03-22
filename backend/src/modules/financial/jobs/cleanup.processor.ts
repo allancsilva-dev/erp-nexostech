@@ -5,6 +5,15 @@ import { QueueService } from '../../../infrastructure/queue/queue.service';
 import { resolveTenantSchema } from './jobs.util';
 import { quoteIdent } from '../../../infrastructure/database/sql-builder.util';
 
+function getRows(result: unknown): Array<Record<string, unknown>> {
+  if (!result || typeof result !== 'object' || !('rows' in result)) {
+    return [];
+  }
+
+  const rows = (result as { rows?: unknown }).rows;
+  return Array.isArray(rows) ? (rows as Array<Record<string, unknown>>) : [];
+}
+
 /**
  * Job de limpeza semanal (domingo 03:00).
  *
@@ -35,7 +44,7 @@ export class CleanupProcessor implements OnModuleInit {
         const summary: Record<string, number> = {};
 
         // 1. Limpa soft-deleted de categorias (> 90 dias)
-        const cats = await this.drizzleService.getClient().execute(
+        const cats: unknown = await this.drizzleService.getClient().execute(
           sql.raw(`
           DELETE FROM ${schemaName}.categories
           WHERE deleted_at IS NOT NULL
@@ -43,10 +52,10 @@ export class CleanupProcessor implements OnModuleInit {
           RETURNING id
         `),
         );
-        summary['categories_purged'] = cats.rows.length;
+        summary['categories_purged'] = getRows(cats).length;
 
         // 2. Limpa soft-deleted de contatos (> 90 dias)
-        const contacts = await this.drizzleService.getClient().execute(
+        const contacts: unknown = await this.drizzleService.getClient().execute(
           sql.raw(`
           DELETE FROM ${schemaName}.contacts
           WHERE deleted_at IS NOT NULL
@@ -54,28 +63,30 @@ export class CleanupProcessor implements OnModuleInit {
           RETURNING id
         `),
         );
-        summary['contacts_purged'] = contacts.rows.length;
+        summary['contacts_purged'] = getRows(contacts).length;
 
         // 3. Limpa dispatches de cobrança antigos (SENT ou FAILED, > 180 dias)
-        const dispatches = await this.drizzleService.getClient().execute(
-          sql.raw(`
+        const dispatches: unknown = await this.drizzleService
+          .getClient()
+          .execute(
+            sql.raw(`
           DELETE FROM ${schemaName}.collection_dispatches
           WHERE status IN ('SENT', 'FAILED')
             AND scheduled_for < NOW() - INTERVAL '180 days'
           RETURNING id
         `),
-        );
-        summary['collection_dispatches_purged'] = dispatches.rows.length;
+          );
+        summary['collection_dispatches_purged'] = getRows(dispatches).length;
 
         // 4. Limpa audit_logs mais antigos que 2 anos (retenção LGPD)
-        const logs = await this.drizzleService.getClient().execute(
+        const logs: unknown = await this.drizzleService.getClient().execute(
           sql.raw(`
           DELETE FROM ${schemaName}.audit_logs
           WHERE created_at < NOW() - INTERVAL '2 years'
           RETURNING id
         `),
         );
-        summary['audit_logs_purged'] = logs.rows.length;
+        summary['audit_logs_purged'] = getRows(logs).length;
 
         this.logger.log(
           `cleanup concluído para schema=${schema.replace(/"/g, '')}: ${JSON.stringify(summary)}`,
