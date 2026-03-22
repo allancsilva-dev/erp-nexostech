@@ -16,6 +16,7 @@ export async function serverFetch<T>(endpoint: string, init?: RequestInit): Prom
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...init,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,

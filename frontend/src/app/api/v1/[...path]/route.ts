@@ -51,6 +51,7 @@ async function proxy(req: NextRequest, params: { path: string[] }) {
     method: req.method,
     headers,
     body,
+    credentials: 'include',
   });
 
   const data = await res.text();
