@@ -23,8 +23,8 @@ export function EntryDetail({ id }: { id: string }) {
   return (
     <div className="space-y-4 rounded-xl border bg-white p-6 dark:bg-slate-800">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">{entry.documentNumber}</h2>
-        <StatusBadge status={entry.status} />
+        <h2 className="text-xl font-semibold">{entry.documentNumber ?? 'Sem numero'}</h2>
+        <StatusBadge status={entry.status} type={entry.type} />
       </div>
       <div className="flex flex-wrap gap-2">
         <PermissionGate permission="financial.entries.pay">

@@ -9,6 +9,7 @@ import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
 import { PermissionGate } from '@/components/shared/permission-gate';
 import { PageHeader } from '@/components/layout/page-header';
+import { LockPeriodGuard } from '@/components/shared/lock-period-guard';
 import { EntryFilters } from '@/features/entries/components/entry-filters';
 import { EntriesTable } from '@/features/entries/components/entries-table';
 import { BatchPayBar } from '@/features/entries/components/batch-pay-bar';
@@ -35,12 +36,14 @@ export default function ContasPagarPage() {
         subtitle="Controle de despesas, pagamentos e vencimentos"
         actions={
           <PermissionGate permission="financial.entries.create">
-            <Link
-              className="inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              href="/financeiro/contas-pagar/nova"
-            >
-              Nova conta a pagar
-            </Link>
+            <LockPeriodGuard date={new Date().toISOString()}>
+              <Link
+                className="inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                href="/financeiro/contas-pagar/nova"
+              >
+                Nova conta a pagar
+              </Link>
+            </LockPeriodGuard>
           </PermissionGate>
         }
       />

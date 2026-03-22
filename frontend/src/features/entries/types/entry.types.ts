@@ -11,7 +11,7 @@ export type PaymentMethod = 'BOLETO' | 'PIX' | 'TRANSFER' | 'CARD' | 'CASH' | 'O
 
 export interface Entry {
   id: string;
-  documentNumber: string;
+  documentNumber: string | null;
   type: 'PAYABLE' | 'RECEIVABLE';
   description: string;
   amount: string;

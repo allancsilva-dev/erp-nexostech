@@ -8,6 +8,7 @@ import { DataTable } from '@/components/shared/data-table';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { CategoryBadge } from '@/components/shared/category-badge';
 import { MoneyDisplay } from '@/components/shared/money-display';
+import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/format';
 
 export function EntriesTable({
@@ -29,7 +30,20 @@ export function EntriesTable({
         accessorKey: 'documentNumber',
         header: 'Codigo',
         enableSorting: true,
-        cell: ({ row }) => <span className="font-mono">{row.original.documentNumber}</span>,
+        cell: ({ row }) => {
+          if (!row.original.documentNumber) {
+            return (
+              <Badge
+                className="bg-slate-100 text-slate-600"
+                title="O numero do documento sera gerado apos aprovacao"
+              >
+                Sem numero
+              </Badge>
+            );
+          }
+
+          return <span className="font-mono">{row.original.documentNumber}</span>;
+        },
       },
       {
         accessorKey: 'description',
@@ -63,7 +77,7 @@ export function EntriesTable({
         accessorKey: 'status',
         header: 'Status',
         enableSorting: true,
-        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+        cell: ({ row }) => <StatusBadge status={row.original.status} type={row.original.type} />,
       },
     ],
     [],

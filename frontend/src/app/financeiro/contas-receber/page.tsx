@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
 import { PermissionGate } from '@/components/shared/permission-gate';
+import { LockPeriodGuard } from '@/components/shared/lock-period-guard';
 import { useQueryState } from 'nuqs';
 import { PageHeader } from '@/components/layout/page-header';
 import { EntryFilters } from '@/features/entries/components/entry-filters';
@@ -30,12 +31,14 @@ export default function ContasReceberPage() {
         subtitle="Gestao de receitas e recebimentos"
         actions={
           <PermissionGate permission="financial.entries.create">
-            <Link
-              className="inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              href="/financeiro/contas-receber/nova"
-            >
-              Nova conta a receber
-            </Link>
+            <LockPeriodGuard date={new Date().toISOString()}>
+              <Link
+                className="inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                href="/financeiro/contas-receber/nova"
+              >
+                Nova conta a receber
+              </Link>
+            </LockPeriodGuard>
           </PermissionGate>
         }
       />
