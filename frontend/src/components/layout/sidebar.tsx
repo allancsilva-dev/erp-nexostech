@@ -38,9 +38,6 @@ type SidebarItem = {
   permission: string;
   icon: LucideIcon;
   featureFlag?:
-    | 'boletos_enabled'
-    | 'approval_flow_enabled'
-    | 'branches_enabled'
     | 'collection_rules_enabled';
   badge?: 'approvals';
 };
@@ -101,7 +98,6 @@ const ITEMS: SidebarItem[] = [
     href: ROUTES.boletos,
     permission: 'financial.entries.view',
     icon: FileText,
-    featureFlag: 'boletos_enabled',
   },
   {
     section: 'relatorios',
@@ -130,7 +126,6 @@ const ITEMS: SidebarItem[] = [
     href: ROUTES.aprovacoes,
     permission: 'financial.entries.approve',
     icon: CheckCircle2,
-    featureFlag: 'approval_flow_enabled',
     badge: 'approvals',
   },
   {
@@ -161,7 +156,6 @@ const ITEMS: SidebarItem[] = [
     href: ROUTES.adminFiliais,
     permission: 'admin.branches.manage',
     icon: Building2,
-    featureFlag: 'branches_enabled',
   },
   {
     section: 'configuracoes',
@@ -191,35 +185,39 @@ const baseItem =
 const normalItem = `${baseItem} text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)]`;
 const activeItem = `${baseItem} bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)]`;
 
-function getIdentityLabel(user: { email: string | null; roles?: Array<{ name: string }> } | null): string {
-  if (!user?.email) {
-    return 'Utilizador';
-  }
-
-  return user.email;
+function getIdentityLabel(user: { name?: string | null; email: string | null; roles?: Array<{ name: string }> } | null): string {
+  return user?.name || user?.email || 'Utilizador';
 }
 
 function getIdentityInitials(identity: string): string {
-  const chunks = identity.split(' ').filter(Boolean);
-  if (chunks.length === 0) {
+  const safeValue = identity.trim();
+  if (!safeValue) {
     return 'US';
   }
 
-  if (chunks.length === 1) {
-    return chunks[0].slice(0, 2).toUpperCase();
+  if (safeValue.includes('@')) {
+    const local = safeValue.split('@')[0] ?? '';
+    const parts = local.split(/[._-]/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+    }
+
+    return local.slice(0, 2).toUpperCase();
   }
 
-  return `${chunks[0][0] ?? ''}${chunks[1][0] ?? ''}`.toUpperCase();
+  const chunks = safeValue.split(/\s+/).filter(Boolean);
+  if (chunks.length >= 2) {
+    return `${chunks[0][0] ?? ''}${chunks[1][0] ?? ''}`.toUpperCase();
+  }
+
+  return safeValue.slice(0, 2).toUpperCase();
 }
 
 export function Sidebar({ isVisible }: { isVisible: boolean }) {
   const { hasPermission } = usePermissions();
   const { user, logout } = useAuthContext();
-  const boletosEnabled = useFeatureFlag('boletos_enabled');
-  const approvalsEnabled = useFeatureFlag('approval_flow_enabled');
-  const branchesEnabled = useFeatureFlag('branches_enabled');
   const collectionRulesEnabled = useFeatureFlag('collection_rules_enabled');
-  const { pending } = useApprovals({ enabled: approvalsEnabled });
+  const { pending } = useApprovals();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -232,9 +230,10 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
     localStorage.setItem('sidebar_collapsed', isCollapsed ? '1' : '0');
   }, [isCollapsed]);
 
-  const pendingCount = pending.data?.data?.length ?? 0;
+  const pendingList = pending.data?.data;
+  const pendingCount = Array.isArray(pendingList) ? pendingList.length : 0;
   const identity = getIdentityLabel(user);
-  const roleLabel = user?.roles?.[0]?.name ?? 'User';
+  const roleLabel = user?.roles?.[0]?.name ?? 'Admin';
 
   const filteredItems = useMemo(
     () =>
@@ -243,25 +242,13 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
           return true;
         }
 
-        if (item.featureFlag === 'boletos_enabled') {
-          return boletosEnabled;
-        }
-
-        if (item.featureFlag === 'approval_flow_enabled') {
-          return approvalsEnabled;
-        }
-
-        if (item.featureFlag === 'branches_enabled') {
-          return branchesEnabled;
-        }
-
         if (item.featureFlag === 'collection_rules_enabled') {
           return collectionRulesEnabled;
         }
 
         return false;
       }),
-    [approvalsEnabled, boletosEnabled, branchesEnabled, collectionRulesEnabled, hasPermission],
+    [collectionRulesEnabled, hasPermission],
   );
 
   const sections = useMemo(() => {

@@ -10,18 +10,34 @@ function getInitials(nameOrEmail?: string | null): string {
     return 'US';
   }
 
-  const chunks = nameOrEmail.split(' ').filter(Boolean);
-  if (chunks.length === 1) {
-    return chunks[0].slice(0, 2).toUpperCase();
+  const safeValue = nameOrEmail.trim();
+  if (!safeValue) {
+    return 'US';
   }
 
-  return `${chunks[0][0] ?? ''}${chunks[1][0] ?? ''}`.toUpperCase();
+  if (safeValue.includes('@')) {
+    const local = safeValue.split('@')[0] ?? '';
+    const parts = local.split(/[._-]/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+    }
+
+    return local.slice(0, 2).toUpperCase();
+  }
+
+  const chunks = safeValue.split(/\s+/).filter(Boolean);
+  if (chunks.length >= 2) {
+    return `${chunks[0][0] ?? ''}${chunks[1][0] ?? ''}`.toUpperCase();
+  }
+
+  return safeValue.slice(0, 2).toUpperCase();
 }
 
 export function Topbar() {
   const { activeBranch } = useBranchContext();
   const { user } = useAuthContext();
-  const identity = user?.email ?? 'Utilizador';
+  const userName = (user as { name?: string } | null)?.name;
+  const identity = userName || user?.email || 'Utilizador';
 
   return (
     <header
