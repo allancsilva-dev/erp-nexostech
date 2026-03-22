@@ -37,7 +37,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Saldo actual"
           value={summary.data?.totalBalance}
@@ -83,7 +83,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <OverdueTable
           title="Contas a receber vencidas"
           entries={receivables}

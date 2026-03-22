@@ -1,4 +1,5 @@
 import React from 'react';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils/currency';
 
@@ -30,7 +31,7 @@ export const MetricCard = React.memo(function MetricCard({
   }
 
   return (
-    <div className="surface-card p-4 flex flex-col gap-2">
+    <div className="surface-card-interactive cursor-default p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
           {label}
@@ -40,10 +41,21 @@ export const MetricCard = React.memo(function MetricCard({
       <span className="text-[22px] font-semibold tabular-nums" style={{ color }}>
         {formatCurrency(value)}
       </span>
-      {variation != null ? (
-        <span className="text-[11px]" style={{ color: variation >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-          {variation >= 0 ? '↑' : '↓'} {Math.abs(variation)}% vs mes anterior
-        </span>
+      {variation != null && variation !== 0 ? (
+        <div className="mt-1 flex items-center gap-1">
+          {variation > 0 ? (
+            <TrendingUp size={12} style={{ color: 'hsl(var(--success))' }} />
+          ) : (
+            <TrendingDown size={12} style={{ color: 'hsl(var(--danger))' }} />
+          )}
+          <span
+            className="text-[11px] font-medium"
+            style={{ color: variation > 0 ? 'hsl(var(--success))' : 'hsl(var(--danger))' }}
+          >
+            {variation > 0 ? '+' : ''}
+            {variation.toFixed(1)}% vs mes anterior
+          </span>
+        </div>
       ) : null}
     </div>
   );

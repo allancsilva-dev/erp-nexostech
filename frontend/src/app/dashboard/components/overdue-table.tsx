@@ -56,25 +56,52 @@ export const OverdueTable = React.memo(function OverdueTable({
         ) : null}
       </div>
 
-      {entries.length === 0 ? (
-        <div className="flex flex-col items-center py-6">
-          <Inbox size={24} style={{ color: 'var(--text-muted)' }} strokeWidth={1.2} />
-          <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-            Nenhuma conta vencida
-          </p>
-        </div>
-      ) : (
-        <table className="w-full text-[12px]">
-          <thead>
-            <tr style={{ color: 'var(--text-muted)' }}>
-              <th className="pb-2 text-left text-[10px] font-medium uppercase tracking-wider">Codigo</th>
-              <th className="pb-2 text-left text-[10px] font-medium uppercase tracking-wider">Descricao</th>
-              <th className="pb-2 text-right text-[10px] font-medium uppercase tracking-wider">Valor</th>
-              <th className="pb-2 text-right text-[10px] font-medium uppercase tracking-wider">Atraso</th>
+      <table className="w-full text-[12px]">
+        <thead>
+          <tr>
+            <th
+              className="pb-2 text-left text-[10px] font-medium uppercase tracking-wider"
+              style={{ color: 'hsl(var(--text-muted))' }}
+            >
+              Codigo
+            </th>
+            <th
+              className="pb-2 text-left text-[10px] font-medium uppercase tracking-wider"
+              style={{ color: 'hsl(var(--text-muted))' }}
+            >
+              Descricao
+            </th>
+            <th
+              className="pb-2 text-right text-[10px] font-medium uppercase tracking-wider"
+              style={{ color: 'hsl(var(--text-muted))' }}
+            >
+              Valor
+            </th>
+            <th
+              className="pb-2 text-right text-[10px] font-medium uppercase tracking-wider"
+              style={{ color: 'hsl(var(--text-muted))' }}
+            >
+              Atraso
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="py-8 text-center">
+                <Inbox
+                  size={24}
+                  style={{ color: 'hsl(var(--text-muted))' }}
+                  strokeWidth={1.2}
+                  className="mx-auto mb-2"
+                />
+                <p className="text-xs" style={{ color: 'hsl(var(--text-muted))' }}>
+                  Nenhuma conta vencida
+                </p>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry) => (
+          ) : (
+            entries.map((entry) => (
               <tr key={entry.id} className="border-t" style={{ borderColor: 'var(--border-subtle)' }}>
                 <td className="py-2 font-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>
                   {entry.documentNumber ?? '-'}
@@ -86,15 +113,18 @@ export const OverdueTable = React.memo(function OverdueTable({
                   {formatCurrency(entry.amount)}
                 </td>
                 <td className="py-2 text-right">
-                  <span className="rounded px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--danger-muted)', color: 'var(--danger)' }}>
+                  <span
+                    className="rounded px-1.5 py-0.5 text-[10px] font-bold"
+                    style={{ background: 'var(--danger-muted)', color: 'var(--danger)' }}
+                  >
                     {entry.daysOverdue}d
                   </span>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 });
