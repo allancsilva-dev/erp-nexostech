@@ -1,43 +1,108 @@
-﻿import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import { cookies } from 'next/headers';
-import { PageHeader } from '@/components/layout/page-header';
-import { DashboardClient } from '@/features/dashboard/components/dashboard-client';
-import { serverFetch } from '@/lib/api-server';
-import { createAppQueryClient } from '@/lib/query-client';
-import { queryKeys } from '@/lib/query-keys';
+﻿'use client';
 
-export const dynamic = 'force-dynamic';
+import { useMemo } from 'react';
+import { Target, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { useCashflowData, useDashboardSummary, useOverdueEntries } from '@/hooks/use-dashboard';
+import { CashflowChart } from '@/app/dashboard/components/cashflow-chart';
+import { MetricCard } from '@/app/dashboard/components/metric-card';
+import { OverdueTable } from '@/app/dashboard/components/overdue-table';
 
-export default async function DashboardPage() {
-  const queryClient = createAppQueryClient();
-  const branchId = cookies().get('branch_id')?.value ?? 'default';
+export default function DashboardPage() {
+  const summary = useDashboardSummary();
+  const cashflow = useCashflowData();
+  const overdue = useOverdueEntries();
 
-  await queryClient.prefetchQuery({
-    queryKey: queryKeys.dashboard.summary(branchId),
-    queryFn: () => serverFetch('/dashboard/summary'),
-  });
+  const chartData = useMemo(() => cashflow.data ?? [], [cashflow.data]);
 
-  await queryClient.prefetchQuery({
-    queryKey: queryKeys.dashboard.overdue(branchId),
-    queryFn: () => serverFetch('/dashboard/overdue'),
-  });
+  const receivables = useMemo(
+    () => (overdue.data ?? []).filter((entry) => entry.type === 'RECEIVABLE').slice(0, 5),
+    [overdue.data],
+  );
 
-  await queryClient.prefetchQuery({
-    queryKey: [...queryKeys.dashboard.all(branchId), 'cashflow'],
-    queryFn: () => serverFetch('/dashboard/cashflow-chart'),
-  });
-
-  await queryClient.prefetchQuery({
-    queryKey: [...queryKeys.dashboard.all(branchId), 'expense-breakdown'],
-    queryFn: () => serverFetch('/dashboard/expense-breakdown'),
-  });
+  const payables = useMemo(
+    () => (overdue.data ?? []).filter((entry) => entry.type === 'PAYABLE').slice(0, 5),
+    [overdue.data],
+  );
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Dashboard financeiro" subtitle="Visao consolidada de saldos, vencimentos e fluxo" />
-      <HydrationBoundary state={dehydrate(queryClient)}>
-        <DashboardClient />
-      </HydrationBoundary>
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Dashboard financeiro
+          </h1>
+          <p className="mt-0.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Visao consolidada de saldos, vencimentos e fluxo
+          </p>
+        </div>
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-4">
+        <MetricCard
+          label="Saldo actual"
+          value={summary.data?.totalBalance}
+          icon={Wallet}
+          color="var(--text-primary)"
+          isLoading={summary.isLoading}
+        />
+        <MetricCard
+          label="A receber (30d)"
+          value={summary.data?.receivable30d}
+          icon={TrendingUp}
+          color="var(--success)"
+          variation={summary.data?.variations?.receivable ?? null}
+          isLoading={summary.isLoading}
+        />
+        <MetricCard
+          label="A pagar (30d)"
+          value={summary.data?.payable30d}
+          icon={TrendingDown}
+          color="var(--danger)"
+          variation={summary.data?.variations?.payable ?? null}
+          isLoading={summary.isLoading}
+        />
+        <MetricCard
+          label="Resultado do mes"
+          value={summary.data?.monthResult}
+          icon={Target}
+          color="var(--accent-text)"
+          variation={summary.data?.variations?.result ?? null}
+          isLoading={summary.isLoading}
+        />
+      </div>
+
+      <div className="mb-6">
+        <CashflowChart
+          data={chartData}
+          isLoading={cashflow.isLoading}
+          isError={cashflow.isError}
+          error={cashflow.error}
+          refetch={() => {
+            void cashflow.refetch();
+          }}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <OverdueTable
+          title="Contas a receber vencidas"
+          entries={receivables}
+          isLoading={overdue.isLoading}
+          isError={overdue.isError}
+          refetch={() => {
+            void overdue.refetch();
+          }}
+        />
+        <OverdueTable
+          title="Contas a pagar vencidas"
+          entries={payables}
+          isLoading={overdue.isLoading}
+          isError={overdue.isError}
+          refetch={() => {
+            void overdue.refetch();
+          }}
+        />
+      </div>
     </div>
   );
 }
