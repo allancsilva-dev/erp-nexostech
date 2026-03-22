@@ -18,15 +18,15 @@ function ExpenseDonutComponent({ data }: { data: ExpenseBreakdownItem[] }) {
   );
 
   return (
-    <Card>
+    <Card className="p-0">
       <CardTitle>Despesas por categoria</CardTitle>
-      <CardContent>
+      <CardContent className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={limited} dataKey="numeric" nameKey="category" cx="50%" cy="50%" outerRadius={96}>
                 {limited.map((entry) => (
-                  <Cell key={entry.category} fill={entry.color || '#3B82F6'} />
+                  <Cell key={entry.category} fill={entry.color || 'var(--info)'} />
                 ))}
               </Pie>
               <Tooltip

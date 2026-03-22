@@ -43,7 +43,7 @@ function OverdueListComponent({ items }: { items: OverdueItem[] }) {
     <Card>
       <div className="mb-3 flex items-center justify-between">
         <CardTitle>Vencidas</CardTitle>
-        <Link className="text-sm text-[hsl(var(--primary))]" href={ROUTES.contasPagar}>Ver todas</Link>
+        <Link className="text-sm text-[var(--info)]" href={ROUTES.contasPagar}>Ver todas</Link>
       </div>
       <CardContent className="space-y-3">
         <Table>
@@ -82,7 +82,7 @@ function OverdueListComponent({ items }: { items: OverdueItem[] }) {
           >
             Anterior
           </Button>
-          <span className="text-xs text-[hsl(var(--muted-foreground))]">
+          <span className="text-xs text-[var(--text-muted)]">
             Pagina {page} de {totalPages}
           </span>
           <Button

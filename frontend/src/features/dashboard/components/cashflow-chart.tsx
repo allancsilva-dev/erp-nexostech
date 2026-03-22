@@ -19,9 +19,9 @@ function CashflowChartComponent({ data }: { data: CashflowPoint[] }) {
   );
 
   return (
-    <Card>
+    <Card className="p-0">
       <CardTitle>Fluxo de caixa</CardTitle>
-      <CardContent>
+      <CardContent className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-4">
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={limited}>
@@ -34,8 +34,8 @@ function CashflowChartComponent({ data }: { data: CashflowPoint[] }) {
                   return formatCurrency(numericValue);
                 }}
               />
-              <Line type="monotone" dataKey="incomingValue" stroke="#10B981" strokeWidth={2} />
-              <Line type="monotone" dataKey="outgoingValue" stroke="#EF4444" strokeWidth={2} />
+              <Line type="monotone" dataKey="incomingValue" stroke="var(--success)" strokeWidth={2} />
+              <Line type="monotone" dataKey="outgoingValue" stroke="var(--danger)" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </div>

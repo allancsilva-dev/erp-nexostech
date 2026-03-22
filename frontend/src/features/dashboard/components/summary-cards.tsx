@@ -22,10 +22,13 @@ function SummaryCardsComponent({ data }: { data?: DashboardSummary }) {
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {cards.map(([label, value, href]) => (
         <Link key={label} href={href}>
-          <Card className="hover:border-[hsl(var(--ring))]">
-            <CardTitle>{label}</CardTitle>
-            <CardContent>
-              <MoneyDisplay value={value} colored className="text-xl font-semibold" />
+          <Card className="transition-transform duration-150 hover:-translate-y-0.5">
+            <CardTitle className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+              {label}
+            </CardTitle>
+            <CardContent className="space-y-1">
+              <MoneyDisplay value={value} colored className="text-[22px] font-bold leading-tight" />
+              <p className="text-[12px] text-[var(--text-secondary)]">Atualizado em tempo real</p>
             </CardContent>
           </Card>
         </Link>
