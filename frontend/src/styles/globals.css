@@ -17,6 +17,15 @@
   --accent-foreground: 222 47% 11%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
+  --success: 142 72% 45%;
+  --success-muted: 138 76% 97%;
+  --success-foreground: 142 72% 24%;
+  --warning: 38 92% 50%;
+  --warning-muted: 48 100% 96%;
+  --warning-foreground: 26 83% 30%;
+  --info: 221 83% 53%;
+  --info-muted: 214 100% 97%;
+  --info-foreground: 217 33% 20%;
   --border: 214 32% 91%;
   --input: 214 32% 91%;
   --ring: 221 83% 53%;
@@ -45,6 +54,15 @@
   --accent-foreground: 210 40% 98%;
   --destructive: 0 63% 31%;
   --destructive-foreground: 210 40% 98%;
+  --success: 142 70% 45%;
+  --success-muted: 143 40% 22%;
+  --success-foreground: 141 80% 88%;
+  --warning: 38 92% 52%;
+  --warning-muted: 35 46% 22%;
+  --warning-foreground: 48 98% 87%;
+  --info: 217 91% 60%;
+  --info-muted: 222 37% 23%;
+  --info-foreground: 214 100% 91%;
   --border: 217 33% 17%;
   --input: 217 33% 17%;
   --ring: 217 91% 60%;
@@ -62,10 +80,16 @@
 html,
 body {
   height: 100%;
+  scrollbar-gutter: stable;
 }
 
 body {
   background: hsl(var(--content-bg));
   color: hsl(var(--foreground));
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
 }
