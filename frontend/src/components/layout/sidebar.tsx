@@ -37,7 +37,7 @@ const ITEMS = [
   },
 ] as const;
 
-export function Sidebar() {
+export function Sidebar({ isVisible }: { isVisible: boolean }) {
   const { hasPermission } = usePermissions();
   const { pending } = useApprovals();
   const pathname = usePathname();
@@ -61,11 +61,13 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'hidden shrink-0 border-r bg-slate-900 text-slate-100 transition-all duration-200 lg:block',
-        isCollapsed ? 'w-16 p-2' : 'w-64 p-4',
+        'hidden shrink-0 border-r border-[hsl(var(--border))] bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-foreground))] transition-all duration-200 lg:flex lg:flex-col',
+        !isVisible && 'lg:w-0 lg:overflow-hidden lg:border-r-0 lg:p-0',
+        isVisible && (isCollapsed ? 'w-16 p-2' : 'w-64 p-4'),
       )}
+      aria-label="Menu lateral principal"
     >
-      <div className="mb-6 flex items-center justify-between rounded-lg bg-blue-600 px-2 py-2 font-semibold">
+      <div className="mb-4 flex items-center justify-between rounded-lg bg-[hsl(var(--sidebar-active))] px-2 py-2 font-semibold text-[hsl(var(--primary-foreground))]">
         <span className="inline-flex items-center gap-2 overflow-hidden whitespace-nowrap">
           <span className="rounded bg-white/20 px-2 py-0.5">N</span>
           {!isCollapsed ? <span>Nexos Financeiro</span> : null}
@@ -74,28 +76,31 @@ export function Sidebar() {
           type="button"
           size="sm"
           variant="ghost"
-          className="h-7 w-7 p-0 text-white hover:bg-white/20 hover:text-white"
+          className="h-7 w-7 p-0 text-[hsl(var(--primary-foreground))] hover:bg-white/20 hover:text-[hsl(var(--primary-foreground))]"
           onClick={() => setIsCollapsed((previous) => !previous)}
           aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
         >
           {isCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </Button>
       </div>
-      <nav className="space-y-1">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1" aria-label="Navegacao do ERP">
         {filteredItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              'block rounded-md px-3 py-2 text-sm transition-colors hover:bg-slate-800',
-              pathname === item.href ? 'bg-slate-800 text-white' : 'text-slate-100/90',
+              'block rounded-md px-3 py-2 text-sm transition-colors hover:bg-[hsl(var(--sidebar-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2',
+              pathname === item.href
+                ? 'bg-[hsl(var(--sidebar-active))] text-[hsl(var(--primary-foreground))]'
+                : 'text-[hsl(var(--sidebar-foreground))]',
             )}
             title={isCollapsed ? item.label : undefined}
+            aria-label={item.label}
           >
             <span className={cn('inline-flex items-center gap-2', isCollapsed ? 'justify-center w-full' : '')}>
               {isCollapsed ? item.label.charAt(0) : item.label}
               {item.href === ROUTES.aprovacoes && pendingCount > 0 ? (
-                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-semibold text-slate-900">
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-semibold text-slate-900">
                   {pendingCount}
                 </span>
               ) : null}
