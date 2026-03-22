@@ -1,0 +1,12 @@
+# Regras obrigatórias para este projecto
+
+ANTES de qualquer alteração em autenticação, lê `AUTH_ARCHITECTURE.md`.
+
+Ficheiros protegidos que NÃO podem ser alterados:
+- src/middleware.ts
+- src/providers/auth-provider.tsx
+- src/providers/branch-provider.tsx
+- src/app/api/v1/[...path]/route.ts
+- next.config.mjs
+
+Se precisares alterar algum destes ficheiros, para e confirma com o utilizador primeiro.
