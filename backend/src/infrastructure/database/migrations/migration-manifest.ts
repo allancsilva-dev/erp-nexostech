@@ -166,16 +166,18 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
       `CREATE TABLE IF NOT EXISTS ${schema}.collection_rules (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         branch_id UUID NOT NULL REFERENCES ${schema}.branches(id),
-        event VARCHAR(20) NOT NULL,
-        days_offset INTEGER NOT NULL,
-        email_template_id UUID NOT NULL,
+        trigger_event VARCHAR(20) NOT NULL,
+        offset_days INTEGER NOT NULL,
+        name VARCHAR(100),
+        channel VARCHAR(20) NOT NULL DEFAULT 'EMAIL',
+        email_template_id UUID,
         active BOOLEAN NOT NULL DEFAULT true,
         sort_order INTEGER NOT NULL DEFAULT 0,
         deleted_at TIMESTAMP,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`,
-      `CREATE INDEX IF NOT EXISTS idx_collection_rules_branch_event ON ${schema}.collection_rules(branch_id, event)`,
+      `CREATE INDEX IF NOT EXISTS idx_collection_rules_branch_event ON ${schema}.collection_rules(branch_id, trigger_event)`,
     ],
   },
   {
@@ -279,12 +281,13 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
     name: '009_create_financial_jobs_support_tables',
     run: (schema) => [
       `CREATE TABLE IF NOT EXISTS ${schema}.document_sequences (
-        sequence_year INTEGER NOT NULL,
-        doc_type VARCHAR(10) NOT NULL,
-        next_number INTEGER NOT NULL DEFAULT 1,
+        branch_id UUID NOT NULL REFERENCES ${schema}.branches(id),
+        type VARCHAR(10) NOT NULL,
+        year INTEGER NOT NULL,
+        last_sequence INTEGER NOT NULL DEFAULT 0,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        PRIMARY KEY (sequence_year, doc_type)
+        PRIMARY KEY (branch_id, type, year)
       )`,
       `CREATE TABLE IF NOT EXISTS ${schema}.recurrences (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -426,12 +429,32 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
        END $$`,
 
       // PASSO 1 — Adicionar UNIQUE(id, branch_id) em categories para suportar FK composta
-      `ALTER TABLE ${schema}.categories
-       ADD CONSTRAINT IF NOT EXISTS uq_categories_id_branch UNIQUE (id, branch_id)`,
+      `DO $$
+       BEGIN
+         IF NOT EXISTS (
+           SELECT 1 FROM information_schema.table_constraints
+           WHERE constraint_schema = REPLACE('${schema}', '"', '')
+             AND table_name = 'categories'
+             AND constraint_name = 'uq_categories_id_branch'
+         ) THEN
+           ALTER TABLE ${schema}.categories
+           ADD CONSTRAINT uq_categories_id_branch UNIQUE (id, branch_id);
+         END IF;
+       END $$`,
 
       // PASSO 2 — Adicionar UNIQUE(id, branch_id) em bank_accounts para suportar FK composta
-      `ALTER TABLE ${schema}.bank_accounts
-       ADD CONSTRAINT IF NOT EXISTS uq_bank_accounts_id_branch UNIQUE (id, branch_id)`,
+      `DO $$
+       BEGIN
+         IF NOT EXISTS (
+           SELECT 1 FROM information_schema.table_constraints
+           WHERE constraint_schema = REPLACE('${schema}', '"', '')
+             AND table_name = 'bank_accounts'
+             AND constraint_name = 'uq_bank_accounts_id_branch'
+         ) THEN
+           ALTER TABLE ${schema}.bank_accounts
+           ADD CONSTRAINT uq_bank_accounts_id_branch UNIQUE (id, branch_id);
+         END IF;
+       END $$`,
 
       // PASSO 3 — Adicionar branch_id em financial_entries.categories FK como FK composta.
       // Dropa a FK simples (se existir) e cria a composta.
@@ -468,10 +491,20 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
        END $$`,
 
       // PASSO 4 — Adicionar FK composta category_id + branch_id → categories(id, branch_id)
-      `ALTER TABLE ${schema}.financial_entries
-       ADD CONSTRAINT IF NOT EXISTS fk_entries_category_branch
-       FOREIGN KEY (category_id, branch_id)
-       REFERENCES ${schema}.categories(id, branch_id)`,
+      `DO $$
+       BEGIN
+         IF NOT EXISTS (
+           SELECT 1 FROM information_schema.table_constraints
+           WHERE constraint_schema = REPLACE('${schema}', '"', '')
+             AND table_name = 'financial_entries'
+             AND constraint_name = 'fk_entries_category_branch'
+         ) THEN
+           ALTER TABLE ${schema}.financial_entries
+           ADD CONSTRAINT fk_entries_category_branch
+           FOREIGN KEY (category_id, branch_id)
+           REFERENCES ${schema}.categories(id, branch_id);
+         END IF;
+       END $$`,
 
       // PASSO 5 — Dropa FK simples de bank_account_id (se existir)
       `DO $$
@@ -507,10 +540,20 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
 
       // PASSO 6 — Adicionar FK composta bank_account_id + branch_id → bank_accounts(id, branch_id)
       // bank_account_id é nullable (pagamentos sem conta definida são válidos)
-      `ALTER TABLE ${schema}.financial_entries
-       ADD CONSTRAINT IF NOT EXISTS fk_entries_bank_account_branch
-       FOREIGN KEY (bank_account_id, branch_id)
-       REFERENCES ${schema}.bank_accounts(id, branch_id)`,
+      `DO $$
+       BEGIN
+         IF NOT EXISTS (
+           SELECT 1 FROM information_schema.table_constraints
+           WHERE constraint_schema = REPLACE('${schema}', '"', '')
+             AND table_name = 'financial_entries'
+             AND constraint_name = 'fk_entries_bank_account_branch'
+         ) THEN
+           ALTER TABLE ${schema}.financial_entries
+           ADD CONSTRAINT fk_entries_bank_account_branch
+           FOREIGN KEY (bank_account_id, branch_id)
+           REFERENCES ${schema}.bank_accounts(id, branch_id);
+         END IF;
+       END $$`,
     ],
   },
   {
