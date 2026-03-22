@@ -1,6 +1,8 @@
 ﻿import { ApiError, type ApiResponse, type PaginatedResponse } from '@/lib/api-types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+let rateLimitRemaining: number | null = null;
+let throttleUntil = 0;
 
 const TENANT_LEVEL_ENDPOINTS = ['/contacts', '/branches', '/roles', '/users', '/tenants'];
 
@@ -38,6 +40,11 @@ class ApiClient {
     endpoint: string,
     options?: RequestInit & { idempotencyKey?: string },
   ): Promise<T> {
+    if (throttleUntil > Date.now()) {
+      const delay = throttleUntil - Date.now();
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+
     const branchId = getCookieValue('branch_id');
 
     const headers: Record<string, string> = {
@@ -55,8 +62,29 @@ class ApiClient {
       credentials: 'include',
     });
 
+    const remainingHeader = response.headers.get('X-RateLimit-Remaining');
+    if (remainingHeader !== null) {
+      const parsedRemaining = Number.parseInt(remainingHeader, 10);
+      if (!Number.isNaN(parsedRemaining)) {
+        rateLimitRemaining = parsedRemaining;
+
+        if (parsedRemaining < 5) {
+          throttleUntil = Date.now() + 5000;
+        } else if (parsedRemaining < 10) {
+          throttleUntil = Date.now() + 2000;
+        }
+      }
+    }
+
     if (response.status === 204) {
       return undefined as T;
+    }
+
+    if (response.status === 429) {
+      const retryAfter = response.headers.get('Retry-After');
+      const waitMs = retryAfter ? Number.parseInt(retryAfter, 10) * 1000 : 60_000;
+      throttleUntil = Date.now() + (Number.isNaN(waitMs) ? 60_000 : waitMs);
+      throw new ApiError('RATE_LIMIT', 'Limite de requisicoes atingido. Aguarde alguns segundos.', undefined, 429);
     }
 
     if (response.status === 401 && typeof window !== 'undefined') {
@@ -121,3 +149,10 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
+
+export function getRateLimitStatus(): { remaining: number | null; isThrottled: boolean } {
+  return {
+    remaining: rateLimitRemaining,
+    isThrottled: throttleUntil > Date.now(),
+  };
+}
