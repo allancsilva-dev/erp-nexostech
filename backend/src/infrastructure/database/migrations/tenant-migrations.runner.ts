@@ -115,7 +115,8 @@ async function saveMigrationStatus(
 }
 
 function schemaFromTenant(tenantId: string): string {
-  return `tenant_${tenantId.replace(/[^a-zA-Z0-9_]/g, '')}`;
+  // Converte caracteres invalidos em underscore para manter consistencia.
+  return `tenant_${tenantId.replace(/[^a-zA-Z0-9_]/g, '_')}`;
 }
 
 async function applyForTenant(
