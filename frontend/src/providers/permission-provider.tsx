@@ -4,7 +4,7 @@ import { createContext, useContext } from 'react';
 import { useAuthContext } from '@/providers/auth-provider';
 
 interface PermissionContextValue {
-  user: { plan?: string } | null;
+  user: (Record<string, unknown> & { plan?: string }) | null;
   permissions: string[];
   isLoading: boolean;
   hasPermission: (code: string) => boolean;
