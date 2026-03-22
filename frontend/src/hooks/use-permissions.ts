@@ -1,9 +1,9 @@
 ﻿'use client';
 
-import { useAuthContext } from '@/providers/auth-provider';
+import { usePermissionContext } from '@/providers/permission-provider';
 
 export function usePermissions() {
-  const { hasPermission, hasAnyPermission, isAdmin } = useAuthContext();
+  const { hasPermission, hasAnyPermission, isAdmin, permissions, isLoading } = usePermissionContext();
 
-  return { hasPermission, hasAnyPermission, isAdmin: isAdmin() };
+  return { hasPermission, hasAnyPermission, isAdmin, permissions, isLoading };
 }

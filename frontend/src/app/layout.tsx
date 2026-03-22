@@ -5,6 +5,7 @@ import { QueryProvider } from '@/providers/query-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { AuthProvider } from '@/providers/auth-provider';
 import { BranchProvider } from '@/providers/branch-provider';
+import { PermissionProvider } from '@/providers/permission-provider';
 import { ToastProvider } from '@/providers/toast-provider';
 import '@/styles/globals.css';
 
@@ -21,10 +22,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <QueryProvider>
             <NuqsAdapter>
               <AuthProvider>
-                <BranchProvider>
-                  <AppShell>{children}</AppShell>
-                  <ToastProvider />
-                </BranchProvider>
+                <PermissionProvider>
+                  <BranchProvider>
+                    <AppShell>{children}</AppShell>
+                    <ToastProvider />
+                  </BranchProvider>
+                </PermissionProvider>
               </AuthProvider>
             </NuqsAdapter>
           </QueryProvider>
