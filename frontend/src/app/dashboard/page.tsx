@@ -1,14 +1,15 @@
-﻿import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
+﻿import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { cookies } from 'next/headers';
 import { PageHeader } from '@/components/layout/page-header';
 import { DashboardClient } from '@/features/dashboard/components/dashboard-client';
 import { serverFetch } from '@/lib/api-server';
+import { createAppQueryClient } from '@/lib/query-client';
 import { queryKeys } from '@/lib/query-keys';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const queryClient = new QueryClient();
+  const queryClient = createAppQueryClient();
   const branchId = cookies().get('branch_id')?.value ?? 'default';
 
   await queryClient.prefetchQuery({

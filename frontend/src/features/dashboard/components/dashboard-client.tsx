@@ -1,8 +1,7 @@
 ﻿'use client';
 
-import { EmptyState } from '@/components/shared/empty-state';
-import { ErrorBanner } from '@/components/shared/error-banner';
-import { CardSkeleton } from '@/components/shared/loading-skeleton';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   useDashboardCashflowChart,
   useDashboardExpenseBreakdown,
@@ -22,17 +21,25 @@ export function DashboardClient() {
 
   if (summary.isLoading || overdue.isLoading || cashflow.isLoading || expense.isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <CardSkeleton />
-        <CardSkeleton />
-        <CardSkeleton />
-        <CardSkeleton />
+      <div className="space-y-6">
+        <LoadingState type="cards" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Skeleton className="h-80" />
+          <Skeleton className="h-80" />
+        </div>
+        <LoadingState type="table" rows={6} />
       </div>
     );
   }
 
-  if (summary.isError) {
-    return <ErrorBanner message={summary.error.message} onRetry={() => summary.refetch()} />;
+  if (summary.isError || overdue.isError || cashflow.isError || expense.isError) {
+    const message =
+      summary.error?.message ??
+      overdue.error?.message ??
+      cashflow.error?.message ??
+      expense.error?.message ??
+      'Erro inesperado ao carregar dashboard.';
+    return <ErrorState message={message} onRetry={() => summary.refetch()} />;
   }
 
   if (!summary.data?.data) {

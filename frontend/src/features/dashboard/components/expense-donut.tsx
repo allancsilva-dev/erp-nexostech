@@ -1,16 +1,21 @@
 ﻿'use client';
 
+import { memo, useMemo } from 'react';
 import Decimal from 'decimal.js';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/format';
 import type { ExpenseBreakdownItem } from '@/features/dashboard/hooks/use-dashboard';
 
-export function ExpenseDonut({ data }: { data: ExpenseBreakdownItem[] }) {
-  const limited = data.slice(0, 24).map((item) => ({
-    ...item,
-    numeric: new Decimal(item.value).toNumber(),
-  }));
+function ExpenseDonutComponent({ data }: { data: ExpenseBreakdownItem[] }) {
+  const limited = useMemo(
+    () =>
+      data.slice(0, 24).map((item) => ({
+        ...item,
+        numeric: new Decimal(item.value).toNumber(),
+      })),
+    [data],
+  );
 
   return (
     <Card>
@@ -37,3 +42,5 @@ export function ExpenseDonut({ data }: { data: ExpenseBreakdownItem[] }) {
     </Card>
   );
 }
+
+export const ExpenseDonut = memo(ExpenseDonutComponent);

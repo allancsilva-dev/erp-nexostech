@@ -1,17 +1,22 @@
 ﻿'use client';
 
+import { memo, useMemo } from 'react';
 import Decimal from 'decimal.js';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/format';
 import type { CashflowPoint } from '@/features/dashboard/hooks/use-dashboard';
 
-export function CashflowChart({ data }: { data: CashflowPoint[] }) {
-  const limited = data.slice(0, 24).map((item) => ({
-    ...item,
-    incomingValue: new Decimal(item.incoming).toNumber(),
-    outgoingValue: new Decimal(item.outgoing).toNumber(),
-  }));
+function CashflowChartComponent({ data }: { data: CashflowPoint[] }) {
+  const limited = useMemo(
+    () =>
+      data.slice(0, 24).map((item) => ({
+        ...item,
+        incomingValue: new Decimal(item.incoming).toNumber(),
+        outgoingValue: new Decimal(item.outgoing).toNumber(),
+      })),
+    [data],
+  );
 
   return (
     <Card>
@@ -38,3 +43,5 @@ export function CashflowChart({ data }: { data: CashflowPoint[] }) {
     </Card>
   );
 }
+
+export const CashflowChart = memo(CashflowChartComponent);
