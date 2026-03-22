@@ -10,14 +10,15 @@ interface PendingApproval {
   documentNumber: string;
 }
 
-export function useApprovals() {
+export function useApprovals(options?: { enabled?: boolean }) {
   const { activeBranchId } = useBranch();
   const queryClient = useQueryClient();
+  const isEnabled = options?.enabled ?? true;
 
   const pending = useQuery({
     queryKey: queryKeys.approvals.pending(activeBranchId || 'default'),
     queryFn: () => api.get<PendingApproval[]>('/approvals/pending'),
-    enabled: Boolean(activeBranchId),
+    enabled: Boolean(activeBranchId) && isEnabled,
   });
 
   const approve = useMutation({

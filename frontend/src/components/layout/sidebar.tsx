@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { usePermissions } from '@/hooks/use-permissions';
+import { useFeatureFlag } from '@/hooks/use-feature-flags';
 import { useApprovals } from '@/features/approvals/hooks/use-approvals';
 import { Button } from '@/components/ui/button';
 
@@ -19,12 +20,32 @@ const ITEMS = [
   { label: 'Conciliacao', href: ROUTES.conciliacao, permission: 'financial.reconciliation.execute' },
   { label: 'Relatorios', href: ROUTES.relatorios, permission: 'financial.reports.view' },
   { label: 'Transferencias', href: ROUTES.transferencias, permission: 'financial.entries.create' },
-  { label: 'Boletos', href: ROUTES.boletos, permission: 'financial.entries.view' },
-  { label: 'Aprovacoes', href: ROUTES.aprovacoes, permission: 'financial.entries.approve' },
+  {
+    label: 'Boletos',
+    href: ROUTES.boletos,
+    permission: 'financial.entries.view',
+    featureFlag: 'boletos_enabled',
+  },
+  {
+    label: 'Aprovacoes',
+    href: ROUTES.aprovacoes,
+    permission: 'financial.entries.approve',
+    featureFlag: 'approval_flow_enabled',
+  },
   { label: 'Auditoria', href: ROUTES.auditoria, permission: 'financial.audit.view' },
   { label: 'Configuracoes', href: ROUTES.configuracoes, permission: 'financial.settings.manage' },
-  { label: 'Regua de cobranca', href: ROUTES.reguaCobranca, permission: 'financial.settings.manage' },
-  { label: 'Admin > Filiais', href: ROUTES.adminFiliais, permission: 'admin.branches.manage' },
+  {
+    label: 'Regua de cobranca',
+    href: ROUTES.reguaCobranca,
+    permission: 'financial.settings.manage',
+    featureFlag: 'collection_rules_enabled',
+  },
+  {
+    label: 'Admin > Filiais',
+    href: ROUTES.adminFiliais,
+    permission: 'admin.branches.manage',
+    featureFlag: 'branches_enabled',
+  },
   {
     label: 'Configuracoes > Usuarios',
     href: ROUTES.configuracoesUsuarios,
@@ -39,7 +60,11 @@ const ITEMS = [
 
 export function Sidebar({ isVisible }: { isVisible: boolean }) {
   const { hasPermission } = usePermissions();
-  const { pending } = useApprovals();
+  const boletosEnabled = useFeatureFlag('boletos_enabled');
+  const approvalsEnabled = useFeatureFlag('approval_flow_enabled');
+  const branchesEnabled = useFeatureFlag('branches_enabled');
+  const collectionRulesEnabled = useFeatureFlag('collection_rules_enabled');
+  const { pending } = useApprovals({ enabled: approvalsEnabled });
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -54,8 +79,32 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
 
   const pendingCount = pending.data?.data?.length ?? 0;
   const filteredItems = useMemo(
-    () => ITEMS.filter((item) => hasPermission(item.permission)),
-    [hasPermission],
+    () => ITEMS
+      .filter((item) => hasPermission(item.permission))
+      .filter((item) => {
+        if (!item.featureFlag) {
+          return true;
+        }
+
+        if (item.featureFlag === 'boletos_enabled') {
+          return boletosEnabled;
+        }
+
+        if (item.featureFlag === 'approval_flow_enabled') {
+          return approvalsEnabled;
+        }
+
+        if (item.featureFlag === 'branches_enabled') {
+          return branchesEnabled;
+        }
+
+        if (item.featureFlag === 'collection_rules_enabled') {
+          return collectionRulesEnabled;
+        }
+
+        return false;
+      }),
+    [approvalsEnabled, boletosEnabled, branchesEnabled, collectionRulesEnabled, hasPermission],
   );
 
   return (

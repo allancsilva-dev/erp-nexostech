@@ -4,8 +4,10 @@ import { createContext, useContext, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMe, fetchMyPermissions } from '@/lib/api/auth';
 import { queryKeys } from '@/lib/query-keys';
+import type { UserMe } from '@/lib/types/auth';
 
 interface PermissionContextValue {
+  user: UserMe | null;
   permissions: string[];
   isAdmin: boolean;
   isLoading: boolean;
@@ -41,13 +43,14 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
     const hasAnyPermission = (codes: string[]) => isAdmin || codes.some((code) => permissions.includes(code));
 
     return {
+      user: me ?? null,
       permissions,
       isAdmin,
       isLoading: isLoadingMe || isLoadingPermissions,
       hasPermission,
       hasAnyPermission,
     };
-  }, [isAdmin, isLoadingMe, isLoadingPermissions, permissions]);
+  }, [isAdmin, isLoadingMe, isLoadingPermissions, me, permissions]);
 
   return (
     <PermissionContext.Provider value={value}>{children}</PermissionContext.Provider>
