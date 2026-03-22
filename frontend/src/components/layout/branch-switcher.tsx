@@ -42,11 +42,11 @@ export function BranchSwitcher() {
   }
 
   return (
-    <label className="flex min-w-[220px] items-center gap-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm shadow-sm">
+    <label className="flex min-w-[220px] items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-2 text-sm shadow-sm">
       {isLoading || isSwitching ? (
-        <Loader2 className="h-4 w-4 animate-spin text-[hsl(var(--muted-foreground))]" aria-hidden="true" />
+        <Loader2 className="h-4 w-4 animate-spin text-[var(--text-muted)]" aria-hidden="true" />
       ) : (
-        <Building2 className="h-4 w-4 text-[hsl(var(--muted-foreground))]" aria-hidden="true" />
+        <Building2 className="h-4 w-4 text-[var(--text-muted)]" aria-hidden="true" />
       )}
       <Select
         className="h-7 border-0 bg-transparent p-0 shadow-none outline-none focus-visible:ring-0"

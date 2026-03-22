@@ -61,46 +61,50 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
   return (
     <aside
       className={cn(
-        'hidden shrink-0 border-r border-[hsl(var(--border))] bg-[hsl(var(--sidebar-bg))] text-[hsl(var(--sidebar-foreground))] transition-all duration-200 lg:flex lg:flex-col',
+        'hidden shrink-0 border-r border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-secondary)] transition-all duration-200 lg:flex lg:flex-col',
         !isVisible && 'lg:w-0 lg:overflow-hidden lg:border-r-0 lg:p-0',
         isVisible && (isCollapsed ? 'w-16 p-2' : 'w-64 p-4'),
       )}
       aria-label="Menu lateral principal"
     >
-      <div className="mb-4 flex items-center justify-between rounded-lg bg-[hsl(var(--sidebar-active))] px-2 py-2 font-semibold text-[hsl(var(--primary-foreground))]">
+      <div className="mb-6 flex items-center justify-between rounded-lg border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-2 font-semibold text-[var(--text-primary)]">
         <span className="inline-flex items-center gap-2 overflow-hidden whitespace-nowrap">
-          <span className="rounded bg-white/20 px-2 py-0.5">N</span>
+          <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded bg-[var(--accent-bg)] text-[11px] leading-none text-[var(--accent-text)]">N</span>
           {!isCollapsed ? <span>Nexos Financeiro</span> : null}
         </span>
         <Button
           type="button"
           size="sm"
           variant="ghost"
-          className="h-7 w-7 p-0 text-[hsl(var(--primary-foreground))] hover:bg-white/20 hover:text-[hsl(var(--primary-foreground))]"
+          className="h-7 w-7 p-0 text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
           onClick={() => setIsCollapsed((previous) => !previous)}
           aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
         >
           {isCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </Button>
       </div>
-      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1" aria-label="Navegacao do ERP">
+      <nav className="mt-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1" aria-label="Navegacao do ERP">
         {filteredItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              'block rounded-md px-3 py-2 text-sm transition-colors hover:bg-[hsl(var(--sidebar-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2',
+              'block rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2',
+              'hover:bg-[var(--bg-surface-hover)]',
               pathname === item.href
-                ? 'bg-[hsl(var(--sidebar-active))] text-[hsl(var(--primary-foreground))]'
-                : 'text-[hsl(var(--sidebar-foreground))]',
+                ? 'bg-[var(--accent-bg)] text-[var(--text-primary)]'
+                : 'text-[var(--text-secondary)]',
             )}
             title={isCollapsed ? item.label : undefined}
             aria-label={item.label}
           >
             <span className={cn('inline-flex items-center gap-2', isCollapsed ? 'justify-center w-full' : '')}>
-              {isCollapsed ? item.label.charAt(0) : item.label}
+              <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded bg-[var(--bg-surface-hover)] text-[10px] leading-none text-[var(--text-muted)]">
+                {item.label.charAt(0)}
+              </span>
+              {!isCollapsed ? item.label : null}
               {item.href === ROUTES.aprovacoes && pendingCount > 0 ? (
-                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-semibold text-slate-900">
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--info)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--bg-surface)]">
                   {pendingCount}
                 </span>
               ) : null}

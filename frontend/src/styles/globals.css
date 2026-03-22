@@ -1,6 +1,20 @@
 ﻿@import "tailwindcss";
 
 :root {
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --border-default: rgba(0, 0, 0, 0.12);
+  --accent-bg: #e2e8f0;
+  --accent-text: #0f172a;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --info: #4f46e5;
+  --card-glow: 0 10px 30px rgba(15, 23, 42, 0.08);
+
   --background: 0 0% 100%;
   --foreground: 222 47% 11%;
   --card: 0 0% 100%;
@@ -37,7 +51,37 @@
   --content-bg: 210 40% 98%;
 }
 
+.light {
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --border-default: rgba(0, 0, 0, 0.12);
+  --accent-bg: #e2e8f0;
+  --accent-text: #0f172a;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --info: #4f46e5;
+  --card-glow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
 .dark {
+  --bg-app: #0b1220;
+  --bg-surface: #111a2e;
+  --bg-surface-hover: #1a2740;
+  --text-primary: #e2e8f0;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-default: rgba(148, 163, 184, 0.24);
+  --accent-bg: #24324f;
+  --accent-text: #f8fafc;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --info: #818cf8;
+  --card-glow: 0 10px 30px rgba(2, 6, 23, 0.4);
+
   --background: 222 47% 11%;
   --foreground: 210 40% 98%;
   --card: 217 33% 17%;
@@ -84,8 +128,8 @@ body {
 }
 
 body {
-  background: hsl(var(--content-bg));
-  color: hsl(var(--foreground));
+  background: var(--bg-app);
+  color: var(--text-primary);
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 

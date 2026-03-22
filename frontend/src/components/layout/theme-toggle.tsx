@@ -21,13 +21,7 @@ export function ThemeToggle() {
     setTheme(nextTheme);
   }
 
-  if (!mounted) {
-    return (
-      <Button variant="outline" size="sm" aria-label="Carregando tema" disabled>
-        <span className="h-4 w-4" />
-      </Button>
-    );
-  }
+  if (!mounted) return null;
 
   return (
     <Button variant="outline" size="sm" onClick={toggleTheme} aria-label="Alternar tema">

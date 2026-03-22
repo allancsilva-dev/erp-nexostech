@@ -17,14 +17,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [isSidebarVisible]);
 
   return (
-    <div className="flex min-h-screen bg-[hsl(var(--content-bg))] text-[hsl(var(--foreground))]">
+    <div className="flex min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)]">
       <Sidebar isVisible={isSidebarVisible} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header
           isSidebarVisible={isSidebarVisible}
           onToggleSidebar={() => setIsSidebarVisible((prev) => !prev)}
         />
-        <main className="min-w-0 flex-1 p-6">{children}</main>
+        <main className="min-w-0 flex-1 p-6">
+          <div className="mx-auto w-full max-w-7xl">{children}</div>
+        </main>
       </div>
     </div>
   );
