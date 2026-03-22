@@ -1,33 +1,30 @@
-﻿import type { EntryStatus } from '@/features/entries/types/entry.types';
-import { Badge } from '@/components/ui/badge';
+﻿import React from 'react';
 
-const STATUS_COLORS: Record<EntryStatus, string> = {
-  DRAFT: 'bg-slate-100 text-slate-600',
-  PENDING_APPROVAL: 'bg-amber-50 text-amber-700',
-  PENDING: 'bg-blue-50 text-blue-700',
-  PARTIAL: 'bg-purple-50 text-purple-700',
-  PAID: 'bg-emerald-50 text-emerald-700',
-  OVERDUE: 'bg-red-50 text-red-700',
-  CANCELLED: 'bg-slate-100 text-slate-500 line-through',
+const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = {
+  DRAFT: { label: 'Rascunho', bg: 'var(--bg-surface-raised)', text: 'var(--text-muted)' },
+  PENDING_APPROVAL: { label: 'Aguard. Aprovacao', bg: 'var(--warning-muted)', text: 'var(--warning)' },
+  PENDING: { label: 'Pendente', bg: 'var(--info-muted)', text: 'var(--info)' },
+  PARTIAL: { label: 'Parcial', bg: '239 50% 50% / 0.12', text: 'var(--accent-text)' },
+  PAID: { label: 'Pago', bg: 'var(--success-muted)', text: 'var(--success)' },
+  OVERDUE: { label: 'Vencido', bg: 'var(--danger-muted)', text: 'var(--danger)' },
+  CANCELLED: { label: 'Cancelado', bg: 'var(--bg-surface-raised)', text: 'var(--text-muted)' },
 };
 
-const STATUS_LABELS: Record<EntryStatus, string> = {
-  DRAFT: 'Rascunho',
-  PENDING_APPROVAL: 'Aguard. Aprovacao',
-  PENDING: 'Pendente',
-  PARTIAL: 'Parcial',
-  PAID: 'Pago',
-  OVERDUE: 'Vencido',
-  CANCELLED: 'Cancelado',
-};
-
-export function StatusBadge({
-  status,
-  type,
-}: {
-  status: EntryStatus;
+interface StatusBadgeProps {
+  status: string;
   type?: 'PAYABLE' | 'RECEIVABLE';
-}) {
-  const label = status === 'PAID' && type === 'RECEIVABLE' ? 'Recebido' : STATUS_LABELS[status];
-  return <Badge className={STATUS_COLORS[status]}>{label}</Badge>;
 }
+
+export const StatusBadge = React.memo(function StatusBadge({ status, type }: StatusBadgeProps) {
+  const config = STATUS_MAP[status] ?? STATUS_MAP.DRAFT;
+  const label = status === 'PAID' && type === 'RECEIVABLE' ? 'Recebido' : config.label;
+
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold"
+      style={{ background: `hsl(${config.bg})`, color: `hsl(${config.text})` }}
+    >
+      {label}
+    </span>
+  );
+});
