@@ -64,7 +64,7 @@ export class JwtGuard implements CanActivate {
       return bearer.replace('Bearer ', '');
     }
 
-    return request.cookies?.access_token;
+    return request.cookies?.erp_access_token;
   }
 
   private mapPayload(payload: JWTPayload): AuthUser {

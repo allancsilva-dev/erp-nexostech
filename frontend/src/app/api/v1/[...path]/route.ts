@@ -34,7 +34,7 @@ async function proxy(req: NextRequest, params: { path: string[] }) {
   if (authorization) headers['authorization'] = authorization;
 
   if (!headers.authorization) {
-    const token = req.cookies.get('access_token')?.value;
+    const token = req.cookies.get('erp_access_token')?.value;
     if (token) {
       headers.authorization = `Bearer ${token}`;
     }

@@ -3,7 +3,7 @@ import { ApiError } from '@/lib/api-types';
 import { redirect } from 'next/navigation';
 
 const BASE_URL = process.env.API_INTERNAL_URL ?? 'http://localhost:3001/api/v1';
-const COOKIE_NAME = 'access_token';
+const COOKIE_NAME = 'erp_access_token';
 
 export async function serverFetch<T>(endpoint: string, init?: RequestInit): Promise<T> {
   const cookieStore = await cookies();
