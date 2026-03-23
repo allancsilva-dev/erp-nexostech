@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { CurrencyInput } from '@/components/shared/currency-input';
 import { DatePicker } from '@/components/shared/date-picker';
 import { Select } from '@/components/ui/select';
@@ -35,6 +36,7 @@ export function TransferForm() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [fromBankAccountId, setFromBankAccountId] = useState('');
   const [toBankAccountId, setToBankAccountId] = useState('');
+  const [description, setDescription] = useState('');
 
   const bankAccounts = useBankAccounts();
   const createTransfer = useCreateTransfer();
@@ -56,7 +58,8 @@ export function TransferForm() {
     !fromBankAccountId ||
     !toBankAccountId ||
     fromBankAccountId === toBankAccountId ||
-    amount === '0.00';
+    amount === '0.00' ||
+    description.trim().length === 0;
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -70,12 +73,14 @@ export function TransferForm() {
       {
         fromBankAccountId,
         toBankAccountId,
-        amount,
+        amount: String(amount),
         transferDate: date,
+        description,
       },
       {
         onSuccess: () => {
           setAmount('0.00');
+          setDescription('');
         },
       },
     );
@@ -101,6 +106,7 @@ export function TransferForm() {
       </Select>
       <CurrencyInput value={amount} onChange={setAmount} />
       <DatePicker value={date} onChange={setDate} />
+      <Input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descricao da transferencia" className="md:col-span-2" />
       {lockCheck.isLocked && lockCheck.message ? (
         <p className="md:col-span-2 text-sm text-amber-700 dark:text-amber-400">{lockCheck.message}</p>
       ) : null}

@@ -7,11 +7,29 @@ import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
 import { queryKeys } from '@/lib/query-keys';
 
-export function useTransfers() {
+export interface TransferFilters {
+  startDate?: string;
+  endDate?: string;
+  accountId?: string;
+}
+
+export function useTransfers(filters?: TransferFilters) {
   const { activeBranchId } = useBranch();
+
   return useQuery({
-    queryKey: queryKeys.transfers.list(activeBranchId || 'default'),
-    queryFn: () => api.get('/transfers'),
+    queryKey: [
+      'transfers',
+      activeBranchId || 'default',
+      filters?.startDate || '',
+      filters?.endDate || '',
+      filters?.accountId || '',
+    ] as const,
+    queryFn: () =>
+      api.get('/transfers', {
+        startDate: filters?.startDate,
+        endDate: filters?.endDate,
+        accountId: filters?.accountId,
+      }),
     enabled: Boolean(activeBranchId),
   });
 }

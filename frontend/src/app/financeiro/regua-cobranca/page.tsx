@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { useFeatureFlag } from '@/hooks/use-feature-flags';
 import { RulesList } from '@/features/collection-rules/components/rules-list';
 import { TemplateEditor } from '@/features/collection-rules/components/template-editor';
+import { RuleForm } from '@/features/collection-rules/components/rule-form';
 
 export default function ReguaCobrancaPage() {
   const enabled = useFeatureFlag('collection_rules_enabled');
@@ -30,6 +31,9 @@ export default function ReguaCobrancaPage() {
       <PageHeader title="Regua de cobranca" subtitle="Envio automatico de e-mails" />
       <div className="mb-4 surface-card p-5">
         <RulesList />
+      </div>
+      <div className="mb-4 surface-card p-5">
+        <RuleForm />
       </div>
       <div className="surface-card p-5">
         <TemplateEditor />
