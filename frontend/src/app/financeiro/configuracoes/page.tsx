@@ -2,6 +2,7 @@
 import { BankAccountsCrud } from '@/features/settings/components/bank-accounts-crud';
 import { FinancialSettings } from '@/features/settings/components/financial-settings';
 import { LockPeriodForm } from '@/features/settings/components/lock-period-form';
+import { ApprovalRulesManager } from '@/features/settings/components/approval-rules-manager';
 import { RolesManager } from '@/features/settings/components/roles-manager';
 
 export default function ConfiguracoesPage() {
@@ -13,6 +14,9 @@ export default function ConfiguracoesPage() {
       </div>
       <div className="mb-4 surface-card p-5">
         <BankAccountsCrud />
+      </div>
+      <div className="mb-4 surface-card p-5">
+        <ApprovalRulesManager />
       </div>
       <div className="mb-4 surface-card p-5">
         <RolesManager />
