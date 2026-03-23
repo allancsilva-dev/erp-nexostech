@@ -8,7 +8,7 @@ const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech/
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://erp.zonadev.tech';
 
 function buildAuthRedirectUrl(redirectTo: string): string {
-  return `${AUTH_URL}?app=erp&redirect=${encodeURIComponent(redirectTo)}`;
+  return `${AUTH_URL}?app=erp.zonadev.tech&redirect=${encodeURIComponent(redirectTo)}`;
 }
 
 export async function serverFetch<T>(endpoint: string, init?: RequestInit): Promise<T> {

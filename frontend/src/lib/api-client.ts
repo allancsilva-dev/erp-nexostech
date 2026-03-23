@@ -90,7 +90,7 @@ class ApiClient {
 
     if (response.status === 401 && typeof window !== 'undefined') {
       const currentUrl = window.location.href;
-      window.location.href = `${AUTH_URL}?app=erp&redirect=${encodeURIComponent(currentUrl)}`;
+      window.location.href = `${AUTH_URL}?app=erp.zonadev.tech&redirect=${encodeURIComponent(currentUrl)}`;
       throw new ApiError('UNAUTHORIZED', 'Sessao expirada', undefined, 401);
     }
 
