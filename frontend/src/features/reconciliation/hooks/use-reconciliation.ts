@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
 import { queryKeys } from '@/lib/query-keys';
@@ -35,6 +36,7 @@ interface EntryListItem {
 
 interface ImportedBatch {
   id: string;
+  batchId?: string;
   branchId: string;
   bankAccountId: string;
   startDate: string;
@@ -42,6 +44,14 @@ interface ImportedBatch {
   createdBy: string;
   createdAt: string;
   importedCount: number;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  return fallback;
 }
 
 interface ReconciliationUiState {
@@ -126,26 +136,52 @@ export function useReconciliation() {
 
   const importBatch = useMutation({
     mutationFn: async ({ file, bankAccountId, startDate, endDate }: ImportStatementParams) => {
-      void file;
-      const response = await api.post<ImportedBatch>('/reconciliation/import', {
+      const payload = {
         bankAccountId,
         startDate: startDate ?? monthStartIso(),
         endDate: endDate ?? todayIso(),
-      });
+      };
 
-      return response.data;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bankAccountId', payload.bankAccountId);
+      formData.append('startDate', payload.startDate);
+      formData.append('endDate', payload.endDate);
+
+      try {
+        const response = await api.postForm<ImportedBatch>('/reconciliation/import', formData);
+        return response.data;
+      } catch {
+        // Fallback for environments where backend still expects JSON payload.
+        const response = await api.post<ImportedBatch>('/reconciliation/import', payload);
+        return response.data;
+      }
     },
     onSuccess: (batch) => {
+      const batchId = batch.batchId ?? batch.id;
+
+      if (!batchId) {
+        toast.error('Importacao falhou: servidor nao retornou ID do lote.');
+        return;
+      }
+
       queryClient.setQueryData<ReconciliationUiState>(UI_STATE_QUERY_KEY, (previous) => ({
         ...(previous ?? DEFAULT_UI_STATE),
-        activeBatchId: batch.id,
+        activeBatchId: batchId,
         selectedStatementId: null,
         selectedEntryId: null,
       }));
 
       void queryClient.invalidateQueries({
-        queryKey: ['reconciliation', 'batch', batch.id, activeBranchId || 'default'],
+        queryKey: ['reconciliation', 'batch', batchId, activeBranchId || 'default'],
       });
+
+      toast.success('Extrato importado com sucesso');
+    },
+    onError: (error: unknown) => {
+      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
+      toast.error(message);
+      console.error('[reconciliation:import]', error);
     },
   });
 
@@ -296,10 +332,10 @@ export function useReconciliation() {
       pending.error?.message ??
       batchItems.error?.message ??
       entries.error?.message ??
-      importBatch.error?.message ??
-      confirmMatchMutation.error?.message ??
-      rejectMatchMutation.error?.message ??
-      undoBatchMutation.error?.message ??
+      (importBatch.error ? getErrorMessage(importBatch.error, '') : null) ??
+      (confirmMatchMutation.error ? getErrorMessage(confirmMatchMutation.error, '') : null) ??
+      (rejectMatchMutation.error ? getErrorMessage(rejectMatchMutation.error, '') : null) ??
+      (undoBatchMutation.error ? getErrorMessage(undoBatchMutation.error, '') : null) ??
       null,
     ...actions,
   };
