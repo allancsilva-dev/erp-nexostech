@@ -13,6 +13,7 @@ type EntryEntity = {
   remainingBalance: string;
   installmentNumber: number | null;
   installmentTotal: number | null;
+  hasBoleto?: boolean;
   createdAt: string;
 };
 
@@ -29,6 +30,7 @@ export class EntryResponse {
   contactName!: string | null;
   paidAmount!: string | null;
   remainingBalance!: string;
+  hasBoleto!: boolean;
   installmentLabel!: string | null;
   createdAt!: string;
 
@@ -46,6 +48,7 @@ export class EntryResponse {
     response.contactName = entity.contactName;
     response.paidAmount = entity.paidAmount;
     response.remainingBalance = entity.remainingBalance;
+    response.hasBoleto = entity.hasBoleto ?? false;
     response.installmentLabel =
       entity.installmentNumber && entity.installmentTotal
         ? `${entity.installmentNumber}/${entity.installmentTotal}`

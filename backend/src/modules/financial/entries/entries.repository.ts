@@ -22,7 +22,28 @@ export type EntryRecord = {
   remainingBalance: string;
   installmentNumber: number | null;
   installmentTotal: number | null;
+  hasBoleto?: boolean;
   createdAt: string;
+};
+
+export type EntriesListFilters = {
+  type?: string;
+  status?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+};
+
+export type EntriesListOptions = {
+  page?: number;
+  pageSize?: number;
+};
+
+export type EntriesListResult = {
+  items: EntryRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 type QueryRow = Record<string, unknown>;
@@ -78,9 +99,50 @@ function toNullableNumber(value: unknown): number | null {
 export class EntriesRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
-  async list(branchId: string): Promise<EntryRecord[]> {
+  async list(
+    branchId: string,
+    filters: EntriesListFilters = {},
+    options: EntriesListOptions = {},
+  ): Promise<EntriesListResult> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchIdLiteral = quoteLiteral(branchId);
+    const page = Math.max(1, options.page ?? 1);
+    const pageSize = Math.min(200, Math.max(1, options.pageSize ?? 50));
+    const offset = (page - 1) * pageSize;
+
+    const whereClauses = [
+      `e.deleted_at IS NULL`,
+      `e.branch_id = ${branchIdLiteral}`,
+    ];
+
+    if (filters.type) {
+      whereClauses.push(`e.type = ${quoteLiteral(filters.type)}`);
+    }
+
+    if (filters.status) {
+      whereClauses.push(`e.status = ${quoteLiteral(filters.status)}`);
+    }
+
+    if (filters.startDate) {
+      whereClauses.push(`e.due_date >= ${quoteLiteral(filters.startDate)}`);
+    }
+
+    if (filters.endDate) {
+      whereClauses.push(`e.due_date <= ${quoteLiteral(filters.endDate)}`);
+    }
+
+    if (filters.search) {
+      const search = quoteLiteral(`%${filters.search}%`);
+      whereClauses.push(`(
+        e.description ILIKE ${search}
+        OR e.document_number ILIKE ${search}
+        OR COALESCE(ct.name, '') ILIKE ${search}
+      )`);
+    }
+
+    const whereClause = whereClauses.join('\n        AND ');
+    const orderClause = `ORDER BY e.created_at DESC, e.id DESC`;
+
     const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
@@ -103,14 +165,30 @@ export class EntriesRepository {
       FROM ${schema}.financial_entries e
       LEFT JOIN ${schema}.categories c ON c.id = e.category_id
       LEFT JOIN ${schema}.contacts ct ON ct.id = e.contact_id
-      WHERE e.deleted_at IS NULL
-        AND e.branch_id = ${branchIdLiteral}
-      ORDER BY e.created_at DESC
-      LIMIT 100
+      WHERE ${whereClause}
+      ${orderClause}
+      LIMIT ${pageSize}
+      OFFSET ${offset}
     `),
     );
 
-    return getRows(result).map((row) => this.mapRow(row));
+    const countResult: unknown = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT COUNT(*)::int AS total
+      FROM ${schema}.financial_entries e
+      LEFT JOIN ${schema}.contacts ct ON ct.id = e.contact_id
+      WHERE ${whereClause}
+    `),
+    );
+
+    const total = Number(toText(getRows(countResult)[0]?.total, '0'));
+
+    return {
+      items: getRows(result).map((row) => this.mapRow(row)),
+      total,
+      page,
+      pageSize,
+    };
   }
 
   async findById(
@@ -139,6 +217,13 @@ export class EntriesRepository {
         (e.amount - COALESCE(e.paid_amount, 0))::text AS remaining_balance,
         e.installment_number,
         e.installment_total,
+        EXISTS(
+          SELECT 1
+          FROM ${schema}.financial_boletos fb
+          WHERE fb.entry_id = e.id
+            AND fb.deleted_at IS NULL
+            AND fb.status NOT IN ('CANCELED', 'CANCELLED')
+        ) AS has_boleto,
         e.created_at
       FROM ${schema}.financial_entries e
       LEFT JOIN ${schema}.categories c ON c.id = e.category_id
@@ -409,6 +494,7 @@ export class EntriesRepository {
       remainingBalance: toText(row.remaining_balance),
       installmentNumber: toNullableNumber(row.installment_number),
       installmentTotal: toNullableNumber(row.installment_total),
+      hasBoleto: Boolean(row.has_boleto),
       createdAt: new Date(toText(row.created_at)).toISOString(),
     };
   }

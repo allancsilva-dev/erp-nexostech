@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Put,
   UseGuards,
 } from '@nestjs/common';
@@ -32,9 +33,41 @@ export class EntriesController {
   @RequirePermission('financial.entries.view')
   async list(
     @BranchId() branchId: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('type') type?: string,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ): Promise<ApiResponse<EntryResponse[]>> {
-    const entries = await this.entriesService.list(branchId);
-    return ApiResponse.ok(entries.map((entry) => EntryResponse.from(entry)));
+    const parsedPage = page ? Number.parseInt(page, 10) : undefined;
+    const parsedPageSize = pageSize ? Number.parseInt(pageSize, 10) : undefined;
+
+    const result = await this.entriesService.list(
+      branchId,
+      {
+        type,
+        status,
+        search,
+        startDate,
+        endDate,
+      },
+      {
+        page: Number.isFinite(parsedPage) ? parsedPage : undefined,
+        pageSize: Number.isFinite(parsedPageSize) ? parsedPageSize : undefined,
+      },
+    );
+
+    return ApiResponse.paginated(
+      result.items.map((entry) => EntryResponse.from(entry)),
+      {
+        page: result.page,
+        pageSize: result.pageSize,
+        total: result.total,
+        totalPages: Math.max(1, Math.ceil(result.total / result.pageSize)),
+      },
+    );
   }
 
   @Get(':entryId')

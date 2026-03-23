@@ -67,9 +67,15 @@ export class TransfersRepository {
     };
   }
 
-  async list(branchId: string): Promise<TransferEntity[]> {
+  async list(
+    branchId: string,
+    options: { page?: number; pageSize?: number } = {},
+  ): Promise<TransferEntity[]> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
+    const page = Math.max(1, options.page ?? 1);
+    const pageSize = Math.min(200, Math.max(1, options.pageSize ?? 50));
+    const offset = (page - 1) * pageSize;
 
     const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
@@ -77,8 +83,9 @@ export class TransfersRepository {
       FROM ${schema}.financial_transfers
       WHERE branch_id = ${branchLiteral}
         AND deleted_at IS NULL
-      ORDER BY created_at DESC
-      LIMIT 100
+      ORDER BY created_at DESC, id DESC
+      LIMIT ${pageSize}
+      OFFSET ${offset}
     `),
     );
 

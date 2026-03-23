@@ -14,7 +14,11 @@ import { CreateEntryDto, EntryType } from './dto/create-entry.dto';
 import { UpdateEntryDto } from './dto/update-entry.dto';
 import { EntryCalculator } from './domain/entry.calculator';
 import { EntryRules } from './domain/entry.rules';
-import { EntriesRepository } from './entries.repository';
+import {
+  EntriesListFilters,
+  EntriesListOptions,
+  EntriesRepository,
+} from './entries.repository';
 
 @Injectable()
 export class EntriesService {
@@ -93,8 +97,12 @@ export class EntriesService {
     }
   }
 
-  async list(branchId: string) {
-    return this.entriesRepository.list(branchId);
+  async list(
+    branchId: string,
+    filters: EntriesListFilters,
+    options: EntriesListOptions,
+  ) {
+    return this.entriesRepository.list(branchId, filters, options);
   }
 
   async getById(entryId: string, branchId: string) {
