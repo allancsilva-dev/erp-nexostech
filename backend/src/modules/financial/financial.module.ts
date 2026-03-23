@@ -15,6 +15,7 @@ import { ApprovalsModule } from './approvals/approvals.module';
 import { ApprovalRulesModule } from './approval-rules/approval-rules.module';
 import { JobsModule } from './jobs/jobs.module';
 import { ReconciliationModule } from './reconciliation/reconciliation.module';
+import { AttachmentsModule } from './attachments/attachments.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ReconciliationModule } from './reconciliation/reconciliation.module';
     ApprovalsModule,
     ApprovalRulesModule,
     ReconciliationModule,
+    AttachmentsModule,
     JobsModule,
   ],
   exports: [
@@ -51,6 +53,7 @@ import { ReconciliationModule } from './reconciliation/reconciliation.module';
     ApprovalsModule,
     ApprovalRulesModule,
     ReconciliationModule,
+    AttachmentsModule,
   ],
 })
 export class FinancialModule {}

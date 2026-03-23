@@ -25,6 +25,7 @@ import { UsersController } from './controllers/users.controller';
 import { MetricsController } from './controllers/metrics.controller';
 import { TenantsController } from './controllers/tenants.controller';
 import { AuthController } from './controllers/auth.controller';
+import { AttachmentsController } from './controllers/attachments.controller';
 import { FinancialModule } from '../../modules/financial/financial.module';
 import { RbacModule } from '../../modules/rbac/rbac.module';
 import { TenantsModule } from '../../modules/tenants/tenants.module';
@@ -70,6 +71,7 @@ import { MetricsService } from '../../infrastructure/observability/metrics.servi
     MetricsController,
     TenantsController,
     AuthController,
+    AttachmentsController,
   ],
   providers: [BranchGuard, RbacGuard, FeatureFlagGuard, MetricsService],
 })

@@ -12,7 +12,6 @@ import { RequestIdMiddleware } from './common/middlewares/request-id.middleware'
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 import { V1Module } from './api/v1/v1.module';
-import { AttachmentsModule } from './modules/financial/attachments/attachments.module';
 
 @Module({
   imports: [
@@ -22,7 +21,6 @@ import { AttachmentsModule } from './modules/financial/attachments/attachments.m
     }),
     InfrastructureModule,
     V1Module,
-    AttachmentsModule,
   ],
   providers: [
     AuditLogListener,

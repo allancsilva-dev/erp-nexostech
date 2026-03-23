@@ -15,9 +15,9 @@ import { BranchGuard } from '../../../common/guards/branch.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
 import type { AuthUser } from '../../../common/types/auth-user.type';
-import { PresignDto } from './dto/presign.dto';
-import { RegisterAttachmentDto } from './dto/register-attachment.dto';
-import { AttachmentsService } from './attachments.service';
+import { AttachmentsService } from '../../../modules/financial/attachments/attachments.service';
+import { PresignDto } from '../../../modules/financial/attachments/dto/presign.dto';
+import { RegisterAttachmentDto } from '../../../modules/financial/attachments/dto/register-attachment.dto';
 
 @Controller('attachments')
 @UseGuards(JwtGuard, BranchGuard, RbacGuard)
