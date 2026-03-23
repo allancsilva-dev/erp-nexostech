@@ -1,4 +1,5 @@
 export interface ReportFilters {
+  [key: string]: unknown;
   startDate: string;
   endDate: string;
 }
@@ -61,3 +62,4 @@ export interface ReportExportResponse {
   filename: string;
   content: string;
 }
+
