@@ -9,6 +9,7 @@ import { PaymentModal } from '@/features/entries/components/payment-modal';
 import { CancelModal } from '@/features/entries/components/cancel-modal';
 import { RefundModal } from '@/features/entries/components/refund-modal';
 import { Button } from '@/components/ui/button';
+import { BoletoActions } from '@/features/boletos/components/boleto-actions';
 
 export function EntryDetail({ id }: { id: string }) {
   const { data, isLoading } = useEntry(id);
@@ -55,6 +56,17 @@ export function EntryDetail({ id }: { id: string }) {
             <LockPeriodGuard date={entry.paidDate}>
               <RefundModal entryId={entry.id} />
             </LockPeriodGuard>
+          </PermissionGate>
+        ) : null}
+        {entry.paymentMethod === 'BOLETO' ? (
+          <PermissionGate permission="financial.entries.create">
+            <BoletoActions
+              entryId={entry.id}
+              paymentMethod={entry.paymentMethod}
+              hasGenerated={entry.hasBoleto ?? false}
+              amount={entry.amount}
+              customerName={entry.contactName}
+            />
           </PermissionGate>
         ) : null}
       </div>
