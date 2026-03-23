@@ -1,12 +1,12 @@
 import { PageHeader } from '@/components/layout/page-header';
-import { RolesManager } from '@/features/settings/components/roles-manager';
+import { ApprovalRulesManager } from '@/features/settings/components/approval-rules-manager';
 
 export default function RegrasAprovacaoPage() {
   return (
     <div>
       <PageHeader title="Regras de aprovacao" subtitle="Configurar fluxo de aprovacao" />
       <div className="surface-card p-5">
-        <RolesManager />
+        <ApprovalRulesManager />
       </div>
     </div>
   );
