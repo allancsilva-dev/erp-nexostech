@@ -1,43 +1,63 @@
-export type ReportType = 'DRE' | 'CASHFLOW' | 'AGING';
-
-export interface DreRow {
-  categoryId: string;
-  category: string;
-  type: 'RECEIVABLE' | 'PAYABLE';
-  amount: string;
-  percentage: number;
+export interface ReportFilters {
+  startDate: string;
+  endDate: string;
 }
 
-export interface DreSummary {
-  totalRevenue: string;
-  totalExpense: string;
+export interface DreReport {
+  revenueTotal: string;
+  expenseTotal: string;
   netResult: string;
-  rows: DreRow[];
 }
 
 export interface CashflowRow {
   date: string;
-  incoming: string;
-  outgoing: string;
-  balance: string;
+  inflow: string;
+  outflow: string;
 }
 
-export interface AgingBucket {
-  label: string;
-  receivable: string;
-  payable: string;
+export interface CashflowReport {
+  startBalance: string;
+  rows: CashflowRow[];
+  accumulated: string[];
+}
+
+export interface BalanceSheetRow {
+  categoryName: string;
+  inflow: string;
+  outflow: string;
+  net: string;
+}
+
+export interface BalanceSheetReport {
+  byCategory: BalanceSheetRow[];
+  totals: {
+    inflow: string;
+    outflow: string;
+    net: string;
+  };
+}
+
+export interface AgingRange {
+  range: string;
+  total: string;
   count: number;
 }
 
 export interface AgingReport {
-  buckets: AgingBucket[];
-  totalReceivable: string;
-  totalPayable: string;
+  ranges: AgingRange[];
 }
 
-export interface ReportFilters {
-  startDate: string;
-  endDate: string;
-  categoryId?: string;
-  type?: 'RECEIVABLE' | 'PAYABLE';
+export type ExportReportName = 'dre' | 'cashflow' | 'balance-sheet' | 'aging';
+
+export type ExportFormat = 'csv' | 'pdf';
+
+export interface ExportReportPayload extends ReportFilters {
+  report: ExportReportName;
+  format: ExportFormat;
+}
+
+export interface ReportExportResponse {
+  format: ExportFormat;
+  filename: string;
+  content: string;
 }
