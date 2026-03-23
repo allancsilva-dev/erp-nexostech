@@ -48,8 +48,10 @@ class ApiClient {
 
     const branchId = getCookieValue('branch_id');
 
+    const isFormDataBody = typeof FormData !== 'undefined' && options?.body instanceof FormData;
+
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      ...(isFormDataBody ? {} : { 'Content-Type': 'application/json' }),
       ...(branchId && !isTenantLevelEndpoint(endpoint) ? { 'X-Branch-Id': branchId } : {}),
       ...(options?.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}),
     };
@@ -128,10 +130,19 @@ class ApiClient {
     });
   }
 
-  public put<T>(endpoint: string, body: unknown): Promise<ApiResponse<T>> {
+  public postForm<T>(endpoint: string, body: FormData, idempotencyKey?: string): Promise<ApiResponse<T>> {
+    return this.request<ApiResponse<T>>(endpoint, {
+      method: 'POST',
+      body,
+      idempotencyKey,
+    });
+  }
+
+  public put<T>(endpoint: string, body: unknown, idempotencyKey?: string): Promise<ApiResponse<T>> {
     return this.request<ApiResponse<T>>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(body),
+      idempotencyKey,
     });
   }
 
