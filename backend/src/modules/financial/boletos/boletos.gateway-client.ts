@@ -18,6 +18,8 @@ type GatewayResponse = {
 
 @Injectable()
 export class BoletosGatewayClient {
+  private readonly gatewayUrl: string;
+  private readonly gatewayToken: string | null;
   private readonly generateBreaker: CircuitBreaker<
     [GeneratePayload],
     GatewayResponse
@@ -28,6 +30,11 @@ export class BoletosGatewayClient {
   >;
 
   constructor(private readonly configService: ConfigService) {
+    this.gatewayUrl =
+      this.configService.get<string>('BOLETOS_GATEWAY_URL') ?? '';
+    this.gatewayToken =
+      this.configService.get<string>('BOLETOS_GATEWAY_TOKEN') ?? null;
+
     const options = {
       timeout: 10_000,
       errorThresholdPercentage: 50,
@@ -35,11 +42,11 @@ export class BoletosGatewayClient {
     };
 
     this.generateBreaker = new CircuitBreaker((payload: GeneratePayload) => {
-      return withRetry(() => Promise.resolve(this.generateOnGateway(payload)));
+      return withRetry(() => this.generateOnGateway(payload));
     }, options);
 
     this.cancelBreaker = new CircuitBreaker((boletoId: string) => {
-      return withRetry(() => Promise.resolve(this.cancelOnGateway(boletoId)));
+      return withRetry(() => this.cancelOnGateway(boletoId));
     }, options);
 
     this.generateBreaker.fallback(() => {
@@ -65,20 +72,112 @@ export class BoletosGatewayClient {
     return this.cancelBreaker.fire(boletoId);
   }
 
-  private generateOnGateway(payload: GeneratePayload): GatewayResponse {
-    const gatewayUrl =
-      this.configService.get<string>('BOLETOS_GATEWAY_URL') ??
-      'https://gateway.local';
-    void gatewayUrl;
+  private toNullableText(value: unknown): string | null {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    return null;
+  }
+
+  private buildHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (this.gatewayToken) {
+      headers.Authorization = `Bearer ${this.gatewayToken}`;
+    }
+
+    return headers;
+  }
+
+  private getBaseUrl(): string {
+    const baseUrl = this.gatewayUrl.trim();
+    if (!baseUrl) {
+      throw new BusinessException(
+        'GATEWAY_NOT_CONFIGURED',
+        'Servico de boletos nao configurado.',
+      );
+    }
+
+    return baseUrl.replace(/\/+$/, '');
+  }
+
+  private async readJsonRecord(
+    response: Response,
+  ): Promise<Record<string, unknown>> {
+    try {
+      const parsed: unknown = await response.json();
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+      return {};
+    } catch {
+      return {};
+    }
+  }
+
+  private async parseGatewayError(response: Response): Promise<never> {
+    const fallback = `Gateway de boletos retornou HTTP ${response.status}`;
+    const body = await this.readJsonRecord(response);
+
+    const message =
+      this.toNullableText(body?.message) ??
+      this.toNullableText(body?.error) ??
+      fallback;
+
+    throw new BusinessException('GATEWAY_ERROR', message);
+  }
+
+  private async generateOnGateway(
+    payload: GeneratePayload,
+  ): Promise<GatewayResponse> {
+    const response = await fetch(`${this.getBaseUrl()}/boletos`, {
+      method: 'POST',
+      headers: this.buildHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      await this.parseGatewayError(response);
+    }
+
+    const body = await this.readJsonRecord(response);
+
+    const boletoId = this.toNullableText(body.boletoId ?? body.id);
+    const status = this.toNullableText(body.status) ?? 'PENDING';
+    const pdfUrl = this.toNullableText(body.pdfUrl ?? body.pdf_url) ?? '';
+
+    if (!boletoId || !pdfUrl) {
+      throw new BusinessException(
+        'GATEWAY_INVALID_RESPONSE',
+        'Gateway de boletos retornou payload invalido.',
+      );
+    }
+
     return {
-      boletoId: `bol_${payload.entryId}`,
-      status: 'PENDING',
-      pdfUrl: `https://r2.local/${payload.entryId}.pdf`,
+      boletoId,
+      status,
+      pdfUrl,
     };
   }
 
-  private cancelOnGateway(boletoId: string): { success: boolean } {
-    void boletoId;
+  private async cancelOnGateway(
+    boletoId: string,
+  ): Promise<{ success: boolean }> {
+    const response = await fetch(
+      `${this.getBaseUrl()}/boletos/${encodeURIComponent(boletoId)}`,
+      {
+        method: 'DELETE',
+        headers: this.buildHeaders(),
+      },
+    );
+
+    if (!response.ok) {
+      await this.parseGatewayError(response);
+    }
+
     return { success: true };
   }
 }
