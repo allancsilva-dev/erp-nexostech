@@ -28,6 +28,7 @@ export interface Entry {
   contactName: string | null;
   bankAccountId: string | null;
   paymentMethod: PaymentMethod | null;
+  hasBoleto?: boolean;
   installmentNumber: number | null;
   installmentTotal: number | null;
   installmentLabel: string | null;
