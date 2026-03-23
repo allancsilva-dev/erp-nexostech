@@ -54,7 +54,7 @@ export default function BoletosPage() {
           </label>
           <label className="text-xs font-semibold uppercase tracking-wide">
             Status
-            <select className="mt-1 h-10 w-full rounded-md border px-3 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}>
+            <select className="mt-1 h-10 w-full rounded-md border px-3 text-sm" value={status} onChange={(event) => setStatus(event.target.value as 'PENDENTE' | 'PAGO' | 'CANCELADO' | 'VENCIDO' | '')}>
               <option value="">Todos</option>
               <option value="PENDENTE">Pendente</option>
               <option value="PAGO">Pago</option>
