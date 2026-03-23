@@ -7,13 +7,18 @@ import { TableSkeleton } from '@/components/shared/loading-skeleton';
 import { PermissionGate } from '@/components/shared/permission-gate';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ApprovalHistory } from '@/features/approvals/components/approval-history';
 import { useApprovals } from '@/features/approvals/hooks/use-approvals';
 
-export function ApprovalList() {
-  const { pending, approve, reject } = useApprovals();
-  const [reasonById, setReasonById] = useState<Record<string, string>>({});
+type ApprovalTab = 'pending' | 'history';
 
-  if (pending.isLoading) {
+export function ApprovalList() {
+  const { pending, history, approve, reject, batchApprove } = useApprovals();
+  const [tab, setTab] = useState<ApprovalTab>('pending');
+  const [reasonById, setReasonById] = useState<Record<string, string>>({});
+  const [selectedEntryIds, setSelectedEntryIds] = useState<string[]>([]);
+
+  if (pending.isLoading || history.isLoading) {
     return <TableSkeleton rows={8} cols={4} />;
   }
 
@@ -21,68 +26,152 @@ export function ApprovalList() {
     return <ErrorBanner message={pending.error.message} onRetry={() => pending.refetch()} />;
   }
 
-  const items = pending.data?.data ?? [];
+  if (history.isError) {
+    return <ErrorBanner message={history.error.message} onRetry={() => history.refetch()} />;
+  }
 
-  if (items.length === 0) {
+  const items = pending.data?.data ?? [];
+  const historyItems = history.data?.data ?? [];
+  const selectedCount = selectedEntryIds.length;
+
+  const allSelected = items.length > 0 && selectedEntryIds.length === items.length;
+
+  function toggleSelection(entryId: string): void {
+    setSelectedEntryIds((current) =>
+      current.includes(entryId)
+        ? current.filter((id) => id !== entryId)
+        : [...current, entryId],
+    );
+  }
+
+  function toggleAll(): void {
+    if (allSelected) {
+      setSelectedEntryIds([]);
+      return;
+    }
+
+    setSelectedEntryIds(items.map((item) => item.entryId));
+  }
+
+  async function handleBatchApprove(): Promise<void> {
+    if (selectedEntryIds.length === 0) {
+      return;
+    }
+
+    await batchApprove.mutateAsync(selectedEntryIds);
+    setSelectedEntryIds([]);
+  }
+
+  if (tab === 'pending' && items.length === 0) {
     return (
-      <EmptyState
-        title="Nenhuma aprovacao pendente"
-        description="Assim que houver lancamentos aguardando aprovacao, eles aparecem aqui."
-      />
+      <div className="space-y-3">
+        <div className="flex gap-2">
+          <Button type="button" size="sm" variant={tab === 'pending' ? 'primary' : 'outline'} onClick={() => setTab('pending')}>
+            Pendentes
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => setTab('history')}>
+            Historico
+          </Button>
+        </div>
+        <EmptyState
+          title="Nenhuma aprovacao pendente"
+          description="Assim que houver lancamentos aguardando aprovacao, eles aparecem aqui."
+        />
+      </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border bg-white p-3 dark:bg-slate-800">
-      <table className="w-full min-w-[760px] border-collapse text-sm">
-        <thead>
-          <tr className="border-b bg-slate-50 text-left dark:bg-slate-900/60">
-            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Documento</th>
-            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Motivo rejeicao</th>
-            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Acoes</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr key={item.id} className="border-b hover:bg-blue-50/50 dark:hover:bg-blue-900/20">
-              <td className="px-3 py-2 font-mono">{item.documentNumber}</td>
-              <td className="px-3 py-2">
-                <Input
-                  value={reasonById[item.id] ?? ''}
-                  onChange={(event) =>
-                    setReasonById((previous) => ({ ...previous, [item.id]: event.target.value }))
-                  }
-                  placeholder="Obrigatorio para rejeitar"
-                />
-              </td>
-              <td className="px-3 py-2">
-                <PermissionGate
-                  permission="financial.entries.approve"
-                  fallback={<span className="text-xs text-slate-500">Sem permissao para aprovar</span>}
-                >
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      disabled={approve.isPending || reject.isPending}
-                      onClick={() => approve.mutate(item.id)}
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <Button type="button" size="sm" variant={tab === 'pending' ? 'primary' : 'outline'} onClick={() => setTab('pending')}>
+          Pendentes
+        </Button>
+        <Button type="button" size="sm" variant={tab === 'history' ? 'primary' : 'outline'} onClick={() => setTab('history')}>
+          Historico
+        </Button>
+      </div>
+
+      {tab === 'history' ? (
+        <ApprovalHistory items={historyItems} />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border bg-white p-3 dark:bg-slate-800">
+          <table className="w-full min-w-[900px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b bg-slate-50 text-left dark:bg-slate-900/60">
+                <th className="px-3 py-2">
+                  <input type="checkbox" checked={allSelected} onChange={toggleAll} />
+                </th>
+                <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Documento</th>
+                <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Valor</th>
+                <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Contato</th>
+                <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Motivo rejeicao</th>
+                <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Acoes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.entryId} className="border-b hover:bg-blue-50/50 dark:hover:bg-blue-900/20">
+                  <td className="px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedEntryIds.includes(item.entryId)}
+                      onChange={() => toggleSelection(item.entryId)}
+                    />
+                  </td>
+                  <td className="px-3 py-2 font-mono">{item.documentNumber}</td>
+                  <td className="px-3 py-2">R$ {item.amount}</td>
+                  <td className="px-3 py-2">{item.contactName ?? '-'}</td>
+                  <td className="px-3 py-2">
+                    <Input
+                      value={reasonById[item.entryId] ?? ''}
+                      onChange={(event) =>
+                        setReasonById((previous) => ({ ...previous, [item.entryId]: event.target.value }))
+                      }
+                      placeholder="Obrigatorio para rejeitar"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <PermissionGate
+                      permission="financial.entries.approve"
+                      fallback={<span className="text-xs text-slate-500">Sem permissao para aprovar</span>}
                     >
-                      Aprovar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      disabled={(reasonById[item.id] ?? '').trim().length < 3 || approve.isPending || reject.isPending}
-                      onClick={() => reject.mutate({ entryId: item.id, reason: reasonById[item.id] })}
-                    >
-                      Rejeitar
-                    </Button>
-                  </div>
-                </PermissionGate>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          disabled={approve.isPending || reject.isPending || batchApprove.isPending}
+                          onClick={() => approve.mutate(item.entryId)}
+                        >
+                          Aprovar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={(reasonById[item.entryId] ?? '').trim().length < 3 || approve.isPending || reject.isPending || batchApprove.isPending}
+                          onClick={() => reject.mutate({ entryId: item.entryId, reason: reasonById[item.entryId] })}
+                        >
+                          Rejeitar
+                        </Button>
+                      </div>
+                    </PermissionGate>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === 'pending' && selectedCount > 0 ? (
+        <PermissionGate permission="financial.entries.approve">
+          <div className="sticky bottom-4 z-10 flex items-center justify-between rounded-xl border bg-white p-3 shadow-md dark:bg-slate-800">
+            <span className="text-sm font-medium">{selectedCount} selecionados</span>
+            <Button type="button" onClick={() => void handleBatchApprove()} disabled={batchApprove.isPending}>
+              {batchApprove.isPending ? 'Processando...' : 'Aprovar todos'}
+            </Button>
+          </div>
+        </PermissionGate>
+      ) : null}
     </div>
   );
 }
