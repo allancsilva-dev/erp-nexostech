@@ -114,8 +114,31 @@ export class TransfersService {
       );
     }
 
-    const created = await this.txHelper.run(async () => {
-      return this.transfersRepository.create(branchId, dto, user.sub);
+    const created = await this.txHelper.run(async (tx) => {
+      const currentBalance =
+        await this.transfersRepository.getAccountBalanceForUpdate(
+          dto.fromAccountId,
+          branchId,
+          tx,
+        );
+
+      const available = new Decimal(currentBalance);
+      const requested = new Decimal(dto.amount);
+
+      if (available.lt(requested)) {
+        throw new BusinessException(
+          'INSUFFICIENT_BALANCE',
+          `Saldo insuficiente na conta de origem. Saldo disponivel: R$ ${available.toFixed(2)}. Valor solicitado: R$ ${requested.toFixed(2)}.`,
+          {
+            accountId: dto.fromAccountId,
+            available: available.toFixed(2),
+            requested: requested.toFixed(2),
+          },
+          422,
+        );
+      }
+
+      return this.transfersRepository.create(branchId, dto, user.sub, tx);
     });
 
     this.eventBus.emit(

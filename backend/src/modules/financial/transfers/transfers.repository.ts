@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import {
   quoteIdent,
@@ -9,6 +10,10 @@ import { CreateTransferDto } from './dto/create-transfer.dto';
 import { TransferEntity } from './dto/transfer.response';
 
 type QueryRow = Record<string, unknown>;
+
+type SqlExecutor = {
+  execute(query: any): Promise<{ rows: unknown[] }>;
+};
 
 function getRows(result: unknown): QueryRow[] {
   if (!result || typeof result !== 'object' || !('rows' in result)) {
@@ -104,7 +109,9 @@ export class TransfersRepository {
     branchId: string,
     dto: CreateTransferDto,
     userId: string,
+    tx?: SqlExecutor,
   ): Promise<TransferEntity> {
+    const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
     const fromAccountLiteral = quoteLiteral(dto.fromAccountId);
@@ -114,7 +121,7 @@ export class TransfersRepository {
     const descriptionLiteral = quoteLiteral(dto.description ?? null);
     const userLiteral = quoteLiteral(userId);
 
-    const result: unknown = await this.drizzleService.getClient().execute(
+    const result: unknown = await executor.execute(
       sql.raw(`
       INSERT INTO ${schema}.financial_transfers (
         branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by
@@ -131,6 +138,77 @@ export class TransfersRepository {
     }
 
     return this.mapRow(row);
+  }
+
+  async getAccountBalanceForUpdate(
+    accountId: string,
+    branchId: string,
+    tx: SqlExecutor,
+  ): Promise<string> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const accountLiteral = quoteLiteral(accountId);
+    const branchLiteral = quoteLiteral(branchId);
+
+    const result: unknown = await tx.execute(
+      sql.raw(`
+      SELECT
+        (
+          COALESCE(ba.initial_balance, 0)
+          + COALESCE((
+              SELECT SUM(fep.amount)
+              FROM ${schema}.financial_entry_payments fep
+              JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
+              WHERE fe.bank_account_id = ${accountLiteral}
+                AND fe.branch_id = ${branchLiteral}
+                AND fe.type = 'RECEIVABLE'
+                AND fe.status = 'PAID'
+                AND fe.deleted_at IS NULL
+            ), 0)
+          - COALESCE((
+              SELECT SUM(fep.amount)
+              FROM ${schema}.financial_entry_payments fep
+              JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
+              WHERE fe.bank_account_id = ${accountLiteral}
+                AND fe.branch_id = ${branchLiteral}
+                AND fe.type = 'PAYABLE'
+                AND fe.status = 'PAID'
+                AND fe.deleted_at IS NULL
+            ), 0)
+          + COALESCE((
+              SELECT SUM(amount)
+              FROM ${schema}.financial_transfers
+              WHERE to_account_id = ${accountLiteral}
+                AND branch_id = ${branchLiteral}
+                AND deleted_at IS NULL
+            ), 0)
+          - COALESCE((
+              SELECT SUM(amount)
+              FROM ${schema}.financial_transfers
+              WHERE from_account_id = ${accountLiteral}
+                AND branch_id = ${branchLiteral}
+                AND deleted_at IS NULL
+            ), 0)
+        )::text AS balance
+      FROM ${schema}.bank_accounts ba
+      WHERE ba.id = ${accountLiteral}
+        AND ba.branch_id = ${branchLiteral}
+        AND ba.deleted_at IS NULL
+      LIMIT 1
+      FOR UPDATE OF ba
+    `),
+    );
+
+    const rows = getRows(result);
+    if (!rows[0]) {
+      throw new BusinessException(
+        'NOT_FOUND',
+        'Conta bancaria de origem nao encontrada',
+        { accountId, branchId },
+        404,
+      );
+    }
+
+    return toText(rows[0].balance, '0.00');
   }
 
   async softDelete(id: string, branchId: string): Promise<void> {
