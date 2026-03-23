@@ -47,6 +47,13 @@ async function ensureControlTable(pool: Pool): Promise<void> {
   await pool.query(
     'CREATE INDEX IF NOT EXISTS idx_tenant_migrations_status ON public.tenant_migrations(status)',
   );
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS public.tenant_storage_usage (
+      tenant_id UUID PRIMARY KEY,
+      used_bytes BIGINT NOT NULL DEFAULT 0
+    )
+  `);
 }
 
 async function listTenants(
