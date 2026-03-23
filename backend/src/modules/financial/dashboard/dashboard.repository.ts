@@ -17,6 +17,57 @@ export type DashboardSummary = {
 export class DashboardRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  private buildBranchBalanceSQL(schema: string, branchLiteral: string): string {
+    return `
+      COALESCE((
+        SELECT SUM(ba.initial_balance)
+        FROM ${schema}.bank_accounts ba
+        WHERE ba.branch_id = ${branchLiteral}
+          AND ba.deleted_at IS NULL
+      ), 0)
+      + COALESCE((
+          SELECT SUM(fep.amount)
+          FROM ${schema}.financial_entry_payments fep
+          JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
+          WHERE fe.branch_id = ${branchLiteral}
+            AND fe.type = 'RECEIVABLE'
+            AND fe.status = 'PAID'
+            AND fe.deleted_at IS NULL
+        ), 0)
+      - COALESCE((
+          SELECT SUM(fep.amount)
+          FROM ${schema}.financial_entry_payments fep
+          JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
+          WHERE fe.branch_id = ${branchLiteral}
+            AND fe.type = 'PAYABLE'
+            AND fe.status = 'PAID'
+            AND fe.deleted_at IS NULL
+        ), 0)
+      + COALESCE((
+          SELECT SUM(t.amount)
+          FROM ${schema}.financial_transfers t
+          WHERE t.branch_id = ${branchLiteral}
+            AND t.deleted_at IS NULL
+            AND t.to_account_id IN (
+              SELECT ba.id FROM ${schema}.bank_accounts ba
+              WHERE ba.branch_id = ${branchLiteral}
+                AND ba.deleted_at IS NULL
+            )
+        ), 0)
+      - COALESCE((
+          SELECT SUM(t.amount)
+          FROM ${schema}.financial_transfers t
+          WHERE t.branch_id = ${branchLiteral}
+            AND t.deleted_at IS NULL
+            AND t.from_account_id IN (
+              SELECT ba.id FROM ${schema}.bank_accounts ba
+              WHERE ba.branch_id = ${branchLiteral}
+                AND ba.deleted_at IS NULL
+            )
+        ), 0)
+    `;
+  }
+
   private toNullableText(value: unknown): string | null {
     if (typeof value === 'string') return value;
     if (typeof value === 'number' || typeof value === 'bigint') {
@@ -36,8 +87,7 @@ export class DashboardRepository {
     const result = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
-        COALESCE((SELECT SUM(initial_balance) FROM ${schema}.bank_accounts
-                  WHERE branch_id = ${branchLiteral} AND deleted_at IS NULL), 0)::text AS current_balance,
+        (${this.buildBranchBalanceSQL(schema, branchLiteral)})::text AS current_balance,
         COALESCE((SELECT SUM(amount) FROM ${schema}.financial_entries
                   WHERE branch_id = ${branchLiteral}
                     AND type = 'RECEIVABLE'
