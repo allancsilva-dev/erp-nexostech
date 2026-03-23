@@ -563,4 +563,23 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
        ADD COLUMN IF NOT EXISTS email VARCHAR(255)`,
     ],
   },
+  {
+    name: '015_create_attachments_table',
+    run: (schema) => [
+      `CREATE TABLE IF NOT EXISTS ${schema}.attachments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        entry_id UUID NOT NULL REFERENCES ${schema}.financial_entries(id) ON DELETE CASCADE,
+        filename VARCHAR(255) NOT NULL,
+        storage_key TEXT NOT NULL,
+        mime_type VARCHAR(120) NOT NULL,
+        size_bytes BIGINT NOT NULL,
+        uploaded_by VARCHAR(100) NOT NULL,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_attachments_entry_active ON ${schema}.attachments(entry_id, deleted_at)`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS uq_attachments_storage_key ON ${schema}.attachments(storage_key)`,
+    ],
+  },
 ];
