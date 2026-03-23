@@ -11,7 +11,7 @@ export default function BoletosPage() {
   const enabled = useFeatureFlag('boletos_enabled');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<'PENDENTE' | 'PAGO' | 'CANCELADO' | 'VENCIDO' | ''>('');
   const [contactId, setContactId] = useState('');
 
   const filters = useMemo(
