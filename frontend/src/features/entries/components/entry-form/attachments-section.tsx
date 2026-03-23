@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import { FileUpload } from '@/components/shared/file-upload';
 
-export function AttachmentsSection() {
+export function AttachmentsSection({ entryId }: { entryId?: string }) {
   const [attachment, setAttachment] = useState<File | null>(null);
 
   return (
     <div className="space-y-2">
-      <FileUpload onChange={(file) => setAttachment(file)} />
+      <FileUpload entryId={entryId} onChange={(file) => setAttachment(file)} />
       {attachment ? <p className="text-xs text-slate-500">Anexo selecionado: {attachment.name}</p> : null}
     </div>
   );

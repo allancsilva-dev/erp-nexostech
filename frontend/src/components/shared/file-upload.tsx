@@ -1,10 +1,11 @@
 ﻿'use client';
 
 import { useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Upload } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
+import { useBranch } from '@/hooks/use-branch';
 
 const ALLOWED = ['application/pdf', 'image/png', 'image/jpeg'];
 
@@ -12,6 +13,14 @@ interface PresignPayload {
   uploadUrl: string;
   storageKey: string;
 }
+
+type UploadStep =
+  | 'idle'
+  | 'requesting-url'
+  | 'uploading'
+  | 'registering'
+  | 'done'
+  | 'error';
 
 function uploadWithProgress(file: File, uploadUrl: string, onProgress: (value: number) => void): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -52,36 +61,78 @@ async function retryUpload(file: File, uploadUrl: string, onProgress: (value: nu
   }
 }
 
-export function FileUpload({ onChange }: { onChange: (file: File | null, storageKey?: string) => void }) {
+export function FileUpload({
+  entryId,
+  onChange,
+}: {
+  entryId?: string;
+  onChange: (file: File | null, storageKey?: string) => void;
+}) {
+  const queryClient = useQueryClient();
+  const { activeBranchId } = useBranch();
+
   const [fileName, setFileName] = useState<string>('');
   const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<string>('');
-  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [step, setStep] = useState<UploadStep>('idle');
   const currentFile = useRef<File | null>(null);
-  const presignMutation = useMutation({
-    mutationFn: (file: File) =>
-      api.post<PresignPayload>('/attachments/presign', {
-        filename: file.name,
-        mimeType: file.type,
-      }),
-  });
+
+  const isUploading = step === 'requesting-url' || step === 'uploading' || step === 'registering';
 
   async function startUpload(file: File): Promise<void> {
+    if (!entryId) {
+      setError('Nao e possivel anexar sem um lancamento valido.');
+      setStep('error');
+      onChange(null);
+      return;
+    }
+
     setError('');
     setProgress(0);
-    setIsUploading(true);
+    setStep('requesting-url');
 
     try {
-      const presign = await presignMutation.mutateAsync(file);
+      const presign = await api.post<PresignPayload>('/attachments/presign', {
+        filename: file.name,
+        mimeType: file.type,
+        sizeBytes: file.size,
+        entryId,
+      });
+
+      setStep('uploading');
       await retryUpload(file, presign.data.uploadUrl, setProgress);
 
+      setStep('registering');
+      await api.post('/attachments', {
+        entryId,
+        storageKey: presign.data.storageKey,
+        filename: file.name,
+        mimeType: file.type,
+        sizeBytes: file.size,
+      });
+
+      if (activeBranchId) {
+        void queryClient.invalidateQueries({
+          queryKey: ['entries', entryId, 'attachments', activeBranchId],
+        });
+      }
+
       setFileName(file.name);
+      setStep('done');
       onChange(file, presign.data.storageKey);
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : 'Erro no upload');
+      const message = uploadError instanceof Error
+        ? uploadError.message
+        : 'Erro no upload';
+
+      if (step === 'registering') {
+        setError(`Arquivo enviado para storage, mas nao foi registrado no banco: ${message}`);
+      } else {
+        setError(message);
+      }
+
+      setStep('error');
       onChange(null);
-    } finally {
-      setIsUploading(false);
     }
   }
 
@@ -102,12 +153,14 @@ export function FileUpload({ onChange }: { onChange: (file: File | null, storage
               setFileName('');
               setProgress(0);
               setError('');
+              setStep('idle');
               onChange(null);
               return;
             }
             if (!ALLOWED.includes(file.type) || file.size > 10 * 1024 * 1024) {
               setFileName('Arquivo invalido');
               setError('Arquivo invalido. Aceito: PDF/JPG/PNG ate 10MB.');
+              setStep('error');
               onChange(null);
               return;
             }
@@ -118,10 +171,21 @@ export function FileUpload({ onChange }: { onChange: (file: File | null, storage
 
       {isUploading ? (
         <div className="mt-3 space-y-2">
+          {step === 'requesting-url' ? (
+            <p className="text-xs text-slate-500">Preparando upload...</p>
+          ) : null}
+
           <div className="h-2 w-full overflow-hidden rounded bg-slate-200">
             <div className="h-full bg-blue-600 transition-all" style={{ width: `${progress}%` }} />
           </div>
-          <p className="text-xs text-slate-500">Upload em andamento: {progress}%</p>
+
+          {step === 'uploading' ? (
+            <p className="text-xs text-slate-500">Upload em andamento: {progress}%</p>
+          ) : null}
+
+          {step === 'registering' ? (
+            <p className="text-xs text-slate-500">Registrando arquivo...</p>
+          ) : null}
         </div>
       ) : null}
 
@@ -153,6 +217,7 @@ export function FileUpload({ onChange }: { onChange: (file: File | null, storage
               setFileName('');
               setProgress(0);
               setError('');
+              setStep('idle');
               currentFile.current = null;
               onChange(null);
             }}
