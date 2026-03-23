@@ -128,7 +128,7 @@ export function ApprovalRulesManager() {
     null;
 
   const rules = rulesQuery.data?.data ?? [];
-  const roles = rolesQuery.data?.data ?? [];
+  const roles = useMemo(() => rolesQuery.data?.data ?? [], [rolesQuery.data?.data]);
 
   const roleMap = useMemo(() => {
     return new Map(roles.map((role) => [role.id, role.name]));

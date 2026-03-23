@@ -63,11 +63,9 @@ export class EntriesService {
     );
 
     const row = result.rows[0] as { locked_until?: unknown } | undefined;
-    return typeof row?.locked_until === 'string'
-      ? row.locked_until
-      : row?.locked_until
-        ? String(row.locked_until)
-        : null;
+    if (!row?.locked_until) return null;
+    if (typeof row.locked_until === 'string') return row.locked_until;
+    return String(row.locked_until as Date);
   }
 
   private async checkLockPeriod(
