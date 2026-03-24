@@ -45,7 +45,7 @@ type SidebarItem = {
 const ITEMS: SidebarItem[] = [
   {
     section: 'main',
-    label: 'Dashboard',
+    label: 'Painel',
     href: ROUTES.dashboard,
     permission: 'financial.dashboard.view',
     icon: LayoutDashboard,
@@ -80,14 +80,14 @@ const ITEMS: SidebarItem[] = [
   },
   {
     section: 'financeiro',
-    label: 'Conciliacao',
+    label: 'Conciliação',
     href: ROUTES.conciliacao,
     permission: 'financial.reconciliation.execute',
     icon: GitCompare,
   },
   {
     section: 'financeiro',
-    label: 'Transferencias',
+    label: 'Transferências',
     href: ROUTES.transferencias,
     permission: 'financial.entries.create',
     icon: ArrowLeftRight,
@@ -115,14 +115,14 @@ const ITEMS: SidebarItem[] = [
   },
   {
     section: 'relatorios',
-    label: 'Aging',
+    label: 'Vencimentos',
     href: '/financeiro/relatorios/aging',
     permission: 'financial.reports.view',
     icon: Clock4,
   },
   {
     section: 'operacoes',
-    label: 'Aprovacoes',
+    label: 'Aprovações',
     href: ROUTES.aprovacoes,
     permission: 'financial.entries.approve',
     icon: CheckCircle2,
@@ -144,7 +144,7 @@ const ITEMS: SidebarItem[] = [
   },
   {
     section: 'configuracoes',
-    label: 'Regua de cobranca',
+    label: 'Régua de cobrança',
     href: ROUTES.reguaCobranca,
     permission: 'financial.settings.manage',
     icon: Settings,
@@ -159,7 +159,7 @@ const ITEMS: SidebarItem[] = [
   },
   {
     section: 'configuracoes',
-    label: 'Usuarios',
+    label: 'Usuários',
     href: ROUTES.configuracoesUsuarios,
     permission: 'admin.users.manage',
     icon: Users,
@@ -175,9 +175,9 @@ const ITEMS: SidebarItem[] = [
 
 const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = {
   financeiro: 'Financeiro',
-  relatorios: 'Relatorios',
-  operacoes: 'Operacoes',
-  configuracoes: 'Configuracoes',
+  relatorios: 'Relatórios',
+  operacoes: 'Operações',
+  configuracoes: 'Configurações',
 };
 
 const baseItem =

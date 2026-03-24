@@ -56,7 +56,7 @@ export default function ConfiguracoesRolesPage() {
         permissionCodes: [],
       }),
     onSuccess: () => {
-      toast.success('Role criada com sucesso');
+      toast.success('Perfil criado com sucesso');
       setName('');
       setDescription('');
       queryClient.invalidateQueries({ queryKey: ['configuracoes', 'roles'] });
@@ -81,7 +81,7 @@ export default function ConfiguracoesRolesPage() {
   const deleteRole = useMutation({
     mutationFn: (roleId: string) => api.delete(`/roles/${roleId}`),
     onSuccess: () => {
-      toast.success('Role removida');
+      toast.success('Perfil removido');
       queryClient.invalidateQueries({ queryKey: ['configuracoes', 'roles'] });
     },
     onError: (error: Error) => {
@@ -102,13 +102,13 @@ export default function ConfiguracoesRolesPage() {
 
   return (
     <div>
-      <PageHeader title="Roles" subtitle="Papeis e permissoes" />
+      <PageHeader title="Permissões" subtitle="Perfis e permissões" />
 
       <Card className="surface-card mb-4 space-y-3 p-5">
-        <h2 className="text-base font-semibold">Nova role</h2>
+        <h2 className="text-base font-semibold">Novo perfil</h2>
         <div className="grid gap-3 md:grid-cols-3">
           <Input
-            placeholder="Nome da role"
+            placeholder="Nome do perfil"
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
@@ -122,7 +122,7 @@ export default function ConfiguracoesRolesPage() {
             onClick={() => createRole.mutate()}
             disabled={!name || !description || createRole.isPending}
           >
-            {createRole.isPending ? 'Criando...' : 'Criar role'}
+            {createRole.isPending ? 'Criando...' : 'Criar perfil'}
           </Button>
         </div>
       </Card>
@@ -176,9 +176,9 @@ export default function ConfiguracoesRolesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Role</TableHead>
-              <TableHead>Permissoes</TableHead>
-              <TableHead className="w-36">Acoes</TableHead>
+              <TableHead>Perfil</TableHead>
+              <TableHead>Permissões</TableHead>
+              <TableHead className="w-36">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

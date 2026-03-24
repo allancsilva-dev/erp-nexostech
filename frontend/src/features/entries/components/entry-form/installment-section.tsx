@@ -2,6 +2,7 @@
 
 import type { UseFormReturn } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import type { CreateEntryInput } from '@/features/entries/types/entry.schemas';
 
 interface PreviewItem {
@@ -43,8 +44,7 @@ export function InstallmentSection({
           </div>
           <div>
             <label className="mb-1 block text-sm">Frequencia</label>
-            <select
-              className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm"
+            <Select
               value={form.watch('installmentFrequency') || 'MONTHLY'}
               onChange={(event) =>
                 form.setValue('installmentFrequency', event.target.value as 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'YEARLY')
@@ -54,7 +54,7 @@ export function InstallmentSection({
               <option value="BIWEEKLY">Quinzenal</option>
               <option value="MONTHLY">Mensal</option>
               <option value="YEARLY">Anual</option>
-            </select>
+            </Select>
           </div>
         </div>
       ) : null}

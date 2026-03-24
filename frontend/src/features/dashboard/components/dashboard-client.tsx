@@ -37,14 +37,14 @@ export function DashboardClient() {
   }
 
   if (!summary.data?.data) {
-    return <EmptyState title="Sem dados" description="Nao ha dados para o dashboard." />;
+    return <EmptyState title="Sem dados" description="Não há dados para o painel." />;
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Dashboard financeiro"
-        subtitle="Visao consolidada de saldos, vencimentos e fluxo"
+        title="Painel financeiro"
+        subtitle="Visão consolidada de saldos, vencimentos e fluxo"
       />
       <SummaryCards data={summary.data.data} />
       <CashflowChart data={cashflow.data?.data ?? []} />

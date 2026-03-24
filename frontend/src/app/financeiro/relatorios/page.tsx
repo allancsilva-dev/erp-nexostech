@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/layout/page-header';
 export default function RelatoriosPage() {
   return (
     <div>
-      <PageHeader title="Relatorios" subtitle="Relatorios financeiros" />
+      <PageHeader title="Relatórios" subtitle="Relatórios financeiros" />
       <div className="surface-card p-5">
         <div className="grid gap-4 md:grid-cols-3">
           <Link
@@ -28,7 +28,7 @@ export default function RelatoriosPage() {
               Balancete
             </h3>
             <p className="mt-1 text-xs" style={{ color: 'hsl(var(--text-secondary))' }}>
-              Movimentacao por categoria
+              Movimentação por categoria
             </p>
           </Link>
           <Link
@@ -37,10 +37,10 @@ export default function RelatoriosPage() {
             style={{ border: '0.5px solid hsl(var(--border-default))', background: 'hsl(var(--bg-surface))' }}
           >
             <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--text-primary))' }}>
-              Aging
+              Vencimentos
             </h3>
             <p className="mt-1 text-xs" style={{ color: 'hsl(var(--text-secondary))' }}>
-              Analise de vencimentos
+              Análise de vencimentos
             </p>
           </Link>
         </div>

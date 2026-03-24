@@ -144,10 +144,10 @@ export default function ConfiguracoesUsuariosPage() {
 
   return (
     <div>
-      <PageHeader title="Usuarios" subtitle="Gestao de utilizadores e acessos" />
+      <PageHeader title="Usuários" subtitle="Gestão de usuários e acessos" />
 
       <Card className="surface-card mb-4 space-y-4 p-5">
-        <h2 className="text-base font-semibold">Adicionar usuario</h2>
+        <h2 className="text-base font-semibold">Adicionar usuário</h2>
 
         <div className="grid gap-3 md:grid-cols-3">
           <Input
@@ -173,7 +173,7 @@ export default function ConfiguracoesUsuariosPage() {
             disabled={!canSubmit || createUser.isPending}
             onClick={() => createUser.mutate()}
           >
-            {createUser.isPending ? 'Adicionando...' : 'Adicionar usuario'}
+            {createUser.isPending ? 'Adicionando...' : 'Adicionar usuário'}
           </Button>
         </div>
 

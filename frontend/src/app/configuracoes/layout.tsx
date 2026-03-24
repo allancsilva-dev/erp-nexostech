@@ -9,8 +9,8 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 const TABS = [
-  { href: ROUTES.configuracoesUsuarios, label: 'Usuarios' },
-  { href: ROUTES.configuracoesRoles, label: 'Roles e Permissoes' },
+  { href: ROUTES.configuracoesUsuarios, label: 'Usuários' },
+  { href: ROUTES.configuracoesRoles, label: 'Permissões' },
 ] as const;
 
 export default function ConfiguracoesLayout({
@@ -26,12 +26,12 @@ export default function ConfiguracoesLayout({
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Configuracoes"
+          title="Configurações"
           subtitle="Acesso restrito a administradores do tenant"
         />
         <Card>
-          Voce nao possui permissao para acessar a area de configuracoes de
-          usuarios e roles.
+          Você não possui permissão para acessar a área de configurações de
+          usuários e permissões.
         </Card>
       </div>
     );
@@ -40,8 +40,8 @@ export default function ConfiguracoesLayout({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Configuracoes de Acesso"
-        subtitle="Gestao de usuarios, roles e permissoes do tenant"
+        title="Configurações de Acesso"
+        subtitle="Gestão de usuários, perfis e permissões do tenant"
       />
 
       <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900">

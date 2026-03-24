@@ -29,10 +29,10 @@ export default function DashboardPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Dashboard financeiro
+            Painel financeiro
           </h1>
           <p className="mt-0.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Visao consolidada de saldos, vencimentos e fluxo
+            Visão consolidada de saldos, vencimentos e fluxo
           </p>
         </div>
       </div>

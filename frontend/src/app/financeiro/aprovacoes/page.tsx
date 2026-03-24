@@ -13,11 +13,11 @@ export default function AprovacoesPage() {
   if (!enabled) {
     return (
       <div>
-        <PageHeader title="Aprovacoes" subtitle="Lancamentos aguardando aprovacao" />
+        <PageHeader title="Aprovações" subtitle="Lançamentos aguardando aprovação" />
         <div className="surface-card p-5">
           <EmptyState
-            title="Recurso nao disponivel no seu plano"
-            description="Aprovacoes estao disponiveis apenas nos planos Pro e Enterprise."
+            title="Recurso não disponível no seu plano"
+            description="Aprovações estão disponíveis apenas nos planos Pro e Enterprise."
             action={<Link href="/configuracoes">Ver planos</Link>}
           />
         </div>
@@ -27,7 +27,7 @@ export default function AprovacoesPage() {
 
   return (
     <div>
-      <PageHeader title="Aprovacoes" subtitle="Lancamentos aguardando aprovacao" />
+      <PageHeader title="Aprovações" subtitle="Lançamentos aguardando aprovação" />
       <div className="mb-4 surface-card p-5">
         <ApprovalActions />
       </div>

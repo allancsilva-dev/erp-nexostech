@@ -3,9 +3,9 @@
 export default function AdminUsuariosPage() {
   return (
     <div>
-      <PageHeader title="Usuarios" subtitle="Gestao de utilizadores e acessos" />
+      <PageHeader title="Usuários" subtitle="Gestão de usuários e acessos" />
       <div className="surface-card p-5" style={{ color: 'hsl(var(--text-secondary))' }}>
-        Vinculacao de usuarios e roles.
+        Vinculação de usuários e permissões.
       </div>
     </div>
   );

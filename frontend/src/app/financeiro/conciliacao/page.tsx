@@ -6,7 +6,7 @@ import { MatchActions } from '@/features/reconciliation/components/match-actions
 export default function ConciliacaoPage() {
   return (
     <div>
-      <PageHeader title="Conciliacao bancaria" subtitle="Importar extrato e conciliar" />
+      <PageHeader title="Conciliação bancária" subtitle="Importar extrato e conciliar" />
       <div className="mb-4 surface-card p-5">
         <UploadStatement />
       </div>

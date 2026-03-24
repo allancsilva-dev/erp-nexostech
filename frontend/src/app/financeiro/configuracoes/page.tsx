@@ -8,7 +8,7 @@ import { RolesManager } from '@/features/settings/components/roles-manager';
 export default function ConfiguracoesPage() {
   return (
     <div>
-      <PageHeader title="Configuracoes" subtitle="Configuracoes do modulo financeiro" />
+      <PageHeader title="Configurações" subtitle="Configurações do módulo financeiro" />
       <div className="mb-4 surface-card p-5">
         <FinancialSettings />
       </div>

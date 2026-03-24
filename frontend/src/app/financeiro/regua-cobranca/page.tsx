@@ -14,11 +14,11 @@ export default function ReguaCobrancaPage() {
   if (!enabled) {
     return (
       <div>
-        <PageHeader title="Regua de cobranca" subtitle="Envio automatico de e-mails" />
+        <PageHeader title="Régua de cobrança" subtitle="Envio automático de e-mails" />
         <div className="surface-card p-5">
           <EmptyState
-            title="Recurso nao disponivel no seu plano"
-            description="Regua de cobranca esta disponivel apenas nos planos Pro e Enterprise."
+            title="Recurso não disponível no seu plano"
+            description="Régua de cobrança está disponível apenas nos planos Pro e Enterprise."
             action={<Link href="/configuracoes">Ver planos</Link>}
           />
         </div>
@@ -28,7 +28,7 @@ export default function ReguaCobrancaPage() {
 
   return (
     <div>
-      <PageHeader title="Regua de cobranca" subtitle="Envio automatico de e-mails" />
+      <PageHeader title="Régua de cobrança" subtitle="Envio automático de e-mails" />
       <div className="mb-4 surface-card p-5">
         <RulesList />
       </div>

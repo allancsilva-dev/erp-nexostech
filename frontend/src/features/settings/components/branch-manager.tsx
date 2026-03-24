@@ -10,6 +10,7 @@ import { TableSkeleton } from '@/components/shared/loading-skeleton';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { MaskedInput } from '@/components/ui/masked-input';
 import { usePermissions } from '@/hooks/use-permissions';
 import { api } from '@/lib/api-client';
 
@@ -74,10 +75,10 @@ function toPayload(form: BranchForm): Record<string, string> {
     payload.legalName = form.legalName.trim();
   }
   if (form.document.trim()) {
-    payload.document = form.document.trim();
+    payload.document = form.document.replace(/\D/g, '');
   }
   if (form.phone.trim()) {
-    payload.phone = form.phone.trim();
+    payload.phone = form.phone.replace(/\D/g, '');
   }
   if (form.email.trim()) {
     payload.email = form.email.trim();
@@ -89,7 +90,7 @@ function toPayload(form: BranchForm): Record<string, string> {
     payload.addressState = normalizeState(form.addressState);
   }
   if (form.addressZip.trim()) {
-    payload.addressZip = form.addressZip.trim();
+    payload.addressZip = form.addressZip.replace(/\D/g, '');
   }
 
   return payload;
@@ -432,15 +433,17 @@ export function BranchManager() {
               placeholder="Razao social"
               disabled={isMutating}
             />
-            <Input
+            <MaskedInput
+              maskType="cnpj"
               value={form.document}
-              onChange={(event) => setForm((current) => ({ ...current, document: event.target.value }))}
+              onChange={(rawValue) => setForm((current) => ({ ...current, document: rawValue }))}
               placeholder="CNPJ (00.000.000/0000-00)"
               disabled={isMutating}
             />
-            <Input
+            <MaskedInput
+              maskType="phone"
               value={form.phone}
-              onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
+              onChange={(rawValue) => setForm((current) => ({ ...current, phone: rawValue }))}
               placeholder="Telefone"
               disabled={isMutating}
             />
@@ -463,9 +466,10 @@ export function BranchManager() {
                 placeholder="UF"
                 disabled={isMutating}
               />
-              <Input
+              <MaskedInput
+                maskType="cep"
                 value={form.addressZip}
-                onChange={(event) => setForm((current) => ({ ...current, addressZip: event.target.value }))}
+                onChange={(rawValue) => setForm((current) => ({ ...current, addressZip: rawValue }))}
                 placeholder="CEP"
                 disabled={isMutating}
               />

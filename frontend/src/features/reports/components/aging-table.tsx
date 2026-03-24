@@ -80,7 +80,7 @@ export function AgingTable() {
       });
       saveExportFile(file);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao exportar aging.';
+      const message = error instanceof Error ? error.message : 'Falha ao exportar vencimentos.';
       setExportError(message);
     }
   }
@@ -117,7 +117,7 @@ export function AgingTable() {
       {exportError ? <ErrorBanner message={exportError} /> : null}
 
       {!aging.isLoading && !aging.isError && ranges.length === 0 ? (
-        <EmptyState title="Sem dados de aging" description="Nao ha titulos elegiveis para analise no periodo selecionado." />
+        <EmptyState title="Sem dados de vencimentos" description="Não há títulos elegíveis para análise no período selecionado." />
       ) : null}
 
       {!aging.isLoading && !aging.isError && ranges.length > 0 ? (
