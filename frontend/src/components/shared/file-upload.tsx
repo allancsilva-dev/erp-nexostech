@@ -137,8 +137,14 @@ export function FileUpload({
   }
 
   return (
-    <div className="rounded-xl border border-dashed p-4">
-      <label className="flex cursor-pointer flex-col items-center gap-2 text-sm text-slate-600">
+    <div
+      className="cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors"
+      style={{
+        borderColor: 'var(--border-default)',
+        background: 'var(--bg-surface)',
+      }}
+    >
+      <label className="flex cursor-pointer flex-col items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
         <Upload className="h-5 w-5" />
         <span>Arraste ou clique para anexar (PDF, JPG, PNG ate 10MB)</span>
         <input
@@ -172,25 +178,25 @@ export function FileUpload({
       {isUploading ? (
         <div className="mt-3 space-y-2">
           {step === 'requesting-url' ? (
-            <p className="text-xs text-slate-500">Preparando upload...</p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Preparando upload...</p>
           ) : null}
 
-          <div className="h-2 w-full overflow-hidden rounded bg-slate-200">
-            <div className="h-full bg-blue-600 transition-all" style={{ width: `${progress}%` }} />
+          <div className="h-2 w-full overflow-hidden rounded" style={{ background: 'var(--bg-surface-raised)' }}>
+            <div className="h-full transition-all" style={{ width: `${progress}%`, background: 'var(--accent)' }} />
           </div>
 
           {step === 'uploading' ? (
-            <p className="text-xs text-slate-500">Upload em andamento: {progress}%</p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Upload em andamento: {progress}%</p>
           ) : null}
 
           {step === 'registering' ? (
-            <p className="text-xs text-slate-500">Registrando arquivo...</p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Registrando arquivo...</p>
           ) : null}
         </div>
       ) : null}
 
-      {fileName ? <p className="mt-2 text-xs text-slate-500">{fileName}</p> : null}
-      {error ? <p className="mt-2 text-xs text-red-600">{error}</p> : null}
+      {fileName ? <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>{fileName}</p> : null}
+      {error ? <p className="mt-2 text-xs" style={{ color: 'var(--danger)' }}>{error}</p> : null}
 
       <div className="mt-2 flex gap-2">
         {error && currentFile.current ? (

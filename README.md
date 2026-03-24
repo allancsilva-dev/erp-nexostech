@@ -8,7 +8,7 @@ Monorepo do modulo financeiro do Nexos ERP, com backend em NestJS e frontend em 
 erp-nexostech/
   backend/        API REST (NestJS)
   frontend/       App web (Next.js 14)
-  prompt-backed.md
+API local (dev): `http://localhost:3000/api/v1`
   prompt-frontend.md
 ```
 
@@ -17,8 +17,21 @@ erp-nexostech/
 - Backend: NestJS, TypeScript, Drizzle, Redis/Keyv, BullMQ, JOSE, Decimal.js, opossum
 - Frontend: Next.js 14, React 18, TypeScript strict, Tailwind, TanStack Query, RHF + Zod, Recharts
 - Observabilidade: OpenTelemetry (backend) e Sentry (frontend)
-
+App local: `http://localhost:3003`
 ## Execucao Local
+### 3. Docker Compose
+
+```bash
+docker compose up --build
+```
+
+Servicos principais no compose:
+
+- Frontend: `http://localhost:3003`
+- Backend (host): `http://localhost:3004/api/v1`
+- Redis: interno na rede `nexos_internal`
+
+Observacao: no container, o backend escuta na porta `3001` e e publicado na host como `3004`.
 
 ### 1. Backend
 
@@ -45,10 +58,6 @@ App: `http://localhost:3000`
 ### Backend
 
 - `npm run build`
-- `npm run start:dev`
-- `npm run lint`
-- `npm run test`
-- `npm run migration:apply`
 
 ### Frontend
 

@@ -196,6 +196,20 @@ Commits aplicados:
 - `baf0e39`: pagina de gestao de roles e permissoes.
 - `3dcfe25`: middleware corrigido para token exchange em `/api/oauth/token`.
 
+## Atualizacoes Financeiras Recentes (Mar/2026)
+
+Commits aplicados:
+
+- `efc03f6`: acoes de boleto integradas no detalhe do lancamento.
+- `60c1b21`: listagem e remocao de anexos no detalhe do lancamento.
+- `46ea3b4`: tipo `Entry` atualizado com campo `hasBoleto` para manter contrato com backend e restaurar build.
+
+Impacto no fluxo de lancamentos:
+
+- O detalhe de lancamento pode habilitar/ocultar acoes de boleto com base em `entry.hasBoleto`.
+- Listagens continuam paginadas via `api.getList(...)` em React Query (`useEntries`), usando `placeholderData: keepPreviousData` para transicao suave.
+- Contrato de API padronizado em proxy relativo (`/api/v1`) no cliente web.
+
 ## Fix Definitivo Pos-Redesign (Mar/2026)
 
 Aplicado com commits isolados, lint em cada etapa e build final validado.
@@ -241,3 +255,8 @@ Aplicado com commits isolados, lint em cada etapa e build final validado.
 5. Confirmar ausencia de cookie `access_token` generico criado pelo ERP
 6. Conferir chamadas para `/api/v1/branches/my` sem `401`
 7. Validar ausencia de erros de hidratacao no console
+
+## Estado de Qualidade
+
+- `npm run lint`: OK
+- `npm run build`: OK

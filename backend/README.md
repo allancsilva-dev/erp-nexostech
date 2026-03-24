@@ -100,6 +100,23 @@ Observacoes importantes:
 - `GET /api/v1/transfers`
 - `POST /api/v1/transfers`
 
+### Contrato de Listagem de Lancamentos (`GET /api/v1/entries`)
+
+Query params suportados:
+
+- `page`
+- `pageSize`
+- `type`
+- `status`
+- `search`
+- `startDate`
+- `endDate`
+
+Retorno:
+
+- Colecao em `data`
+- Metadata paginada em `meta` (`page`, `pageSize`, `total`, `totalPages`)
+
 ## Endpoints de Acesso (SSO + RBAC)
 
 Ja existentes:
@@ -289,6 +306,22 @@ Hotfixes adicionais (Mar/2026):
 - `1bf4564`: `BranchGuard` com bypass de `ADMIN` antes da validacao de branch header.
 - `5bd6348`: log de excecoes internas em `AllExceptionsFilter`.
 - `6e4b79a`: migration runner com sanitizacao de schema via underscore.
+
+## Atualizacoes Financeiras Recentes (PR9 + PR10)
+
+### PR9 (riscos criticos)
+
+- `a73de6e`: transferencias com validacao de saldo em transacao e lock da conta (`FOR UPDATE`).
+- `edd707c`: dashboard com saldo corrente padronizado para fluxos pagos + transferencias.
+- `229a070`: migration `015_create_attachments_table` com FKs e indices para anexos.
+- `7f15d1c`: integracao real com gateway de boletos via HTTP, mantendo retry/circuit breaker.
+
+### PR10 (fechamento funcional)
+
+- `f8dbc70`: listagem de lancamentos com filtros + paginação + metadata consistente.
+- `f8dbc70`: `hasBoleto` calculado em SQL no detalhe da entrada (status cancelado excluido).
+- `f8dbc70`: `collection.processor` com logs estruturados (`collection.job.started`, `collection.job.completed`, `collection.job.failed`) contendo `jobId`, `tenantId` e `branchId`.
+- `f8dbc70`: listagem de transferencias atualizada para paginação/ordenacao estavel no repositorio.
 
 ## Aderencia ao prompt-backed.md
 
