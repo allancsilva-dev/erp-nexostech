@@ -2,44 +2,44 @@
 
 @layer base {
   :root {
-    --bg-app: hsl(220 20% 7%);
-    --bg-surface: hsl(225 18% 9%);
-    --bg-surface-raised: hsl(228 16% 12%);
-    --bg-surface-hover: hsl(228 16% 12%);
-    --bg-input: hsl(230 14% 14%);
+    --bg-app: 220 20% 7%;
+    --bg-surface: 225 18% 9%;
+    --bg-surface-raised: 228 16% 12%;
+    --bg-surface-hover: 228 16% 12%;
+    --bg-input: 230 14% 14%;
     --text-input: hsl(210 40% 96%);
     --placeholder-input: hsl(217 10% 40%);
-    --bg-overlay: hsl(220 20% 5%);
+    --bg-overlay: 220 20% 5%;
 
     --border-subtle: hsla(0 0% 100% / 0.04);
     --border-default: hsla(0 0% 100% / 0.08);
     --border-strong: hsla(0 0% 100% / 0.14);
 
-    --text-primary: hsl(210 40% 96%);
-    --text-secondary: hsl(215 16% 62%);
-    --text-muted: hsl(217 10% 40%);
-    --text-inverse: hsl(222 47% 11%);
+    --text-primary: 210 40% 96%;
+    --text-secondary: 215 16% 62%;
+    --text-muted: 217 10% 40%;
+    --text-inverse: 222 47% 11%;
 
-    --accent: hsl(239 84% 67%);
-    --accent-hover: hsl(239 84% 60%);
+    --accent: 239 84% 67%;
+    --accent-hover: 239 84% 60%;
     --accent-muted: hsla(239 50% 50% / 0.15);
-    --accent-text: hsl(239 84% 77%);
+    --accent-text: 239 84% 77%;
     --accent-bg: hsla(239 50% 50% / 0.12);
 
-    --success: hsl(142 71% 45%);
+    --success: 142 71% 45%;
     --success-muted: hsla(142 50% 40% / 0.12);
-    --danger: hsl(0 84% 60%);
+    --danger: 0 84% 60%;
     --danger-muted: hsla(0 70% 50% / 0.12);
-    --warning: hsl(38 92% 50%);
+    --warning: 38 92% 50%;
     --warning-muted: hsla(38 70% 50% / 0.12);
-    --info: hsl(217 91% 60%);
+    --info: 217 91% 60%;
     --info-muted: hsla(217 70% 50% / 0.12);
 
-    --sidebar-bg: hsl(225 20% 8%);
-    --sidebar-hover: hsl(228 16% 12%);
+    --sidebar-bg: 225 20% 8%;
+    --sidebar-hover: 228 16% 12%;
     --sidebar-active-bg: hsla(239 50% 50% / 0.12);
-    --sidebar-active-text: hsl(239 84% 77%);
-    --sidebar-section-label: hsl(217 10% 36%);
+    --sidebar-active-text: 239 84% 77%;
+    --sidebar-section-label: 217 10% 36%;
     --sidebar-border: hsla(0 0% 100% / 0.06);
 
     --radius-sm: 6px;
@@ -70,44 +70,44 @@
   }
 
   .light {
-    --bg-app: hsl(210 40% 98%);
-    --bg-surface: hsl(0 0% 100%);
-    --bg-surface-raised: hsl(210 40% 96%);
-    --bg-surface-hover: hsl(210 40% 96%);
-    --bg-input: hsl(210 40% 96%);
+    --bg-app: 210 40% 98%;
+    --bg-surface: 0 0% 100%;
+    --bg-surface-raised: 210 40% 96%;
+    --bg-surface-hover: 210 40% 96%;
+    --bg-input: 210 40% 96%;
     --text-input: hsl(222 47% 11%);
     --placeholder-input: hsl(215 20% 65%);
-    --bg-overlay: hsl(210 40% 94%);
+    --bg-overlay: 210 40% 94%;
 
     --border-subtle: hsla(0 0% 0% / 0.05);
     --border-default: hsla(0 0% 0% / 0.10);
     --border-strong: hsla(0 0% 0% / 0.18);
 
-    --text-primary: hsl(222 47% 11%);
-    --text-secondary: hsl(215 16% 47%);
-    --text-muted: hsl(215 20% 65%);
+    --text-primary: 222 47% 11%;
+    --text-secondary: 215 16% 47%;
+    --text-muted: 215 20% 65%;
     --text-inverse: hsl(210 40% 96%);
 
-    --accent: hsl(239 84% 67%);
+    --accent: 239 84% 67%;
     --accent-hover: hsl(239 84% 60%);
-    --accent-text: hsl(239 84% 50%);
+    --accent-text: 239 84% 50%;
     --accent-bg: hsla(239 50% 50% / 0.08);
     --accent-muted: hsla(239 50% 50% / 0.08);
 
-    --success: hsl(142 71% 38%);
+    --success: 142 71% 38%;
     --success-muted: hsla(142 50% 40% / 0.08);
-    --danger: hsl(0 84% 55%);
+    --danger: 0 84% 55%;
     --danger-muted: hsla(0 70% 50% / 0.08);
-    --warning: hsl(38 92% 45%);
+    --warning: 38 92% 45%;
     --warning-muted: hsla(38 70% 50% / 0.08);
-    --info: hsl(217 91% 55%);
+    --info: 217 91% 55%;
     --info-muted: hsla(217 70% 50% / 0.08);
 
-    --sidebar-bg: hsl(222 47% 16%);
-    --sidebar-hover: hsl(222 47% 20%);
+    --sidebar-bg: 222 47% 16%;
+    --sidebar-hover: 222 47% 20%;
     --sidebar-active-bg: hsla(239 50% 50% / 0.15);
-    --sidebar-active-text: hsl(239 84% 77%);
-    --sidebar-section-label: hsl(215 16% 55%);
+    --sidebar-active-text: 239 84% 77%;
+    --sidebar-section-label: 215 16% 55%;
     --sidebar-border: hsla(0 0% 0% / 0.08);
 
     --background: 0 0% 100%;
