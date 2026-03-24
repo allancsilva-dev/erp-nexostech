@@ -1,8 +1,7 @@
 'use client';
 
-import { ChevronDown } from 'lucide-react';
+import { BranchSwitcher } from '@/components/layout/branch-switcher';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
-import { useBranchContext } from '@/providers/branch-provider';
 import { useAuthContext } from '@/providers/auth-provider';
 
 function getInitials(nameOrEmail?: string | null): string {
@@ -34,7 +33,6 @@ function getInitials(nameOrEmail?: string | null): string {
 }
 
 export function Topbar() {
-  const { activeBranch } = useBranchContext();
   const { user } = useAuthContext();
   const userName = (user as { name?: string } | null)?.name;
   const identity = userName || user?.email || 'Utilizador';
@@ -44,18 +42,7 @@ export function Topbar() {
       className="flex h-[var(--topbar-height)] items-center justify-between border-b px-4 md:px-6"
       style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}
     >
-      <button
-        type="button"
-        className="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm"
-        style={{ color: 'var(--text-secondary)', background: 'transparent' }}
-        aria-label="Filial ativa"
-      >
-        <span className="h-2 w-2 rounded-full" style={{ background: 'var(--success)' }} />
-        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-          {activeBranch?.name ?? 'Sem filial'}
-        </span>
-        <ChevronDown size={14} />
-      </button>
+      <BranchSwitcher />
 
       <div className="flex items-center gap-3">
         <ThemeToggle />
