@@ -35,8 +35,10 @@
     --info: hsl(217 91% 60%);
     --info-muted: hsla(217 70% 50% / 0.12);
 
-    --sidebar-bg: hsl(225 20% 8%);
-    --sidebar-hover: hsl(228 16% 12%);
+    --sidebar-bg: hsl(222 47% 11%);
+    --sidebar-text: hsl(210 40% 98%);
+    --sidebar-text-muted: hsl(215 20% 75%);
+    --sidebar-hover: hsl(222 47% 16%);
     --sidebar-active-bg: hsla(239 50% 50% / 0.12);
     --sidebar-active-text: hsl(239 84% 77%);
     --sidebar-section-label: hsl(217 10% 36%);
@@ -103,8 +105,6 @@
     --info: hsl(217 91% 55%);
     --info-muted: hsla(217 70% 50% / 0.08);
 
-    --sidebar-bg: hsl(222 47% 16%);
-    --sidebar-hover: hsl(222 47% 20%);
     --sidebar-active-bg: hsla(239 50% 50% / 0.15);
     --sidebar-active-text: hsl(239 84% 77%);
     --sidebar-section-label: hsl(215 16% 55%);
