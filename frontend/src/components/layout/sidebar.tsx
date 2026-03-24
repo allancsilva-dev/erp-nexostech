@@ -166,7 +166,7 @@ const ITEMS: SidebarItem[] = [
   },
   {
     section: 'configuracoes',
-    label: 'Roles',
+    label: 'Permissões',
     href: ROUTES.configuracoesRoles,
     permission: 'admin.users.manage',
     icon: ShieldCheck,

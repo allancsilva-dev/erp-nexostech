@@ -200,8 +200,8 @@ export function ApprovalRulesManager() {
             onChange={(event) => setForm((current) => ({ ...current, entryType: event.target.value as ApprovalRuleFormState['entryType'] }))}
           >
             <option value="">Ambos</option>
-            <option value="PAYABLE">PAYABLE</option>
-            <option value="RECEIVABLE">RECEIVABLE</option>
+            <option value="PAYABLE">Despesa</option>
+            <option value="RECEIVABLE">Receita</option>
           </select>
         </label>
 
@@ -258,7 +258,7 @@ export function ApprovalRulesManager() {
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[720px] border-collapse text-sm">
             <thead>
-              <tr className="border-b bg-slate-50 text-left dark:bg-slate-900/60">
+              <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
                 <th className="px-3 py-2 font-medium">Tipo</th>
                 <th className="px-3 py-2 font-medium">Valor minimo</th>
                 <th className="px-3 py-2 font-medium">Role</th>

@@ -28,6 +28,7 @@ export function MatchActions() {
   return (
     <div className="flex gap-2">
       <Button
+        variant="primary"
         size="sm"
         onClick={() => void handleConfirm()}
         disabled={!selectedStatementId || !selectedEntryId || reconciliation.isMutating}
@@ -35,14 +36,14 @@ export function MatchActions() {
         Confirmar match
       </Button>
       <Button
-        variant="outline"
+        variant="danger"
         size="sm"
         onClick={() => void handleReject()}
         disabled={!selectedStatementId || reconciliation.isMutating}
       >
         Rejeitar
       </Button>
-      <Button variant="secondary" size="sm" disabled>
+      <Button variant="outline" size="sm" disabled>
         Criar lancamento
       </Button>
     </div>

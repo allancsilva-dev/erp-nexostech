@@ -3,18 +3,35 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 
 export function CategoryForm() {
   const [name, setName] = useState('');
+  const [type, setType] = useState<'DESPESA' | 'RECEITA'>('DESPESA');
 
   return (
-    <form className="grid gap-3 rounded-xl border bg-white p-4 dark:bg-slate-800 md:grid-cols-3">
+    <form className="grid gap-3 md:grid-cols-3">
       <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome da categoria" />
-      <select className="h-10 rounded-md border border-slate-300 px-3 text-sm">
+      <Select
+        value={type}
+        onChange={(event) => setType(event.target.value as 'DESPESA' | 'RECEITA')}
+      >
         <option value="DESPESA">Despesa</option>
         <option value="RECEITA">Receita</option>
-      </select>
-      <Button type="button">Salvar categoria</Button>
+      </Select>
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="primary">Salvar categoria</Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            setName('');
+            setType('DESPESA');
+          }}
+        >
+          Cancelar
+        </Button>
+      </div>
     </form>
   );
 }

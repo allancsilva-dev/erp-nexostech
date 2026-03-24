@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -95,10 +95,10 @@ export function ApprovalList() {
       {tab === 'history' ? (
         <ApprovalHistory items={historyItems} />
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-white p-3 dark:bg-slate-800">
+        <div className="surface-card overflow-x-auto p-3">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead>
-              <tr className="border-b bg-slate-50 text-left dark:bg-slate-900/60">
+              <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
                 <th className="px-3 py-2">
                   <input type="checkbox" checked={allSelected} onChange={toggleAll} />
                 </th>
@@ -164,7 +164,7 @@ export function ApprovalList() {
 
       {tab === 'pending' && selectedCount > 0 ? (
         <PermissionGate permission="financial.entries.approve">
-          <div className="sticky bottom-4 z-10 flex items-center justify-between rounded-xl border bg-white p-3 shadow-md dark:bg-slate-800">
+          <div className="surface-card sticky bottom-4 z-10 flex items-center justify-between p-3 shadow-md">
             <span className="text-sm font-medium">{selectedCount} selecionados</span>
             <Button type="button" onClick={() => void handleBatchApprove()} disabled={batchApprove.isPending}>
               {batchApprove.isPending ? 'Processando...' : 'Aprovar todos'}

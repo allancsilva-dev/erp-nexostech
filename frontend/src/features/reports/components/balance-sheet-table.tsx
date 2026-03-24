@@ -90,7 +90,7 @@ export function BalanceSheetTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 md:flex-row md:items-end md:justify-between">
+      <div className="surface-card flex flex-col gap-3 p-4 md:flex-row md:items-end md:justify-between">
         <div className="grid w-full gap-3 md:max-w-xl md:grid-cols-2">
           <label className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
             Data inicial
@@ -122,7 +122,7 @@ export function BalanceSheetTable() {
       ) : null}
 
       {!balanceSheet.isLoading && !balanceSheet.isError && rows.length > 0 ? (
-        <div className="overflow-x-auto rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+        <div className="surface-card overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -141,7 +141,7 @@ export function BalanceSheetTable() {
                   <TableCell className="text-right font-semibold">{formatCurrency(row.net)}</TableCell>
                 </TableRow>
               ))}
-              <TableRow className="bg-[hsl(var(--muted))]">
+              <TableRow className="bg-[var(--bg-surface-raised)]">
                 <TableCell className="font-semibold">Total</TableCell>
                 <TableCell className="text-right font-semibold">{formatCurrency(report?.totals.inflow ?? '0')}</TableCell>
                 <TableCell className="text-right font-semibold">{formatCurrency(report?.totals.outflow ?? '0')}</TableCell>

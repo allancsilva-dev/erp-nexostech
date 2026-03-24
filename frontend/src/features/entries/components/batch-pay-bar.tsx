@@ -14,7 +14,7 @@ export function BatchPayBar({
   }
 
   return (
-    <div className="sticky bottom-4 z-20 flex items-center justify-between rounded-xl border bg-white p-3 shadow dark:bg-slate-800">
+    <div className="surface-card sticky bottom-4 z-20 flex items-center justify-between p-3 shadow">
       <span className="text-sm">{selectedCount} lancamentos selecionados</span>
       <Button onClick={onPay}>Pagar selecionados</Button>
     </div>

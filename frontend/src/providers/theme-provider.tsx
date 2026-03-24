@@ -11,6 +11,10 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
       {...props}
       disableTransitionOnChange
       storageKey="nexos-theme"
+      value={{
+        light: 'light',
+        dark: '',
+      }}
     >
       {children}
     </NextThemeProvider>

@@ -7,7 +7,7 @@ export function ApprovalActions() {
   const count = pending.data?.data?.length ?? 0;
 
   return (
-    <div className="rounded-xl border bg-white p-4 text-sm dark:bg-slate-800">
+    <div className="surface-card p-4 text-sm">
       <p className="font-medium">Pendencias de aprovacao</p>
       <p className="mt-1 text-slate-500">
         {count === 0 ? 'Nao ha lancamentos aguardando aprovacao.' : `${count} lancamento(s) aguardando decisao.`}

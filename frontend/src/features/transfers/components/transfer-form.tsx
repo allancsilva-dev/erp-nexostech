@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -87,7 +87,7 @@ export function TransferForm() {
   }
 
   return (
-    <form className="grid gap-4 rounded-xl border bg-white p-4 dark:bg-slate-800 md:grid-cols-2" onSubmit={handleSubmit}>
+    <form className="grid gap-4 surface-card p-4 md:grid-cols-2" onSubmit={handleSubmit}>
       <Select value={fromBankAccountId} onChange={(event) => setFromBankAccountId(event.target.value)}>
         <option value="">Conta origem</option>
         {accountOptions.map((account) => (

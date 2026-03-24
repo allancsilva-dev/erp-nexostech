@@ -89,7 +89,7 @@ export function DreTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-4 md:flex-row md:items-end md:justify-between">
+      <div className="surface-card flex flex-col gap-3 p-4 md:flex-row md:items-end md:justify-between">
         <div className="grid w-full gap-3 md:max-w-xl md:grid-cols-2">
           <label className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
             Data inicial
@@ -121,7 +121,7 @@ export function DreTable() {
       ) : null}
 
       {!dre.isLoading && !dre.isError && report ? (
-        <div className="overflow-x-auto rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+        <div className="surface-card overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

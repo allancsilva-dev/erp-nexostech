@@ -58,7 +58,7 @@ export function RuleForm() {
   }
 
   return (
-    <div className="space-y-4 rounded-xl border bg-white p-4 dark:bg-slate-800">
+    <div className="space-y-4 surface-card p-4">
       <h3 className="text-sm font-semibold">Criar / editar regra</h3>
 
       <div className="grid gap-3 md:grid-cols-5">
@@ -108,7 +108,7 @@ export function RuleForm() {
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full min-w-[700px] border-collapse text-sm">
           <thead>
-            <tr className="border-b bg-slate-50 text-left dark:bg-slate-900/60">
+            <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
               <th className="px-3 py-2 font-medium">Evento</th>
               <th className="px-3 py-2 font-medium">Offset</th>
               <th className="px-3 py-2 font-medium">Template</th>

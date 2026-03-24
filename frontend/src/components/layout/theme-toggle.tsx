@@ -17,8 +17,6 @@ export function ThemeToggle() {
 
   function toggleTheme(): void {
     const nextTheme = isDark ? 'light' : 'dark';
-    localStorage.setItem('theme', nextTheme);
-    document.cookie = `theme=${nextTheme}; path=/; max-age=31536000; samesite=lax`;
     setTheme(nextTheme);
   }
 

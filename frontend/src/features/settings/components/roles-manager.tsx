@@ -1,5 +1,5 @@
-﻿'use client';
+'use client';
 
 export function RolesManager() {
-  return <div className="rounded-xl border bg-white p-4 dark:bg-slate-800">Gerenciamento de roles e permissoes</div>;
+  return <div className="surface-card p-4">Gerenciamento de roles e permissoes</div>;
 }

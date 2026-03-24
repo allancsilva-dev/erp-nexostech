@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -185,7 +185,7 @@ export function LockPeriodForm() {
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[680px] border-collapse text-sm">
             <thead>
-              <tr className="border-b bg-slate-50 text-left dark:bg-slate-900/60">
+              <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
                 <th className="px-3 py-2 font-medium">Bloqueado ate</th>
                 <th className="px-3 py-2 font-medium">Motivo</th>
                 <th className="px-3 py-2 font-medium">Criado em</th>

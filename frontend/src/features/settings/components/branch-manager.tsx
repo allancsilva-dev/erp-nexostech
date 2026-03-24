@@ -308,7 +308,7 @@ export function BranchManager() {
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead>
-              <tr className="border-b bg-slate-50 text-left dark:bg-slate-900/60">
+              <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
                 <th className="px-3 py-2 font-medium">Nome</th>
                 <th className="px-3 py-2 font-medium">CNPJ</th>
                 <th className="px-3 py-2 font-medium">Cidade/UF</th>
@@ -353,7 +353,7 @@ export function BranchManager() {
                     </td>
                   </tr>
                   {expandedBranchId === branch.id ? (
-                    <tr className="border-b bg-slate-50/60 dark:bg-slate-900/30">
+                    <tr className="border-b bg-[var(--bg-surface-raised)]">
                       <td className="px-3 py-3" colSpan={6}>
                         {!canManageUsers ? (
                           <p className="text-sm text-slate-600">Sem permissao admin.users.manage para gerenciar vinculacao de usuarios.</p>
@@ -384,7 +384,7 @@ export function BranchManager() {
                                   <p className="text-sm text-slate-600">Nenhum usuario vinculado.</p>
                                 ) : (
                                   (branchUsersQuery.data?.data ?? []).map((user) => (
-                                    <div key={user.userId} className="flex items-center justify-between rounded-md border bg-white px-3 py-2 dark:bg-slate-800">
+                                    <div key={user.userId} className="surface-card flex items-center justify-between px-3 py-2">
                                       <span className="text-sm">{user.userId}</span>
                                       <Button
                                         type="button"

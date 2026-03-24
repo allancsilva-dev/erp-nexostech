@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useMemo } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -34,7 +34,7 @@ export function EntriesTable({
           if (!row.original.documentNumber) {
             return (
               <Badge
-                className="bg-slate-100 text-slate-600"
+                className="bg-[var(--bg-surface-raised)] text-[var(--text-secondary)]"
                 title="O numero do documento sera gerado apos aprovacao"
               >
                 Sem numero

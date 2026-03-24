@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -41,6 +42,10 @@ export function DashboardClient() {
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title="Dashboard financeiro"
+        subtitle="Visao consolidada de saldos, vencimentos e fluxo"
+      />
       <SummaryCards data={summary.data.data} />
       <CashflowChart data={cashflow.data?.data ?? []} />
       <OverdueList items={overdue.data?.data ?? []} />

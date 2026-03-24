@@ -7,18 +7,18 @@ import { useReconciliation } from '@/features/reconciliation/hooks/use-reconcili
 
 function getStatusClass(status: string): string {
   if (status === 'RECONCILED') {
-    return 'text-green-600';
+    return 'text-[var(--success)]';
   }
 
   if (status === 'SUGGESTED') {
-    return 'text-yellow-600';
+    return 'text-[var(--warning)]';
   }
 
   if (status === 'DIVERGENT') {
-    return 'text-red-600';
+    return 'text-[var(--danger)]';
   }
 
-  return 'text-gray-500';
+  return 'text-[var(--text-muted)]';
 }
 
 export function SplitView() {
@@ -37,7 +37,7 @@ export function SplitView() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="rounded-xl border bg-white p-4 dark:bg-slate-800">
+      <div className="surface-card p-4">
         <h3 className="mb-3 text-sm font-semibold">Extrato bancario</h3>
         {statementItems.length === 0 ? (
           <EmptyState title="Sem itens para conciliar" description="Importe um lote ou aguarde itens pendentes de conciliacao." />
@@ -45,7 +45,7 @@ export function SplitView() {
           <div className="max-h-96 overflow-auto rounded-lg border">
             <table className="w-full min-w-[520px] border-collapse text-sm">
               <thead>
-                <tr className="border-b bg-slate-50 text-left dark:bg-slate-900/60">
+                <tr className="border-b text-left" style={{ background: 'var(--bg-surface-raised)' }}>
                   <th className="px-3 py-2 font-medium">Data</th>
                   <th className="px-3 py-2 font-medium">Valor</th>
                   <th className="px-3 py-2 font-medium">Entry vinculada</th>
@@ -59,7 +59,12 @@ export function SplitView() {
                   return (
                     <tr
                       key={item.id}
-                      className={`cursor-pointer border-b transition-colors hover:bg-blue-50/60 dark:hover:bg-blue-900/20 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}
+                      className="cursor-pointer border-b transition-colors"
+                      style={{
+                        background: isSelected
+                          ? 'var(--accent-muted)'
+                          : 'transparent',
+                      }}
                       onClick={() => reconciliation.selectStatement(item.id)}
                     >
                       <td className="px-3 py-2">{item.paymentDate}</td>
@@ -75,7 +80,7 @@ export function SplitView() {
         )}
       </div>
 
-      <div className="rounded-xl border bg-white p-4 dark:bg-slate-800">
+      <div className="surface-card p-4">
         <h3 className="mb-3 text-sm font-semibold">Lancamentos ERP</h3>
         {entries.length === 0 ? (
           <EmptyState title="Sem lancamentos" description="Nao ha lancamentos disponiveis para vinculo no momento." />
@@ -83,7 +88,7 @@ export function SplitView() {
           <div className="max-h-96 overflow-auto rounded-lg border">
             <table className="w-full min-w-[560px] border-collapse text-sm">
               <thead>
-                <tr className="border-b bg-slate-50 text-left dark:bg-slate-900/60">
+                <tr className="border-b text-left" style={{ background: 'var(--bg-surface-raised)' }}>
                   <th className="px-3 py-2 font-medium">Descricao</th>
                   <th className="px-3 py-2 font-medium">Valor</th>
                   <th className="px-3 py-2 font-medium">Vencimento</th>
@@ -97,7 +102,12 @@ export function SplitView() {
                   return (
                     <tr
                       key={entry.id}
-                      className={`cursor-pointer border-b transition-colors hover:bg-blue-50/60 dark:hover:bg-blue-900/20 ${isSelected ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}
+                      className="cursor-pointer border-b transition-colors"
+                      style={{
+                        background: isSelected
+                          ? 'var(--accent-muted)'
+                          : 'transparent',
+                      }}
                       onClick={() => reconciliation.selectEntry(entry.id)}
                     >
                       <td className="px-3 py-2">{entry.description}</td>

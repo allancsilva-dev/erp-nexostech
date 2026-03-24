@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { Button } from '@/components/ui/button';
 import { BasicInfo } from '@/features/entries/components/entry-form/basic-info';
@@ -12,7 +12,7 @@ export function EntryForm({ type }: { type: 'PAYABLE' | 'RECEIVABLE' }) {
   const { form, onSubmit, isPending, installmentPreview } = useEntryForm(type);
 
   return (
-    <form className="space-y-6 rounded-xl border bg-white p-6 dark:bg-slate-800" onSubmit={onSubmit}>
+    <form className="space-y-6 surface-card p-6" onSubmit={onSubmit}>
       <BasicInfo form={form} />
       <FinancialInfo form={form} />
       <DatesInfo form={form} />

@@ -90,7 +90,7 @@ export function AuditLogDetail({
               <div className="overflow-x-auto rounded-lg border">
                 <table className="w-full min-w-[620px] border-collapse text-sm">
                   <thead>
-                    <tr className="border-b bg-slate-50 text-left dark:bg-slate-900/60">
+                    <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
                       <th className="px-3 py-2 font-medium">Campo</th>
                       <th className="px-3 py-2 font-medium">Valor anterior</th>
                       <th className="px-3 py-2 font-medium">Valor novo</th>

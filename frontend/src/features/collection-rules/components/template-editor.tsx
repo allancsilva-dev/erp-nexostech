@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -66,7 +66,7 @@ export function TemplateEditor() {
   }
 
   return (
-    <div className="space-y-3 rounded-xl border bg-white p-4 dark:bg-slate-800">
+    <div className="space-y-3 surface-card p-4">
       <select
         className="h-10 rounded-md border px-3 text-sm"
         value={selectedTemplateId}
