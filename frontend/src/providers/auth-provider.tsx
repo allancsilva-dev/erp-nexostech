@@ -126,13 +126,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    const APP_URL =
+      process.env.NEXT_PUBLIC_APP_URL || 'https://erp.zonadev.tech';
+    const AUTH_URL =
+      process.env.NEXT_PUBLIC_AUTH_URL || 'https://auth.zonadev.tech';
+    const returnTo = encodeURIComponent(`${APP_URL}/login`);
+
     try {
       await fetch('/api/auth/local-logout', {
         method: 'POST',
         credentials: 'include',
       });
     } finally {
-      window.location.href = `${AUTH_URL}/login?app=${APP_AUD}`;
+      window.location.href = `${AUTH_URL}/logout?post_logout_redirect_uri=${returnTo}`;
     }
   }, []);
 
