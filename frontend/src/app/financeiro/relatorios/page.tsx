@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { PageHeader } from '@/components/layout/page-header';
 
 export default function RelatoriosPage() {
@@ -10,36 +10,36 @@ export default function RelatoriosPage() {
           <Link
             href="/financeiro/relatorios/dre"
             className="rounded-lg p-4 transition-colors"
-            style={{ border: '0.5px solid hsl(var(--border-default))', background: 'hsl(var(--bg-surface))' }}
+            style={{ border: '0.5px solid var(--border-default)', background: 'var(--bg-surface)' }}
           >
-            <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--text-primary))' }}>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               DRE
             </h3>
-            <p className="mt-1 text-xs" style={{ color: 'hsl(var(--text-secondary))' }}>
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
               Demonstrativo de resultado
             </p>
           </Link>
           <Link
             href="/financeiro/relatorios/balancete"
             className="rounded-lg p-4 transition-colors"
-            style={{ border: '0.5px solid hsl(var(--border-default))', background: 'hsl(var(--bg-surface))' }}
+            style={{ border: '0.5px solid var(--border-default)', background: 'var(--bg-surface)' }}
           >
-            <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--text-primary))' }}>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               Balancete
             </h3>
-            <p className="mt-1 text-xs" style={{ color: 'hsl(var(--text-secondary))' }}>
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
               Movimentação por categoria
             </p>
           </Link>
           <Link
             href="/financeiro/relatorios/aging"
             className="rounded-lg p-4 transition-colors"
-            style={{ border: '0.5px solid hsl(var(--border-default))', background: 'hsl(var(--bg-surface))' }}
+            style={{ border: '0.5px solid var(--border-default)', background: 'var(--bg-surface)' }}
           >
-            <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--text-primary))' }}>
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               Vencimentos
             </h3>
-            <p className="mt-1 text-xs" style={{ color: 'hsl(var(--text-secondary))' }}>
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
               Análise de vencimentos
             </p>
           </Link>

@@ -44,14 +44,14 @@ export const EntriesTable = React.memo(function EntriesTable({
 
   if (isError) {
     return (
-      <div className="surface-card flex items-center justify-between p-4" style={{ background: 'hsl(var(--danger-muted))' }}>
+      <div className="surface-card flex items-center justify-between p-4" style={{ background: 'var(--danger-muted)' }}>
         <div className="flex items-center gap-3">
-          <AlertCircle size={18} style={{ color: 'hsl(var(--danger))' }} />
+          <AlertCircle size={18} style={{ color: 'var(--danger)' }} />
           <div>
-            <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger))' }}>
+            <p className="text-sm font-medium" style={{ color: 'var(--danger)' }}>
               Falha ao carregar dados
             </p>
-            <p className="text-xs" style={{ color: 'hsl(var(--text-secondary))' }}>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
               {error?.message || 'Erro desconhecido'}
             </p>
           </div>
@@ -60,9 +60,9 @@ export const EntriesTable = React.memo(function EntriesTable({
           onClick={refetch}
           className="rounded-md px-3 py-1.5 text-xs font-medium"
           style={{
-            background: 'hsl(var(--bg-surface))',
-            color: 'hsl(var(--text-primary))',
-            border: '0.5px solid hsl(var(--border-default))',
+            background: 'var(--bg-surface)',
+            color: 'var(--text-primary)',
+            border: '0.5px solid var(--border-default)',
           }}
         >
           Tentar novamente
@@ -74,11 +74,11 @@ export const EntriesTable = React.memo(function EntriesTable({
   if (entries.length === 0) {
     return (
       <div className="surface-card flex flex-col items-center justify-center p-12 text-center">
-        <Inbox size={40} style={{ color: 'hsl(var(--text-muted))' }} strokeWidth={1} />
-        <p className="mt-4 text-sm font-medium" style={{ color: 'hsl(var(--text-secondary))' }}>
+        <Inbox size={40} style={{ color: 'var(--text-muted)' }} strokeWidth={1} />
+        <p className="mt-4 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
           {type === 'PAYABLE' ? 'Nenhuma conta a pagar' : 'Nenhuma conta a receber'}
         </p>
-        <p className="mt-1 text-xs" style={{ color: 'hsl(var(--text-muted))' }}>
+        <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
           Crie o primeiro lancamento para comecar
         </p>
       </div>
@@ -91,12 +91,12 @@ export const EntriesTable = React.memo(function EntriesTable({
     <div className="surface-card overflow-hidden">
       <table className="w-full">
         <thead>
-          <tr style={{ borderBottom: '0.5px solid hsl(var(--border-default))' }}>
+          <tr style={{ borderBottom: '0.5px solid var(--border-default)' }}>
             {['Codigo', 'Descricao', contactLabel, 'Categoria', 'Vencimento', 'Valor', 'Status'].map((header) => (
               <th
                 key={header}
                 className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-wider ${header === 'Valor' ? 'text-right' : 'text-left'}`}
-                style={{ color: 'hsl(var(--text-muted))', background: 'hsl(var(--bg-surface-raised))' }}
+                style={{ color: 'var(--text-muted)', background: 'var(--bg-surface-raised)' }}
               >
                 {header}
               </th>
@@ -110,20 +110,20 @@ export const EntriesTable = React.memo(function EntriesTable({
               <tr
                 key={entry.id}
                 className="cursor-pointer transition-colors"
-                style={{ borderBottom: '0.5px solid hsl(var(--border-subtle))' }}
+                style={{ borderBottom: '0.5px solid var(--border-subtle)' }}
                 onMouseEnter={(event) => {
-                  event.currentTarget.style.background = 'hsl(var(--bg-surface-raised))';
+                  event.currentTarget.style.background = 'var(--bg-surface-raised)';
                 }}
                 onMouseLeave={(event) => {
                   event.currentTarget.style.background = 'transparent';
                 }}
               >
                 <td className="px-4 py-3">
-                  <Link href={`${basePath}/${entry.id}`} className="font-mono text-[11px]" style={{ color: 'hsl(var(--text-muted))' }}>
+                  <Link href={`${basePath}/${entry.id}`} className="font-mono text-[11px]" style={{ color: 'var(--text-muted)' }}>
                     {entry.documentNumber ?? (
                       <span
                         className="rounded px-1.5 py-0.5 text-[10px]"
-                        style={{ background: 'hsl(var(--bg-surface-raised))', color: 'hsl(var(--text-muted))' }}
+                        style={{ background: 'var(--bg-surface-raised)', color: 'var(--text-muted)' }}
                       >
                         Sem no
                       </span>
@@ -134,19 +134,19 @@ export const EntriesTable = React.memo(function EntriesTable({
                   <Link
                     href={`${basePath}/${entry.id}`}
                     className="block truncate text-[13px] font-medium"
-                    style={{ color: 'hsl(var(--text-primary))' }}
+                    style={{ color: 'var(--text-primary)' }}
                   >
                     {entry.description}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-[12px]" style={{ color: 'hsl(var(--text-secondary))' }}>
+                <td className="px-4 py-3 text-[12px]" style={{ color: 'var(--text-secondary)' }}>
                   {entry.contactName ?? '-'}
                 </td>
                 <td className="px-4 py-3">
                   {entry.categoryName ? (
                     <span
                       className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium"
-                      style={{ background: 'hsl(var(--bg-surface-raised))', color: 'hsl(var(--text-secondary))' }}
+                      style={{ background: 'var(--bg-surface-raised)', color: 'var(--text-secondary)' }}
                     >
                       {entry.categoryColor ? (
                         <span className="h-2 w-2 rounded-full" style={{ background: entry.categoryColor }} />
@@ -154,16 +154,16 @@ export const EntriesTable = React.memo(function EntriesTable({
                       {entry.categoryName}
                     </span>
                   ) : (
-                    <span style={{ color: 'hsl(var(--text-muted))' }}>-</span>
+                    <span style={{ color: 'var(--text-muted)' }}>-</span>
                   )}
                 </td>
                 <td
                   className="px-4 py-3 text-[12px]"
-                  style={{ color: isOverdue ? 'hsl(var(--danger))' : 'hsl(var(--text-secondary))' }}
+                  style={{ color: isOverdue ? 'var(--danger)' : 'var(--text-secondary)' }}
                 >
                   {formatDate(entry.dueDate)}
                 </td>
-                <td className="px-4 py-3 text-right text-[13px] font-semibold tabular-nums" style={{ color: 'hsl(var(--text-primary))' }}>
+                <td className="px-4 py-3 text-right text-[13px] font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
                   {formatCurrency(entry.amount)}
                 </td>
                 <td className="px-4 py-3">

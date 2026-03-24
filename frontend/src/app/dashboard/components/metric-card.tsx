@@ -44,13 +44,13 @@ export const MetricCard = React.memo(function MetricCard({
       {variation != null && variation !== 0 ? (
         <div className="mt-1 flex items-center gap-1">
           {variation > 0 ? (
-            <TrendingUp size={12} style={{ color: 'hsl(var(--success))' }} />
+            <TrendingUp size={12} style={{ color: 'var(--success)' }} />
           ) : (
-            <TrendingDown size={12} style={{ color: 'hsl(var(--danger))' }} />
+            <TrendingDown size={12} style={{ color: 'var(--danger)' }} />
           )}
           <span
             className="text-[11px] font-medium"
-            style={{ color: variation > 0 ? 'hsl(var(--success))' : 'hsl(var(--danger))' }}
+            style={{ color: variation > 0 ? 'var(--success)' : 'var(--danger)' }}
           >
             {variation > 0 ? '+' : ''}
             {variation.toFixed(1)}% vs mes anterior

@@ -1,4 +1,4 @@
-﻿import { cva, type VariantProps } from 'class-variance-authority';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const badgeVariants = cva(
@@ -7,13 +7,13 @@ const badgeVariants = cva(
     variants: {
       variant: {
         success:
-          'border-[hsl(var(--success))]/40 bg-[hsl(var(--success-muted))] text-[hsl(var(--success-foreground))]',
+          'border-[var(--success)]/40 bg-[var(--success-muted)] text-[var(--success-foreground)]',
         danger:
           'border-[hsl(var(--destructive))]/40 bg-[hsl(var(--destructive))]/10 text-[hsl(var(--destructive))]',
         warning:
-          'border-[hsl(var(--warning))]/40 bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-foreground))]',
+          'border-[var(--warning)]/40 bg-[var(--warning-muted)] text-[var(--warning-foreground)]',
         info:
-          'border-[hsl(var(--info))]/40 bg-[hsl(var(--info-muted))] text-[hsl(var(--info-foreground))]',
+          'border-[var(--info)]/40 bg-[var(--info-muted)] text-[var(--info-foreground)]',
       },
     },
     defaultVariants: {

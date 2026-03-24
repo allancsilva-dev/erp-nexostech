@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { useMemo } from 'react';
@@ -40,10 +40,10 @@ export default function ContasPagarPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold" style={{ color: 'hsl(var(--text-primary))' }}>
+          <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
             Contas a pagar
           </h1>
-          <p className="mt-0.5 text-sm" style={{ color: 'hsl(var(--text-secondary))' }}>
+          <p className="mt-0.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
             Gerencie suas contas e pagamentos
           </p>
         </div>
@@ -51,9 +51,9 @@ export default function ContasPagarPage() {
           <button
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors"
             style={{
-              background: 'hsl(var(--bg-surface))',
-              color: 'hsl(var(--text-secondary))',
-              border: '0.5px solid hsl(var(--border-default))',
+              background: 'var(--bg-surface)',
+              color: 'var(--text-secondary)',
+              border: '0.5px solid var(--border-default)',
             }}
           >
             <Download size={15} />
@@ -63,7 +63,7 @@ export default function ContasPagarPage() {
             <Link
               href="/financeiro/contas-pagar/nova"
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium text-white transition-colors"
-              style={{ background: 'hsl(var(--accent))' }}
+              style={{ background: 'var(--accent)' }}
             >
               <Plus size={15} />
               Nova conta
@@ -75,9 +75,9 @@ export default function ContasPagarPage() {
       <div className="surface-card mb-4 flex flex-wrap items-center gap-3 p-3">
         <div
           className="flex min-w-[200px] flex-1 items-center gap-2 rounded-md px-3 py-1.5"
-          style={{ background: 'hsl(var(--bg-input))', border: '0.5px solid hsl(var(--border-default))' }}
+          style={{ background: 'var(--bg-input)', border: '0.5px solid var(--border-default)' }}
         >
-          <Search size={14} style={{ color: 'hsl(var(--text-muted))' }} />
+          <Search size={14} style={{ color: 'var(--text-muted)' }} />
           <input
             placeholder="Buscar por descricao, fornecedor ou codigo..."
             value={search}
@@ -86,7 +86,7 @@ export default function ContasPagarPage() {
               void setPage('1');
             }}
             className="flex-1 bg-transparent text-[13px] outline-none"
-            style={{ color: 'hsl(var(--text-primary))' }}
+            style={{ color: 'var(--text-primary)' }}
           />
         </div>
         <select
@@ -97,9 +97,9 @@ export default function ContasPagarPage() {
             void setPage('1');
           }}
           style={{
-            background: 'hsl(var(--bg-input))',
-            color: 'hsl(var(--text-secondary))',
-            border: '0.5px solid hsl(var(--border-default))',
+            background: 'var(--bg-input)',
+            color: 'var(--text-secondary)',
+            border: '0.5px solid var(--border-default)',
           }}
         >
           <option value="">Todos os status</option>
@@ -118,9 +118,9 @@ export default function ContasPagarPage() {
           }}
           className="rounded-md px-3 py-1.5 text-[13px]"
           style={{
-            background: 'hsl(var(--bg-input))',
-            color: 'hsl(var(--text-secondary))',
-            border: '0.5px solid hsl(var(--border-default))',
+            background: 'var(--bg-input)',
+            color: 'var(--text-secondary)',
+            border: '0.5px solid var(--border-default)',
           }}
         />
       </div>
@@ -149,14 +149,14 @@ export default function ContasPagarPage() {
             }}
             className="rounded-md px-3 py-1.5 text-xs font-medium"
             style={{
-              background: 'hsl(var(--bg-surface))',
-              color: 'hsl(var(--text-secondary))',
-              border: '0.5px solid hsl(var(--border-default))',
+              background: 'var(--bg-surface)',
+              color: 'var(--text-secondary)',
+              border: '0.5px solid var(--border-default)',
             }}
           >
             Anterior
           </button>
-          <span className="text-xs" style={{ color: 'hsl(var(--text-muted))' }}>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
             Pagina {entries.data.meta.page} de {entries.data.meta.totalPages}
           </span>
           <button
@@ -169,9 +169,9 @@ export default function ContasPagarPage() {
             }}
             className="rounded-md px-3 py-1.5 text-xs font-medium"
             style={{
-              background: 'hsl(var(--bg-surface))',
-              color: 'hsl(var(--text-secondary))',
-              border: '0.5px solid hsl(var(--border-default))',
+              background: 'var(--bg-surface)',
+              color: 'var(--text-secondary)',
+              border: '0.5px solid var(--border-default)',
             }}
           >
             Proxima

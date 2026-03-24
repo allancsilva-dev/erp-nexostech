@@ -61,25 +61,25 @@ export const OverdueTable = React.memo(function OverdueTable({
           <tr>
             <th
               className="pb-2 text-left text-[10px] font-medium uppercase tracking-wider"
-              style={{ color: 'hsl(var(--text-muted))' }}
+              style={{ color: 'var(--text-muted)' }}
             >
               Codigo
             </th>
             <th
               className="pb-2 text-left text-[10px] font-medium uppercase tracking-wider"
-              style={{ color: 'hsl(var(--text-muted))' }}
+              style={{ color: 'var(--text-muted)' }}
             >
               Descricao
             </th>
             <th
               className="pb-2 text-right text-[10px] font-medium uppercase tracking-wider"
-              style={{ color: 'hsl(var(--text-muted))' }}
+              style={{ color: 'var(--text-muted)' }}
             >
               Valor
             </th>
             <th
               className="pb-2 text-right text-[10px] font-medium uppercase tracking-wider"
-              style={{ color: 'hsl(var(--text-muted))' }}
+              style={{ color: 'var(--text-muted)' }}
             >
               Atraso
             </th>
@@ -91,11 +91,11 @@ export const OverdueTable = React.memo(function OverdueTable({
               <td colSpan={4} className="py-8 text-center">
                 <Inbox
                   size={24}
-                  style={{ color: 'hsl(var(--text-muted))' }}
+                  style={{ color: 'var(--text-muted)' }}
                   strokeWidth={1.2}
                   className="mx-auto mb-2"
                 />
-                <p className="text-xs" style={{ color: 'hsl(var(--text-muted))' }}>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                   Nenhuma conta vencida
                 </p>
               </td>

@@ -141,14 +141,14 @@ export default function ConfiguracoesRolesPage() {
         ) : null}
 
         {isError ? (
-          <div className="m-4 flex items-center justify-between rounded-lg p-4" style={{ background: 'hsl(var(--danger-muted))' }}>
+          <div className="m-4 flex items-center justify-between rounded-lg p-4" style={{ background: 'var(--danger-muted)' }}>
             <div className="flex items-center gap-3">
-              <AlertCircle size={18} style={{ color: 'hsl(var(--danger))' }} />
+              <AlertCircle size={18} style={{ color: 'var(--danger)' }} />
               <div>
-                <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger))' }}>
+                <p className="text-sm font-medium" style={{ color: 'var(--danger)' }}>
                   Falha ao carregar dados
                 </p>
-                <p className="text-xs" style={{ color: 'hsl(var(--text-secondary))' }}>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                   {errorMessage}
                 </p>
               </div>
@@ -161,9 +161,9 @@ export default function ConfiguracoesRolesPage() {
               }}
               className="rounded-md px-3 py-1.5 text-xs font-medium"
               style={{
-                background: 'hsl(var(--bg-surface))',
-                color: 'hsl(var(--text-primary))',
-                border: '0.5px solid hsl(var(--border-default))',
+                background: 'var(--bg-surface)',
+                color: 'var(--text-primary)',
+                border: '0.5px solid var(--border-default)',
               }}
             >
               Tentar novamente
@@ -186,11 +186,11 @@ export default function ConfiguracoesRolesPage() {
               <TableRow key={role.id}>
                 <TableCell>
                   <div className="font-medium">{role.name}</div>
-                  <div className="text-xs" style={{ color: 'hsl(var(--text-muted))' }}>{role.description}</div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{role.description}</div>
                   {role.isSystem ? (
                     <span
                       className="mt-1 inline-block rounded px-2 py-0.5 text-xs"
-                      style={{ background: 'hsl(var(--bg-surface-raised))', color: 'hsl(var(--text-muted))' }}
+                      style={{ background: 'var(--bg-surface-raised)', color: 'var(--text-muted)' }}
                     >
                       Sistema
                     </span>
@@ -201,7 +201,7 @@ export default function ConfiguracoesRolesPage() {
                   <div className="space-y-3">
                     {groupedPermissions.map(([moduleName, modulePermissions]) => (
                       <div key={moduleName}>
-                        <div className="mb-1 text-xs font-semibold uppercase" style={{ color: 'hsl(var(--text-muted))' }}>
+                        <div className="mb-1 text-xs font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>
                           {moduleName}
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -211,7 +211,7 @@ export default function ConfiguracoesRolesPage() {
                               <label
                                 key={permission.code}
                                 className="inline-flex items-center gap-2 rounded px-2 py-1 text-xs"
-                                style={{ border: '0.5px solid hsl(var(--border-default))', color: 'hsl(var(--text-secondary))' }}
+                                style={{ border: '0.5px solid var(--border-default)', color: 'var(--text-secondary)' }}
                                 title={permission.description}
                               >
                                 <input
@@ -266,11 +266,11 @@ export default function ConfiguracoesRolesPage() {
 
         {roles.length === 0 ? (
           <div className="flex flex-col items-center py-12 text-center">
-            <Inbox size={40} style={{ color: 'hsl(var(--text-muted))' }} strokeWidth={1} />
-            <p className="mt-4 text-sm font-medium" style={{ color: 'hsl(var(--text-secondary))' }}>
+            <Inbox size={40} style={{ color: 'var(--text-muted)' }} strokeWidth={1} />
+            <p className="mt-4 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
               Nenhuma role cadastrada
             </p>
-            <p className="mt-1 text-xs" style={{ color: 'hsl(var(--text-muted))' }}>
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
               Crie a primeira role para definir acessos
             </p>
           </div>
