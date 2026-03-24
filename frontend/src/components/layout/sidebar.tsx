@@ -182,7 +182,7 @@ const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = 
 
 const baseItem =
   'flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-[7px] text-[13px] font-medium transition-all duration-150';
-const normalItem = `${baseItem} text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-primary)]`;
+const normalItem = `${baseItem} text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)]`;
 const activeItem = `${baseItem} bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)]`;
 
 function getIdentityLabel(user: { name?: string | null; email: string | null; roles?: Array<{ name: string }> } | null): string {
@@ -319,7 +319,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-sm font-bold text-white">■</span>
-        {!isCollapsed ? <span className="text-[14px] font-semibold text-[var(--text-primary)]">Nexos Financeiro</span> : null}
+        {!isCollapsed ? <span className="text-[14px] font-semibold text-[var(--sidebar-text)]">Nexos Financeiro</span> : null}
       </button>
 
       <nav className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pr-1" aria-label="Navegacao do ERP">
@@ -337,8 +337,8 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
           </div>
           {!isCollapsed ? (
             <div className="min-w-0">
-              <p className="truncate text-[12px] font-medium text-[var(--text-primary)]">{identity}</p>
-              <p className="truncate text-[11px] text-[var(--text-secondary)]">{roleLabel}</p>
+              <p className="truncate text-[12px] font-medium text-[var(--sidebar-text)]">{identity}</p>
+              <p className="truncate text-[11px] text-[var(--sidebar-text-muted)]">{roleLabel}</p>
             </div>
           ) : null}
         </div>
