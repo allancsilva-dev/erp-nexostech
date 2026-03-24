@@ -1,9 +1,9 @@
 ﻿'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Building2, Loader2 } from 'lucide-react';
+import { Building2, ChevronDown, Loader2 } from 'lucide-react';
 import { useBranch } from '@/hooks/use-branch';
-import { Select } from '@/components/ui/select';
+import { Dropdown, DropdownItem } from '@/components/ui/dropdown';
 
 export function BranchSwitcher() {
   const { activeBranch, branches, switchBranch, isLoading } = useBranch();
@@ -27,44 +27,19 @@ export function BranchSwitcher() {
 
   if (!branchList) {
     return (
-      <label className="flex min-w-[220px] items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-2 text-sm shadow-sm">
+      <div className="inline-flex min-w-[220px] items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-[var(--text-primary)]">
         <Loader2 className="h-4 w-4 animate-spin text-[var(--text-muted)]" aria-hidden="true" />
-        <button
-          type="button"
-          disabled
-          className="h-7 w-full cursor-not-allowed rounded-md border border-[var(--border-default)] bg-[var(--bg-input)] px-2 text-left text-[var(--text-muted)]"
-          aria-label="Carregando filiais"
-        >
-          ...
-        </button>
-      </label>
+        <span className="text-[var(--text-muted)]">Carregando...</span>
+      </div>
     );
   }
 
   if (branchList.length === 0) {
     return (
-      <label className="flex min-w-[220px] items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-2 text-sm shadow-sm">
+      <div className="inline-flex min-w-[220px] items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-[var(--text-primary)]">
         <Building2 className="h-4 w-4 text-[var(--text-muted)]" aria-hidden="true" />
-        <button
-          type="button"
-          disabled
-          className="h-7 w-full cursor-not-allowed rounded-md border border-[var(--border-default)] bg-[var(--bg-input)] px-2 text-left text-[var(--text-muted)]"
-          aria-label="Sem filiais"
-        >
-          Sem filiais
-        </button>
-      </label>
-    );
-  }
-
-  if (branchList.length === 1) {
-    return (
-      <label className="flex min-w-[220px] items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-2 text-sm shadow-sm">
-        <Building2 className="h-4 w-4 text-[var(--text-muted)]" aria-hidden="true" />
-        <span className="truncate text-[var(--text-default)]">
-          {currentBranch?.name ?? branchList[0].name}
-        </span>
-      </label>
+        <span className="text-[var(--text-muted)]">Sem filiais</span>
+      </div>
     );
   }
 
@@ -83,25 +58,39 @@ export function BranchSwitcher() {
   }
 
   return (
-    <label className="flex min-w-[220px] items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-surface)] px-3 py-2 text-sm shadow-sm">
-      {isLoading || isSwitching ? (
-        <Loader2 className="h-4 w-4 animate-spin text-[var(--text-muted)]" aria-hidden="true" />
-      ) : (
-        <Building2 className="h-4 w-4 text-[var(--text-muted)]" aria-hidden="true" />
+    <Dropdown
+      align="left"
+      trigger={(
+        <button
+          type="button"
+          className="inline-flex min-w-[220px] items-center gap-2 rounded-md px-2.5 py-1.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[var(--bg-surface-hover)]"
+          aria-label="Selecionar filial"
+          disabled={isLoading || branchList.length === 1}
+        >
+          {isLoading || isSwitching ? (
+            <Loader2 className="h-4 w-4 animate-spin text-[var(--text-muted)]" aria-hidden="true" />
+          ) : (
+            <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" />
+          )}
+          <span className="truncate">{currentBranch?.name ?? branchList[0]?.name ?? 'Matriz'}</span>
+          <ChevronDown className="h-4 w-4 opacity-60" aria-hidden="true" />
+        </button>
       )}
-      <Select
-        className="h-7 border-0 bg-transparent p-0 shadow-none outline-none focus-visible:ring-0"
-        value={pendingBranchId}
-        onChange={(event) => onSelectBranch(event.target.value)}
-        disabled={isLoading}
-        aria-label="Selecionar filial"
-      >
-        {branchList.map((branch) => (
-          <option key={branch.id} value={branch.id}>
-            {branch.name}{branch.isHeadquarters ? ' (Matriz)' : ''}
-          </option>
-        ))}
-      </Select>
-    </label>
+      contentClassName="w-56 border border-[var(--border-subtle)] bg-[var(--bg-surface)]"
+      className="min-w-[220px]"
+    >
+      {branchList.length > 1
+        ? branchList.map((branch) => (
+            <DropdownItem
+              key={branch.id}
+              onClick={() => onSelectBranch(branch.id)}
+              className="flex cursor-pointer items-center justify-between text-[var(--text-primary)] hover:bg-[var(--bg-surface-hover)]"
+            >
+              <span className="truncate">{branch.name}</span>
+              {branch.id === (currentBranch?.id ?? pendingBranchId) ? <span>✓</span> : null}
+            </DropdownItem>
+          ))
+        : null}
+    </Dropdown>
   );
 }
