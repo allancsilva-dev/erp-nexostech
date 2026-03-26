@@ -276,7 +276,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         <Icon size={18} strokeWidth={1.8} className="shrink-0" />
         {!isCollapsed ? <span className="truncate">{item.label}</span> : null}
         {!isCollapsed && item.badge === 'approvals' && pendingCount > 0 ? (
-          <span className="ml-auto min-w-[18px] rounded-full bg-[var(--danger)] px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
+          <span className="ml-auto min-w-[18px] rounded-full bg-[var(--danger)] px-1.5 py-0.5 text-center text-[10px] font-bold text-[var(--destructive-foreground)]">
             {pendingCount}
           </span>
         ) : null}
@@ -305,20 +305,19 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
   return (
     <aside
       className={cn(
-        'hidden shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col',
+        'hidden shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col bg-[var(--sidebar-bg)] border-[var(--sidebar-border)]',
         !isVisible && 'lg:w-0 lg:overflow-hidden lg:border-r-0 lg:p-0',
         isVisible && (isCollapsed ? 'w-16 p-2' : 'w-[var(--sidebar-width)] p-3'),
       )}
-      style={{ background: 'var(--sidebar-bg)', borderColor: 'var(--sidebar-border)' }}
       aria-label="Menu lateral principal"
     >
-      <button
-        type="button"
-        className="mb-3 inline-flex items-center gap-2 overflow-hidden rounded-lg px-2 py-2 text-left"
-        onClick={() => setIsCollapsed((previous) => !previous)}
-        aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-sm font-bold text-white">■</span>
+        <button
+          type="button"
+          className="mb-3 inline-flex items-center gap-2 overflow-hidden rounded-lg px-2 py-2 text-left"
+          onClick={() => setIsCollapsed((previous) => !previous)}
+          aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-sm font-bold text-[var(--accent-foreground)]">■</span>
         {!isCollapsed ? <span className="text-[14px] font-semibold text-[var(--sidebar-text)]">Nexos Financeiro</span> : null}
       </button>
 
@@ -330,9 +329,9 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         {renderSection('configuracoes')}
       </nav>
 
-      <div className="mt-3 border-t pt-3" style={{ borderColor: 'var(--sidebar-border)' }}>
+      <div className="mt-3 border-t pt-3 border-[var(--sidebar-border)]">
         <div className={cn('flex items-center gap-2', isCollapsed ? 'justify-center' : '')}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-bold text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-bold text-[var(--accent-foreground)]">
             {getIdentityInitials(identity)}
           </div>
           {!isCollapsed ? (

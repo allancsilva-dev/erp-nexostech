@@ -40,6 +40,13 @@
     --sidebar-section-label: hsl(215 16% 55%);
     --sidebar-border: hsla(0 0% 0% / 0.08);
 
+    /* Sidebar tokens (light theme defaults) */
+    --sidebar-bg: hsl(0 0% 98%);
+    --sidebar-text: hsl(222 47% 11%);
+    --sidebar-text-muted: hsl(215 20% 65%);
+    --sidebar-hover: hsl(210 40% 96%);
+    --sidebar-width: 240px;
+
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
@@ -94,7 +101,8 @@
     --info: hsl(217 91% 60%);
     --info-muted: hsla(217 70% 50% / 0.12);
 
-    --sidebar-bg: hsl(222 47% 11%);
+    /* Sidebar dark overrides */
+    --sidebar-bg: hsl(220 20% 10%);
     --sidebar-text: hsl(210 40% 98%);
     --sidebar-text-muted: hsl(215 20% 75%);
     --sidebar-hover: hsl(222 47% 16%);
