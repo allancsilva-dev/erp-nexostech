@@ -24,23 +24,23 @@ type ThemeProviderProps = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function applyTheme(theme: Theme): void {
-  if (theme === 'light') {
-    document.documentElement.classList.add('light');
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
   } else {
-    // Never pass an empty token to classList.remove.
-    document.documentElement.classList.remove('light');
+    document.documentElement.classList.remove('dark');
   }
 }
 
-export function ThemeProvider({ children, defaultTheme = 'dark' }: ThemeProviderProps) {
+export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(defaultTheme);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem('nexos-theme');
-    const initialTheme: Theme = storedTheme === 'light' ? 'light' : 'dark';
+    const initialTheme: Theme =
+      storedTheme === 'light' || storedTheme === 'dark' ? (storedTheme as Theme) : defaultTheme;
     setThemeState(initialTheme);
     applyTheme(initialTheme);
-  }, []);
+  }, [defaultTheme]);
 
   function setTheme(nextTheme: Theme): void {
     setThemeState(nextTheme);

@@ -2,6 +2,65 @@
 
 @layer base {
   :root {
+    --bg-app: hsl(210 40% 98%);
+    --bg-surface: hsl(0 0% 100%);
+    --bg-surface-raised: hsl(210 40% 96%);
+    --bg-surface-hover: hsl(210 40% 96%);
+    --bg-input: hsl(210 40% 96%);
+    --text-input: hsl(222 47% 11%);
+    --placeholder-input: hsl(215 20% 65%);
+    --bg-overlay: hsl(210 40% 94%);
+
+    --border-subtle: hsla(0 0% 0% / 0.05);
+    --border-default: hsla(0 0% 0% / 0.10);
+    --border-strong: hsla(0 0% 0% / 0.18);
+
+    --text-primary: hsl(222 47% 11%);
+    --text-secondary: hsl(215 16% 47%);
+    --text-muted: hsl(215 20% 65%);
+    --text-inverse: hsl(210 40% 96%);
+
+    --accent: hsl(239 84% 67%);
+    --accent-hover: hsl(239 84% 60%);
+    --accent-text: hsl(239 84% 50%);
+    --accent-bg: hsla(239 50% 50% / 0.08);
+    --accent-muted: hsla(239 50% 50% / 0.08);
+
+    --success: hsl(142 71% 38%);
+    --success-muted: hsla(142 50% 40% / 0.08);
+    --danger: hsl(0 84% 55%);
+    --danger-muted: hsla(0 70% 50% / 0.08);
+    --warning: hsl(38 92% 45%);
+    --warning-muted: hsla(38 70% 50% / 0.08);
+    --info: hsl(217 91% 55%);
+    --info-muted: hsla(217 70% 50% / 0.08);
+
+    --sidebar-active-bg: hsla(239 50% 50% / 0.15);
+    --sidebar-active-text: hsl(239 84% 77%);
+    --sidebar-section-label: hsl(215 16% 55%);
+    --sidebar-border: hsla(0 0% 0% / 0.08);
+
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 0% / 0.10;
+    --input: 210 40% 96%;
+    --ring: 239 84% 67%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
     --bg-app: hsl(220 20% 7%);
     --bg-surface: hsl(225 18% 9%);
     --bg-surface-raised: hsl(228 16% 12%);
@@ -67,65 +126,6 @@
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 100% / 0.08;
     --input: 230 14% 14%;
-    --ring: 239 84% 67%;
-    --radius: 0.5rem;
-  }
-
-  .light {
-    --bg-app: hsl(210 40% 98%);
-    --bg-surface: hsl(0 0% 100%);
-    --bg-surface-raised: hsl(210 40% 96%);
-    --bg-surface-hover: hsl(210 40% 96%);
-    --bg-input: hsl(210 40% 96%);
-    --text-input: hsl(222 47% 11%);
-    --placeholder-input: hsl(215 20% 65%);
-    --bg-overlay: hsl(210 40% 94%);
-
-    --border-subtle: hsla(0 0% 0% / 0.05);
-    --border-default: hsla(0 0% 0% / 0.10);
-    --border-strong: hsla(0 0% 0% / 0.18);
-
-    --text-primary: hsl(222 47% 11%);
-    --text-secondary: hsl(215 16% 47%);
-    --text-muted: hsl(215 20% 65%);
-    --text-inverse: hsl(210 40% 96%);
-
-    --accent: hsl(239 84% 67%);
-    --accent-hover: hsl(239 84% 60%);
-    --accent-text: hsl(239 84% 50%);
-    --accent-bg: hsla(239 50% 50% / 0.08);
-    --accent-muted: hsla(239 50% 50% / 0.08);
-
-    --success: hsl(142 71% 38%);
-    --success-muted: hsla(142 50% 40% / 0.08);
-    --danger: hsl(0 84% 55%);
-    --danger-muted: hsla(0 70% 50% / 0.08);
-    --warning: hsl(38 92% 45%);
-    --warning-muted: hsla(38 70% 50% / 0.08);
-    --info: hsl(217 91% 55%);
-    --info-muted: hsla(217 70% 50% / 0.08);
-
-    --sidebar-active-bg: hsla(239 50% 50% / 0.15);
-    --sidebar-active-text: hsl(239 84% 77%);
-    --sidebar-section-label: hsl(215 16% 55%);
-    --sidebar-border: hsla(0 0% 0% / 0.08);
-
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 0% / 0.10;
-    --input: 210 40% 96%;
     --ring: 239 84% 67%;
   }
 }
