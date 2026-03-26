@@ -90,9 +90,7 @@ class ApiClient {
       throw new ApiError('RATE_LIMIT', 'Limite de requisicoes atingido. Aguarde alguns segundos.', undefined, 429);
     }
 
-    if (response.status === 401 && typeof window !== 'undefined') {
-      const currentUrl = window.location.href;
-      window.location.href = `${AUTH_URL}?app=erp.zonadev.tech&redirect=${encodeURIComponent(currentUrl)}`;
+    if (response.status === 401) {
       throw new ApiError('UNAUTHORIZED', 'Sessao expirada', undefined, 401);
     }
 

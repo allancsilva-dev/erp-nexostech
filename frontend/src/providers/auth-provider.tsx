@@ -53,7 +53,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch('/api/v1/users/me', { credentials: 'include' });
 
       if (response.status === 401) {
-        window.location.href = `${AUTH_URL}/login?app=${APP_AUD}&redirect=${encodeURIComponent(window.location.href)}`;
+        // Let middleware handle redirects. Clear local state and surface the condition.
+        console.error('AuthProvider: /users/me returned 401');
+        setUser(null);
+        setPermissions([]);
+        setBranches([]);
         return;
       }
 
@@ -80,7 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data?.user ?? null);
       setPermissions(data?.permissions ?? []);
       setBranches(data?.branches ?? []);
-    } catch {
+    } catch (err) {
+      console.error('AuthProvider: loadUser failed', err);
       setUser(null);
       setPermissions([]);
       setBranches([]);
