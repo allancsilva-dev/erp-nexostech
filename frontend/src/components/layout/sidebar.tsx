@@ -8,31 +8,29 @@ import {
   ArrowLeftRight,
   BarChart3,
   BookOpen,
-  Building2,
   CheckCircle2,
   Clock4,
   FileText,
-  FolderTree,
+  
   GitCompare,
   LayoutDashboard,
   LogOut,
   Receipt,
   ScrollText,
   Settings,
-  ShieldCheck,
   TrendingUp,
-  Users,
   type LucideIcon,
 } from 'lucide-react';
 import { ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import CollapsibleMenu from './collapsible-menu';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useFeatureFlag } from '@/hooks/use-feature-flags';
 import { useApprovals } from '@/features/approvals/hooks/use-approvals';
 import { useAuthContext } from '@/providers/auth-provider';
 
 type SidebarItem = {
-  section: 'main' | 'financeiro' | 'relatorios' | 'operacoes' | 'configuracoes';
+  section: 'main' | 'financeiro' | 'relatorios' | 'controle' | 'configuracoes';
   label: string;
   href: string;
   permission: string;
@@ -71,13 +69,7 @@ const ITEMS: SidebarItem[] = [
     permission: 'financial.reports.view',
     icon: TrendingUp,
   },
-  {
-    section: 'financeiro',
-    label: 'Categorias',
-    href: ROUTES.categorias,
-    permission: 'financial.categories.view',
-    icon: FolderTree,
-  },
+  
   {
     section: 'financeiro',
     label: 'Conciliação',
@@ -121,7 +113,7 @@ const ITEMS: SidebarItem[] = [
     icon: Clock4,
   },
   {
-    section: 'operacoes',
+    section: 'controle',
     label: 'Aprovações',
     href: ROUTES.aprovacoes,
     permission: 'financial.entries.approve',
@@ -129,7 +121,7 @@ const ITEMS: SidebarItem[] = [
     badge: 'approvals',
   },
   {
-    section: 'operacoes',
+    section: 'controle',
     label: 'Auditoria',
     href: ROUTES.auditoria,
     permission: 'financial.audit.view',
@@ -150,33 +142,12 @@ const ITEMS: SidebarItem[] = [
     icon: Settings,
     featureFlag: 'collection_rules_enabled',
   },
-  {
-    section: 'configuracoes',
-    label: 'Filiais',
-    href: ROUTES.adminFiliais,
-    permission: 'admin.branches.manage',
-    icon: Building2,
-  },
-  {
-    section: 'configuracoes',
-    label: 'Usuários',
-    href: ROUTES.configuracoesUsuarios,
-    permission: 'admin.users.manage',
-    icon: Users,
-  },
-  {
-    section: 'configuracoes',
-    label: 'Permissões',
-    href: ROUTES.configuracoesRoles,
-    permission: 'admin.users.manage',
-    icon: ShieldCheck,
-  },
 ];
 
 const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = {
   financeiro: 'Financeiro',
   relatorios: 'Relatórios',
-  operacoes: 'Operações',
+  controle: 'Controle',
   configuracoes: 'Configurações',
 };
 
@@ -256,7 +227,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
       main: filteredItems.filter((item) => item.section === 'main'),
       financeiro: filteredItems.filter((item) => item.section === 'financeiro'),
       relatorios: filteredItems.filter((item) => item.section === 'relatorios'),
-      operacoes: filteredItems.filter((item) => item.section === 'operacoes'),
+      controle: filteredItems.filter((item) => item.section === 'controle'),
       configuracoes: filteredItems.filter((item) => item.section === 'configuracoes'),
     };
   }, [filteredItems]);
@@ -324,8 +295,12 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
       <nav className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pr-1" aria-label="Navegacao do ERP">
         <div className="space-y-1">{sections.main.map(renderItem)}</div>
         {renderSection('financeiro')}
-        {renderSection('relatorios')}
-        {renderSection('operacoes')}
+        {renderSection('controle')}
+        {sections.relatorios.length ? (
+          <CollapsibleMenu id="relatorios" title={SECTION_LABELS.relatorios} isCollapsed={isCollapsed}>
+            <div className="space-y-1">{sections.relatorios.map(renderItem)}</div>
+          </CollapsibleMenu>
+        ) : null}
         {renderSection('configuracoes')}
       </nav>
 
