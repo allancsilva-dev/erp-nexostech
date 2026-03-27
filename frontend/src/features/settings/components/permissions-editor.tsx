@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePermissions } from '@/features/settings/hooks/use-permissions';
 import { Button } from '@/components/ui/button';
 
-type Role = { id: string; name: string; permissions: string[] };
+type Role = { id: string; name: string; permissions: Array<string | { code: string }> };
 
 type Props = {
   role: Role;
@@ -11,11 +11,18 @@ type Props = {
 };
 
 export function PermissionsEditor({ role, onSave, onDelete }: Props) {
-  const [permissions, setPermissions] = useState<string[]>(role.permissions ?? []);
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: permsByModule = {}, isLoading } = usePermissions();
+
+  useEffect(() => {
+    if (!role) return;
+
+    const normalized = (role.permissions ?? []).map((p) => (typeof p === 'string' ? p : p.code));
+    setPermissions(normalized);
+  }, [role]);
 
   function togglePermission(perm: string) {
     setPermissions((prev) => (prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]));
