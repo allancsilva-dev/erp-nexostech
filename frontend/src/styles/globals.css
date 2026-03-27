@@ -37,13 +37,13 @@
 
     --sidebar-active-bg: 226 95% 55%;
     --sidebar-active-text: 0 0% 100%;
-    --sidebar-section-label: 210 15% 85%;
+    --sidebar-section-label: 0 0% 75%;
     --sidebar-border: 226 50% 24%;
 
     /* Sidebar tokens (light theme defaults) */
     --sidebar-bg: 226 90% 34%;
     --sidebar-text: 0 0% 100%;
-    --sidebar-text-muted: 210 15% 92%;
+    --sidebar-text-muted: 0 0% 85%;
     --sidebar-hover: 226 85% 42%;
     --sidebar-width: 240px;
 
@@ -104,11 +104,11 @@
     /* Sidebar dark overrides (keep institutional color consistent) */
     --sidebar-bg: 226 90% 34%;
     --sidebar-text: 0 0% 100%;
-    --sidebar-text-muted: 210 15% 92%;
+    --sidebar-text-muted: 0 0% 85%;
     --sidebar-hover: 226 85% 42%;
     --sidebar-active-bg: 226 95% 55%;
     --sidebar-active-text: 0 0% 100%;
-    --sidebar-section-label: 210 15% 85%;
+    --sidebar-section-label: 0 0% 75%;
     --sidebar-border: 226 50% 24%;
 
     --radius-sm: 6px;

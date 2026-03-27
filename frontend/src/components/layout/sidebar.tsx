@@ -246,7 +246,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         title={isCollapsed ? item.label : undefined}
         aria-label={item.label}
       >
-            <Icon size={18} strokeWidth={1.8} className="shrink-0" />
+            <Icon size={18} strokeWidth={1.8} className="shrink-0 text-current" />
             {!isCollapsed ? (
               <div className="min-w-0">
                 <span className="truncate">{item.label}</span>
@@ -333,7 +333,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
           className={cn(normalItem, 'mt-2', isCollapsed ? 'justify-center px-2.5' : '')}
           aria-label="Sair"
         >
-          <LogOut size={18} strokeWidth={1.8} className="shrink-0" />
+          <LogOut size={18} strokeWidth={1.8} className="shrink-0 text-current" />
           {!isCollapsed ? <span>Sair</span> : null}
         </button>
       </div>
