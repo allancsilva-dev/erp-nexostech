@@ -35,16 +35,16 @@
     --info: hsl(217 91% 55%);
     --info-muted: hsla(217 70% 50% / 0.08);
 
-    --sidebar-active-bg: hsla(239 50% 50% / 0.15);
-    --sidebar-active-text: hsl(239 84% 77%);
-    --sidebar-section-label: hsl(215 16% 55%);
-    --sidebar-border: hsla(0 0% 0% / 0.08);
+    --sidebar-active-bg: 226 80% 46%;
+    --sidebar-active-text: 210 40% 98%;
+    --sidebar-section-label: 210 20% 75%;
+    --sidebar-border: 226 50% 24%;
 
     /* Sidebar tokens (light theme defaults) */
-    --sidebar-bg: hsl(0 0% 98%);
-    --sidebar-text: hsl(222 47% 11%);
-    --sidebar-text-muted: hsl(215 20% 65%);
-    --sidebar-hover: hsl(210 40% 96%);
+    --sidebar-bg: 226 90% 34%;
+    --sidebar-text: 210 40% 98%;
+    --sidebar-text-muted: 210 20% 80%;
+    --sidebar-hover: 226 80% 40%;
     --sidebar-width: 240px;
 
     --background: 0 0% 100%;
@@ -101,15 +101,15 @@
     --info: hsl(217 91% 60%);
     --info-muted: hsla(217 70% 50% / 0.12);
 
-    /* Sidebar dark overrides */
-    --sidebar-bg: hsl(220 20% 10%);
-    --sidebar-text: hsl(210 40% 98%);
-    --sidebar-text-muted: hsl(215 20% 75%);
-    --sidebar-hover: hsl(222 47% 16%);
-    --sidebar-active-bg: hsla(239 50% 50% / 0.12);
-    --sidebar-active-text: hsl(239 84% 77%);
-    --sidebar-section-label: hsl(217 10% 36%);
-    --sidebar-border: hsla(0 0% 100% / 0.06);
+    /* Sidebar dark overrides (keep institutional color consistent) */
+    --sidebar-bg: 226 90% 34%;
+    --sidebar-text: 210 40% 98%;
+    --sidebar-text-muted: 210 20% 75%;
+    --sidebar-hover: 226 80% 40%;
+    --sidebar-active-bg: 226 80% 46%;
+    --sidebar-active-text: 210 40% 98%;
+    --sidebar-section-label: 210 20% 75%;
+    --sidebar-border: 226 50% 24%;
 
     --radius-sm: 6px;
     --radius-md: 8px;

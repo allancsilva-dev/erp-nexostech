@@ -155,8 +155,8 @@ const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = 
 
 const baseItem =
   'flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-[7px] text-[13px] font-medium transition-all duration-150';
-const normalItem = `${baseItem} text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)]`;
-const activeItem = `${baseItem} bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)]`;
+const normalItem = `${baseItem} text-[var(--sidebar-text-muted)] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[var(--sidebar-text)]`;
+const activeItem = `${baseItem} bg-[hsl(var(--sidebar-active-bg))] text-[hsl(var(--sidebar-active-text))]`;
 
 function getIdentityLabel(user: { name?: string | null; email: string | null; roles?: Array<{ name: string }> } | null): string {
   return user?.name || user?.email || 'Utilizador';
@@ -285,7 +285,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
   return (
     <aside
       className={cn(
-        'hidden shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col bg-[var(--sidebar-bg)] border-[var(--sidebar-border)]',
+        'hidden shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col bg-[hsl(var(--sidebar-bg))] border-[hsl(var(--sidebar-border))]',
         !isVisible && 'lg:w-0 lg:overflow-hidden lg:border-r-0 lg:p-0',
         isVisible && (isCollapsed ? 'w-16 p-2' : 'w-[var(--sidebar-width)] p-3'),
       )}
@@ -313,7 +313,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         {renderSection('configuracoes')}
       </nav>
 
-      <div className="mt-3 border-t pt-3 border-[var(--sidebar-border)]">
+      <div className="mt-3 border-t pt-3 border-[hsl(var(--sidebar-border))]">
         <div className={cn('flex items-center gap-2', isCollapsed ? 'justify-center' : '')}>
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-bold text-[var(--accent-foreground)]">
             {getIdentityInitials(identity)}
