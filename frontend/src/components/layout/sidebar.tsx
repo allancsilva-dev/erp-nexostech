@@ -134,7 +134,7 @@ const ITEMS: SidebarItem[] = [
     href: ROUTES.configuracoes,
     permission: 'financial.settings.manage',
     icon: Settings,
-    subtitle: 'Hub administrativo',
+    
   },
   {
     section: 'configuracoes',
