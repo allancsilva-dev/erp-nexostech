@@ -22,7 +22,7 @@ export const ROUTES = {
   boletos: '/financeiro/boletos',
   aprovacoes: '/financeiro/aprovacoes',
   auditoria: '/financeiro/auditoria',
-  configuracoes: '/financeiro/configuracoes',
+  configuracoes: '/configuracoes',
   configuracoesUsuarios: '/configuracoes/usuarios',
   configuracoesRoles: '/configuracoes/roles',
   reguaCobranca: '/financeiro/regua-cobranca',

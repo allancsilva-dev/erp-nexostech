@@ -117,7 +117,7 @@ Observacoes importantes:
 - `/financeiro/aprovacoes`
 - `/financeiro/auditoria`
 - `/financeiro/regua-cobranca`
-- `/financeiro/configuracoes`
+ - `/configuracoes`
 - `/configuracoes/usuarios`
 - `/configuracoes/roles`
 - `/admin/filiais`
