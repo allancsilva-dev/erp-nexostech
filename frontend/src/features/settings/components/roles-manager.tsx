@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 // groupPermissions not needed here; PermissionsEditor uses ALL_PERMISSIONS
@@ -16,7 +16,6 @@ export function RolesManager() {
   const [newRoleName, setNewRoleName] = useState('');
 
   const rolesQuery = useQuery({ queryKey: ['roles'], queryFn: () => api.get<Role[]>('/roles') });
-  const permsQuery = useQuery({ queryKey: ['permissions'], queryFn: () => api.get<string[]>('/permissions') });
 
   const roles = rolesQuery.data?.data ?? [];
   // normalize permissions list: accept array of strings or array of { code }
