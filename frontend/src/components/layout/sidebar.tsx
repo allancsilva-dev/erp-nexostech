@@ -155,7 +155,7 @@ const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = 
 
 const baseItem =
   'flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-[7px] text-[13px] font-medium transition-all duration-150';
-const normalItem = `${baseItem} text-[var(--sidebar-text-muted)] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[var(--sidebar-text)]`;
+const normalItem = `${baseItem} text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))]`;
 const activeItem = `${baseItem} bg-[hsl(var(--sidebar-active-bg))] text-[hsl(var(--sidebar-active-text))]`;
 
 function getIdentityLabel(user: { name?: string | null; email: string | null; roles?: Array<{ name: string }> } | null): string {
@@ -251,7 +251,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
               <div className="min-w-0">
                 <span className="truncate">{item.label}</span>
                 {item.subtitle ? (
-                  <div className="text-[11px] text-[var(--sidebar-text-muted)] truncate">{item.subtitle}</div>
+                  <div className="text-[11px] text-[hsl(var(--sidebar-text-muted))] truncate">{item.subtitle}</div>
                 ) : null}
               </div>
             ) : null}
@@ -273,7 +273,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
     return (
       <div key={section}>
         {!isCollapsed ? (
-          <p className="px-3 pb-1.5 pt-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--sidebar-section-label)]">
+          <p className="px-3 pb-1.5 pt-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[hsl(var(--sidebar-section-label))]">
             {SECTION_LABELS[section]}
           </p>
         ) : null}
@@ -298,7 +298,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
           aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-sm font-bold text-[var(--accent-foreground)]">■</span>
-        {!isCollapsed ? <span className="text-[14px] font-semibold text-[var(--sidebar-text)]">Nexos Financeiro</span> : null}
+        {!isCollapsed ? <span className="text-[14px] font-semibold text-[hsl(var(--sidebar-text))]">Nexos Financeiro</span> : null}
       </button>
 
       <nav className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pr-1" aria-label="Navegacao do ERP">
@@ -320,8 +320,8 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
           </div>
           {!isCollapsed ? (
             <div className="min-w-0">
-              <p className="truncate text-[12px] font-medium text-[var(--sidebar-text)]">{identity}</p>
-              <p className="truncate text-[11px] text-[var(--sidebar-text-muted)]">{roleLabel}</p>
+              <p className="truncate text-[12px] font-medium text-[hsl(var(--sidebar-text))]">{identity}</p>
+              <p className="truncate text-[11px] text-[hsl(var(--sidebar-text-muted))]">{roleLabel}</p>
             </div>
           ) : null}
         </div>

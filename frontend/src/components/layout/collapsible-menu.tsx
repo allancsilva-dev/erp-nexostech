@@ -56,7 +56,7 @@ export default function CollapsibleMenu({ id, title, children, isCollapsed }: Co
         aria-expanded={open}
         onClick={toggle}
         onKeyDown={onKey}
-        className="flex w-full items-center justify-between px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--sidebar-section-label)]"
+        className="flex w-full items-center justify-between px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[hsl(var(--sidebar-section-label))]"
       >
         <span className="truncate">{title}</span>
         {!isCollapsed ? <span className="ml-2 text-sm">{open ? '▾' : '▸'}</span> : null}
