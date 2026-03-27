@@ -12,6 +12,41 @@ Browser → erp.zonadev.tech
   → backend valida JWT via JWKS
 ```
 
+## Atualizações importantes (cliente/servidor)
+
+- Server: novo endpoint `GET /api/auth/reauth` — constrói a `loginUrl` server-side e retorna `{ loginUrl }`. Isso garante que parâmetros sensíveis (`app`, `redirect`) e o domínio do Auth permanecem no lado servidor; ver [src/app/api/auth/reauth/route.ts](src/app/api/auth/reauth/route.ts#L1-L20).
+
+- Cliente: centralização do tratamento de 401 via wrapper `httpFetch` em [src/lib/http-client.ts](src/lib/http-client.ts#L1-L200). O wrapper adiciona `credentials: 'include'` obrigatoriamente e expõe `registerUnauthorizedHandler(handler)` para que o aplicativo reaja a 401 sem realizar redirects automáticos.
+
+- AuthProvider: removido redirect automático em respostas 401. Agora, quando `/api/v1/users/me` retornar 401, o `AuthProvider`:
+  - limpa estado local (`user`, `permissions`, `branches`),
+  - define `isAuthenticated = false` e `needsReauth = true`,
+  - expõe `reauthenticate()` que chama `/api/auth/reauth?redirect=<current>` e redireciona o browser para a `loginUrl` retornada.
+  - renderiza um banner visual (não intrusivo) quando `needsReauth === true` com um botão "Reautenticar" que dispara `reauthenticate()`.
+
+- Comportamento de 401: o interceptor (`httpFetch`) é responsável apenas por sinalizar o evento (invocar o handler). A decisão de UX (mostrar banner, redirecionar) fica no `AuthProvider` para manter autoridade centralizada e previsibilidade.
+
+## Regras críticas atualizadas — NUNCA alterar
+
+1. Não tentar renovar token ou manipular cookies no cliente. Token exchange continua sendo tarefa do `middleware` e dos endpoints server-side.
+
+2. `API_BASE` deve permanecer `'/api/v1'` para usar o proxy Next.js que injeta o `Authorization` server-side.
+
+3. Evitar redirects automáticos dispersos no cliente — centralizar em `AuthProvider` e middleware.
+
+## Ficheiros novos/alterados nesta iteração
+
+- `src/app/api/auth/reauth/route.ts` — endpoint que constrói `loginUrl` server-side.
+- `src/lib/http-client.ts` — `httpFetch` + `registerUnauthorizedHandler`.
+- `src/lib/api-client.ts` — usa `httpFetch` para garantir credentials e tratamento centralizado de 401.
+- `src/providers/auth-provider.tsx` — adiciona `needsReauth`, `isAuthenticated`, `reauthenticate()` e banner.
+
+## Observações
+
+- Este fluxo preserva o `middleware` como autoridade para verificação/renovação de cookies e evita colisões de domínio/nome de cookie conforme definido na secção "Regras críticas".
+- Se for necessário um comportamento automático diferente (ex.: iniciar silent reauth server-side), isso deve ser implementado por endpoints server-side que respeitem o contrato do Auth — NÃO pelo cliente.
+
+
 ## Regras críticas — NUNCA alterar
 
 ### 1. Cookie name
