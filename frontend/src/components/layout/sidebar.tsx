@@ -35,6 +35,7 @@ type SidebarItem = {
   href: string;
   permission: string;
   icon: LucideIcon;
+  subtitle?: string;
   featureFlag?:
     | 'collection_rules_enabled';
   badge?: 'approvals';
@@ -129,10 +130,11 @@ const ITEMS: SidebarItem[] = [
   },
   {
     section: 'configuracoes',
-    label: 'Geral',
+    label: 'Configurações',
     href: ROUTES.configuracoes,
     permission: 'financial.settings.manage',
     icon: Settings,
+    subtitle: 'Hub administrativo',
   },
   {
     section: 'configuracoes',
@@ -244,8 +246,15 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         title={isCollapsed ? item.label : undefined}
         aria-label={item.label}
       >
-        <Icon size={18} strokeWidth={1.8} className="shrink-0" />
-        {!isCollapsed ? <span className="truncate">{item.label}</span> : null}
+            <Icon size={18} strokeWidth={1.8} className="shrink-0" />
+            {!isCollapsed ? (
+              <div className="min-w-0">
+                <span className="truncate">{item.label}</span>
+                {item.subtitle ? (
+                  <div className="text-[11px] text-[var(--sidebar-text-muted)] truncate">{item.subtitle}</div>
+                ) : null}
+              </div>
+            ) : null}
         {!isCollapsed && item.badge === 'approvals' && pendingCount > 0 ? (
           <span className="ml-auto min-w-[18px] rounded-full bg-[var(--danger)] px-1.5 py-0.5 text-center text-[10px] font-bold text-[var(--destructive-foreground)]">
             {pendingCount}
