@@ -8,9 +8,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-
-const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech';
-const APP_AUD = process.env.NEXT_PUBLIC_APP_AUDIENCE ?? 'erp.zonadev.tech';
+import { registerUnauthorizedHandler, httpFetch } from '@/lib/http-client';
 
 export type AuthRole = {
   id: string;
@@ -31,6 +29,9 @@ type AuthContextValue = {
   permissions: string[];
   branches: Array<{ id: string; name: string }>;
   loading: boolean;
+  isAuthenticated: boolean;
+  needsReauth: boolean;
+  reauthenticate: () => Promise<void>;
   hasPermission: (code: string) => boolean;
   hasAnyPermission: (codes: string[]) => boolean;
   isAdmin: () => boolean;
@@ -47,10 +48,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   );
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [needsReauth, setNeedsReauth] = useState(false);
 
   const loadUser = useCallback(async () => {
     try {
-      const response = await fetch('/api/v1/users/me', { credentials: 'include' });
+      const response = await httpFetch('/api/v1/users/me');
 
       if (response.status === 401) {
         // Let middleware handle redirects. Clear local state and surface the condition.
@@ -58,6 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         setPermissions([]);
         setBranches([]);
+        setIsAuthenticated(false);
+        setNeedsReauth(true);
         return;
       }
 
@@ -84,11 +89,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data?.user ?? null);
       setPermissions(data?.permissions ?? []);
       setBranches(data?.branches ?? []);
+      setIsAuthenticated(true);
+      setNeedsReauth(false);
     } catch (err) {
       console.error('AuthProvider: loadUser failed', err);
       setUser(null);
       setPermissions([]);
       setBranches([]);
+      setIsAuthenticated(false);
+      setNeedsReauth(true);
     } finally {
       setLoading(false);
     }
@@ -97,6 +106,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void loadUser();
   }, [loadUser]);
+
+  useEffect(() => {
+    registerUnauthorizedHandler(() => {
+      setIsAuthenticated(false);
+      setNeedsReauth(true);
+    });
+  }, []);
 
   const hasPermission = useCallback(
     (code: string) => {
@@ -138,12 +154,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const returnTo = encodeURIComponent(`${APP_URL}/login`);
 
     try {
-      await fetch('/api/auth/local-logout', {
+      await httpFetch('/api/auth/local-logout', {
         method: 'POST',
-        credentials: 'include',
       });
     } finally {
       window.location.href = `${AUTH_URL}/logout?post_logout_redirect_uri=${returnTo}`;
+    }
+  }, []);
+
+  const reauthenticate = useCallback(async () => {
+    try {
+      const res = await httpFetch('/api/auth/reauth?redirect=' + encodeURIComponent(window.location.href));
+      const { loginUrl } = await res.json();
+      window.location.href = loginUrl;
+    } catch (err) {
+      console.error('reauthenticate failed', err);
     }
   }, []);
 
@@ -153,6 +178,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       permissions,
       branches,
       loading,
+      isAuthenticated,
+      needsReauth,
+      reauthenticate,
       hasPermission,
       hasAnyPermission,
       isAdmin,
@@ -169,10 +197,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       permissions,
       user,
+      isAuthenticated,
+      needsReauth,
+      reauthenticate,
     ],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <>
+      {needsReauth ? (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-warning-bg)] text-[var(--color-warning-text)] p-3 flex justify-between items-center">
+          <span>Sessão expirada</span>
+          <button onClick={reauthenticate} className="font-semibold">
+            Reautenticar
+          </button>
+        </div>
+      ) : null}
+      <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    </>
+  );
 }
 
 export function useAuthContext(): AuthContextValue {

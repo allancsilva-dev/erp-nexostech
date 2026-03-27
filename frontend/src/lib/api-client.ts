@@ -1,7 +1,7 @@
 ﻿import { ApiError, type ApiResponse, type PaginatedResponse } from '@/lib/api-types';
+import { httpFetch } from '@/lib/http-client';
 
 const API_BASE = '/api/v1';
-const AUTH_URL = process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech/login';
 let rateLimitRemaining: number | null = null;
 let throttleUntil = 0;
 
@@ -56,13 +56,12 @@ class ApiClient {
       ...(options?.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}),
     };
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const response = await httpFetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       headers: {
         ...headers,
         ...(options?.headers as Record<string, string> | undefined),
       },
-      credentials: 'include',
     });
 
     const remainingHeader = response.headers.get('X-RateLimit-Remaining');
