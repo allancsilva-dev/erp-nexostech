@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ALL_PERMISSIONS } from '@/lib/all-permissions';
+import { usePermissions } from '@/features/settings/hooks/use-permissions';
 import { groupPermissions, getPermissionLabel } from '@/lib/permission-labels';
 import { Button } from '@/components/ui/button';
 
@@ -16,7 +16,9 @@ export function PermissionsEditor({ role, onSave, onDelete }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const permsByModule = useMemo(() => groupPermissions(ALL_PERMISSIONS), []);
+  const { data: allPermissions = [], isLoading } = usePermissions();
+
+  const permsByModule = useMemo(() => groupPermissions(allPermissions), [allPermissions]);
 
   function togglePermission(perm: string) {
     setPermissions((prev) => (prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]));
@@ -39,6 +41,10 @@ export function PermissionsEditor({ role, onSave, onDelete }: Props) {
     } finally {
       setIsDeleting(false);
     }
+  }
+
+  if (isLoading) {
+    return <p>Carregando permissões...</p>;
   }
 
   return (
