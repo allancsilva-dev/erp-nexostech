@@ -5,25 +5,30 @@ export interface PermissionDef {
 }
 
 export const SYSTEM_PERMISSIONS: PermissionDef[] = [
+  // PADRÃO:
+  // description deve seguir:
+  // "Verbo no infinitivo + objeto"
+  // Ex: "Criar lançamentos"
+
   {
     code: 'financial.dashboard.view',
     module: 'financial',
-    description: 'Ver dashboard financeiro',
+    description: 'Visualizar dashboard financeiro',
   },
   {
     code: 'financial.entries.view',
     module: 'financial',
-    description: 'Listar lancamentos',
+    description: 'Visualizar lançamentos',
   },
   {
     code: 'financial.entries.create',
     module: 'financial',
-    description: 'Criar lancamentos',
+    description: 'Criar lançamentos',
   },
   {
     code: 'financial.entries.edit',
     module: 'financial',
-    description: 'Editar lancamentos',
+    description: 'Editar lançamentos',
   },
   {
     code: 'financial.entries.pay',
@@ -33,22 +38,22 @@ export const SYSTEM_PERMISSIONS: PermissionDef[] = [
   {
     code: 'financial.entries.cancel',
     module: 'financial',
-    description: 'Cancelar lancamentos',
+    description: 'Cancelar lançamentos',
   },
   {
     code: 'financial.entries.delete',
     module: 'financial',
-    description: 'Excluir lancamentos',
+    description: 'Excluir lançamentos',
   },
   {
     code: 'financial.entries.approve',
     module: 'financial',
-    description: 'Aprovar lancamentos',
+    description: 'Aprovar lançamentos',
   },
   {
     code: 'financial.categories.view',
     module: 'financial',
-    description: 'Ver categorias',
+    description: 'Visualizar categorias',
   },
   {
     code: 'financial.categories.manage',
@@ -58,37 +63,37 @@ export const SYSTEM_PERMISSIONS: PermissionDef[] = [
   {
     code: 'financial.reconciliation.execute',
     module: 'financial',
-    description: 'Executar conciliacao',
+    description: 'Executar conciliação',
   },
   {
     code: 'financial.reports.view',
     module: 'financial',
-    description: 'Ver relatorios',
+    description: 'Visualizar relatórios',
   },
   {
     code: 'financial.reports.export',
     module: 'financial',
-    description: 'Exportar relatorios',
+    description: 'Exportar relatórios',
   },
   {
     code: 'financial.settings.manage',
     module: 'financial',
-    description: 'Gerenciar configuracoes financeiras',
+    description: 'Gerenciar configurações financeiras',
   },
   {
     code: 'financial.audit.view',
     module: 'financial',
-    description: 'Ver auditoria',
+    description: 'Visualizar auditoria',
   },
   {
     code: 'financial.bank_accounts.manage',
     module: 'financial',
-    description: 'Gerenciar contas bancarias',
+    description: 'Gerenciar contas bancárias',
   },
   {
     code: 'financial.approval_rules.manage',
     module: 'financial',
-    description: 'Gerenciar regras de aprovacao',
+    description: 'Gerenciar regras de aprovação',
   },
   {
     code: 'admin.branches.manage',
@@ -98,6 +103,6 @@ export const SYSTEM_PERMISSIONS: PermissionDef[] = [
   {
     code: 'admin.users.manage',
     module: 'admin',
-    description: 'Gerenciar usuarios e roles',
+    description: 'Gerenciar usuários e permissões',
   },
 ];

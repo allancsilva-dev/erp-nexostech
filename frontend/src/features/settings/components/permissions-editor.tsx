@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { usePermissions } from '@/features/settings/hooks/use-permissions';
-import { groupPermissions, getPermissionLabel } from '@/lib/permission-labels';
 import { Button } from '@/components/ui/button';
 
 type Role = { id: string; name: string; permissions: string[] };
@@ -16,9 +15,7 @@ export function PermissionsEditor({ role, onSave, onDelete }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const { data: allPermissions = [], isLoading } = usePermissions();
-
-  const permsByModule = useMemo(() => groupPermissions(allPermissions), [allPermissions]);
+  const { data: permsByModule = {}, isLoading } = usePermissions();
 
   function togglePermission(perm: string) {
     setPermissions((prev) => (prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]));
@@ -59,9 +56,9 @@ export function PermissionsEditor({ role, onSave, onDelete }: Props) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {perms.map((perm) => (
-              <label key={perm} className="flex items-center gap-2 rounded px-3 py-1.5 text-sm border-[0.5px] border-[var(--border-default)]">
-                <input type="checkbox" checked={permissions.includes(perm)} onChange={() => togglePermission(perm)} />
-                <span className="ml-2 text-[var(--text-primary)]">{getPermissionLabel(perm)}</span>
+              <label key={perm.code} className="flex items-center gap-2 rounded px-3 py-1.5 text-sm border-[0.5px] border-[var(--border-default)]">
+                <input type="checkbox" checked={permissions.includes(perm.code)} onChange={() => togglePermission(perm.code)} />
+                <span className="ml-2 text-[var(--text-primary)]">{perm.description ?? perm.code}</span>
               </label>
             ))}
           </div>

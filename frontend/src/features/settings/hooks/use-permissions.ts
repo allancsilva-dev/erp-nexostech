@@ -1,21 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 
+type Permission = { code: string; description?: string };
+type PermissionsByModule = Record<string, Permission[]>;
+
 export function usePermissions() {
-  return useQuery({
+  return useQuery<PermissionsByModule>({
     queryKey: ['permissions'],
     queryFn: async () => {
-      const res = await api.get<string[]>('/permissions');
-      const data = res.data;
-
-      if (Array.isArray(data)) {
-        if (data.length === 0) return [];
-        if (typeof data[0] === 'string') return data as string[];
-        const arr = data as unknown as Array<{ code: string }>;
-        return arr.map((p) => p.code);
-      }
-
-      return [];
+      const res = await api.get('/permissions');
+      // backend returns { data: { module1: [...], module2: [...] } }
+      const payload = res.data as any;
+      return payload?.data || {};
     },
   });
 }

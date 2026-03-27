@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-// groupPermissions not needed here; PermissionsEditor uses ALL_PERMISSIONS
+// PermissionsEditor will load permissions from the API (grouped by module)
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PermissionsEditor from '@/features/settings/components/permissions-editor';
