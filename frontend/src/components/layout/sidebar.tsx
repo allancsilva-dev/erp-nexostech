@@ -154,9 +154,9 @@ const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = 
 };
 
 const baseItem =
-  'group/sidebar-item relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition-[background-color,color,transform,padding,border-radius,box-shadow,opacity] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--sidebar-active-bg))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--sidebar-bg))]';
+  'group/sidebar-item relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition-[background-color,color,transform] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--sidebar-active-bg))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--sidebar-bg))]';
 const normalItem = `${baseItem} text-[hsl(var(--sidebar-text-muted))] hover:translate-x-0.5 hover:bg-[hsl(var(--sidebar-hover)/0.22)] hover:text-[hsl(var(--sidebar-text))]`;
-const activeItem = `${baseItem} bg-[hsl(var(--background))] text-[var(--text-primary)] shadow-sm after:pointer-events-none after:absolute after:-right-[4px] after:top-0 after:h-full after:w-[4px] after:bg-[hsl(var(--background))] after:content-['']`;
+const activeItem = `${baseItem} rounded-l-xl rounded-r-none bg-[hsl(var(--background))] text-[var(--text-primary)] shadow-sm after:pointer-events-none after:absolute after:-right-3 after:top-0 after:h-full after:w-3 after:bg-[hsl(var(--background))] after:content-['']`;
 
 function getIdentityLabel(user: { name?: string | null; email: string | null; roles?: Array<{ name: string }> } | null): string {
   return user?.name || user?.email || 'Utilizador';
@@ -240,7 +240,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
     const itemClassName = cn(
       isActive ? activeItem : normalItem,
       isCollapsed ? 'justify-center px-2.5' : '',
-      isActive && !isCollapsed ? '-mr-[4px] rounded-r-none pr-6' : '',
+      isActive && !isCollapsed ? '-mr-3 pr-6' : '',
       isActive && isCollapsed ? 'rounded-2xl after:hidden' : '',
     );
     const labelClassName = cn(
@@ -263,8 +263,8 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         <span
           aria-hidden="true"
           className={cn(
-            'absolute bottom-1 left-0 top-1 h-auto w-1 -translate-x-2 rounded-full bg-[hsl(var(--sidebar-active-bg))] opacity-0 transition-[opacity,transform] duration-300 ease-out',
-            isActive && 'translate-x-0 opacity-100',
+            'absolute bottom-1 left-0 top-1 h-auto w-[3px] -translate-x-2 scale-y-75 rounded-full bg-[hsl(var(--sidebar-active-bg))] opacity-0 transition-all duration-300 ease-out',
+            isActive && 'translate-x-0 scale-y-100 opacity-100',
           )}
         />
         <Icon
