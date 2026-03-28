@@ -50,11 +50,11 @@ export function BoletoList({ filters }: { filters?: BoletoFilters }) {
       <table className="w-full min-w-[760px] border-collapse text-sm">
         <thead>
           <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
-            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Numero</th>
+            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Número</th>
             <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Status</th>
             <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Valor</th>
             <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Vencimento</th>
-            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Acoes</th>
+            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Ações</th>
           </tr>
         </thead>
         <tbody>

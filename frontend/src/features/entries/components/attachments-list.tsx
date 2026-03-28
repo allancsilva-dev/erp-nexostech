@@ -114,7 +114,7 @@ export function AttachmentsList({ entryId }: { entryId: string }) {
     return (
       <EmptyState
         title="Sem anexos"
-        description="Nenhum anexo foi retornado para este lancamento no endpoint atual."
+        description="Nenhum anexo foi retornado para este lançamento no endpoint atual."
       />
     );
   }
@@ -136,12 +136,12 @@ export function AttachmentsList({ entryId }: { entryId: string }) {
     <div className="surface-card overflow-x-auto p-3">
       <table className="w-full min-w-[760px] border-collapse text-sm">
         <thead>
-          <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
+            <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
             <th className="px-3 py-2 font-medium">Tipo</th>
             <th className="px-3 py-2 font-medium">Nome</th>
             <th className="px-3 py-2 font-medium">Tamanho</th>
             <th className="px-3 py-2 font-medium">Upload</th>
-            <th className="px-3 py-2 font-medium">Acoes</th>
+            <th className="px-3 py-2 font-medium">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -163,7 +163,7 @@ export function AttachmentsList({ entryId }: { entryId: string }) {
                     {removeMutation.isPending ? 'Processando...' : 'Remover'}
                   </Button>
                 ) : (
-                  <span className="text-xs text-slate-500">Sem permissao</span>
+                  <span className="text-xs text-slate-500">Sem permissão</span>
                 )}
               </td>
             </tr>

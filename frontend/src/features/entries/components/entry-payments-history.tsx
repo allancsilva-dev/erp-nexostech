@@ -24,7 +24,7 @@ export function EntryPaymentsHistory({ entryId }: { entryId: string }) {
     return (
       <EmptyState
         title="Nenhum pagamento registrado"
-        description="Este lancamento ainda nao possui pagamentos vinculados."
+        description="Este lançamento ainda não possui pagamentos vinculados."
       />
     );
   }
@@ -33,12 +33,12 @@ export function EntryPaymentsHistory({ entryId }: { entryId: string }) {
     <div className="surface-card overflow-x-auto p-3">
       <table className="w-full min-w-[760px] border-collapse text-sm">
         <thead>
-          <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
+            <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
             <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Data</th>
             <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Valor</th>
             <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Forma</th>
             <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Conta</th>
-            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Observacoes</th>
+            <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Observações</th>
           </tr>
         </thead>
         <tbody>

@@ -44,7 +44,7 @@ export function MatchActions() {
         Rejeitar
       </Button>
       <Button variant="outline" size="sm" disabled>
-        Criar lancamento
+        Criar lançamento
       </Button>
     </div>
   );

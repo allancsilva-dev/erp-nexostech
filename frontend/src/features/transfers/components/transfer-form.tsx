@@ -65,7 +65,7 @@ export function TransferForm() {
     event.preventDefault();
 
     if (lockCheck.isLocked) {
-      toast.error(lockCheck.message ?? 'Periodo contabil fechado');
+      toast.error(lockCheck.message ?? 'Período contábil fechado');
       return;
     }
 
@@ -106,7 +106,7 @@ export function TransferForm() {
       </Select>
       <CurrencyInput value={amount} onChange={setAmount} />
       <DatePicker value={date} onChange={setDate} />
-      <Input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descricao da transferencia" className="md:col-span-2" />
+      <Input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descrição da transferência" className="md:col-span-2" />
       {lockCheck.isLocked && lockCheck.message ? (
         <p className="md:col-span-2 text-sm text-amber-700 dark:text-amber-400">{lockCheck.message}</p>
       ) : null}

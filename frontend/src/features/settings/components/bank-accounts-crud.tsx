@@ -75,7 +75,7 @@ export function BankAccountsCrud() {
   const createMutation = useMutation({
     mutationFn: (payload: BankAccountForm) => {
       if (!activeBranchId) {
-        throw new Error('Filial ativa nao encontrada.');
+        throw new Error('Filial ativa não encontrada.');
       }
 
       return api.post<BankAccount>('/bank-accounts', {
@@ -84,7 +84,7 @@ export function BankAccountsCrud() {
       });
     },
     onSuccess: () => {
-      toast.success('Conta bancaria criada com sucesso');
+      toast.success('Conta bancária criada com sucesso');
       setForm(DEFAULT_FORM);
       void queryClient.invalidateQueries({ queryKey: ['bank-accounts', activeBranchId] });
     },
@@ -99,7 +99,7 @@ export function BankAccountsCrud() {
     mutationFn: ({ id, payload }: { id: string; payload: BankAccountForm }) =>
       api.put<BankAccount>(`/bank-accounts/${id}`, payload, uuid()),
     onSuccess: () => {
-      toast.success('Conta bancaria atualizada com sucesso');
+      toast.success('Conta bancária atualizada com sucesso');
       setEditingId(null);
       setForm(DEFAULT_FORM);
       void queryClient.invalidateQueries({ queryKey: ['bank-accounts', activeBranchId] });
@@ -114,7 +114,7 @@ export function BankAccountsCrud() {
   const deactivateMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/bank-accounts/${id}`),
     onSuccess: () => {
-      toast.success('Conta bancaria desativada com sucesso');
+      toast.success('Conta bancária desativada com sucesso');
       void queryClient.invalidateQueries({ queryKey: ['bank-accounts', activeBranchId] });
     },
     onError: (error: unknown) => {
@@ -176,7 +176,7 @@ export function BankAccountsCrud() {
       return;
     }
 
-    const shouldDeactivate = window.confirm('Desativar conta bancaria? A conta nao podera ser usada em novos lancamentos.');
+    const shouldDeactivate = window.confirm('Desativar conta bancária? A conta não poderá ser usada em novos lançamentos.');
     if (!shouldDeactivate) {
       return;
     }

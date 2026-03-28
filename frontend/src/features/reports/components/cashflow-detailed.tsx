@@ -127,7 +127,7 @@ export function CashflowDetailed() {
       ) : null}
 
       {!cashflow.isLoading && !cashflow.isError && rows.length === 0 ? (
-        <EmptyState title="Sem fluxo no periodo" description="Nao ha entradas ou saidas para o intervalo selecionado." />
+        <EmptyState title="Sem fluxo no período" description="Não há entradas ou saídas para o intervalo selecionado." />
       ) : null}
 
       {!cashflow.isLoading && !cashflow.isError && rows.length > 0 ? (
@@ -137,7 +137,7 @@ export function CashflowDetailed() {
               <TableRow>
                 <TableHead>Data</TableHead>
                 <TableHead className="text-right">Entradas</TableHead>
-                <TableHead className="text-right">Saidas</TableHead>
+                <TableHead className="text-right">Saídas</TableHead>
                 <TableHead className="text-right">Acumulado</TableHead>
               </TableRow>
             </TableHeader>

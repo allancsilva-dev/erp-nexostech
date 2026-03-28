@@ -4,6 +4,7 @@ import { AlertCircle, Inbox } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils/currency';
 import { StatusBadge } from '@/components/shared/status-badge';
 import type { Entry } from '@/features/entries/types/entry.types';
+import { ENTRY_TYPE_EMPTY_STATE } from '@/features/entries/constants/labels';
 
 interface EntriesTableProps {
   entries: Entry[];
@@ -76,10 +77,10 @@ export const EntriesTable = React.memo(function EntriesTable({
       <div className="surface-card flex flex-col items-center justify-center p-12 text-center">
         <Inbox size={40} style={{ color: 'var(--text-muted)' }} strokeWidth={1} />
         <p className="mt-4 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-          {type === 'PAYABLE' ? 'Nenhuma conta a pagar' : 'Nenhuma conta a receber'}
+          {ENTRY_TYPE_EMPTY_STATE[type].title}
         </p>
         <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-          Crie o primeiro lancamento para comecar
+          {ENTRY_TYPE_EMPTY_STATE[type].description}
         </p>
       </div>
     );
@@ -92,7 +93,7 @@ export const EntriesTable = React.memo(function EntriesTable({
       <table className="w-full">
         <thead>
           <tr style={{ borderBottom: '0.5px solid var(--border-default)' }}>
-            {['Codigo', 'Descricao', contactLabel, 'Categoria', 'Vencimento', 'Valor', 'Status'].map((header) => (
+            {['Código', 'Descrição', contactLabel, 'Categoria', 'Vencimento', 'Valor', 'Status'].map((header) => (
               <th
                 key={header}
                 className={`px-4 py-3 text-[10px] font-semibold uppercase tracking-wider ${header === 'Valor' ? 'text-right' : 'text-left'}`}
@@ -125,7 +126,7 @@ export const EntriesTable = React.memo(function EntriesTable({
                         className="rounded px-1.5 py-0.5 text-[10px]"
                         style={{ background: 'var(--bg-surface-raised)', color: 'var(--text-muted)' }}
                       >
-                        Sem no
+                        Sem número
                       </span>
                     )}
                   </Link>

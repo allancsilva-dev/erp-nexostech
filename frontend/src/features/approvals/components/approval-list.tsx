@@ -70,12 +70,12 @@ export function ApprovalList() {
             Pendentes
           </Button>
           <Button type="button" size="sm" variant="outline" onClick={() => setTab('history')}>
-            Historico
+            Histórico
           </Button>
         </div>
         <EmptyState
-          title="Nenhuma aprovacao pendente"
-          description="Assim que houver lancamentos aguardando aprovacao, eles aparecem aqui."
+          title="Nenhuma aprovação pendente"
+          description="Assim que houver lançamentos aguardando aprovação, eles aparecem aqui."
         />
       </div>
     );
@@ -88,7 +88,7 @@ export function ApprovalList() {
           Pendentes
         </Button>
         <Button type="button" size="sm" variant={tab === 'history' ? 'primary' : 'outline'} onClick={() => setTab('history')}>
-          Historico
+          Histórico
         </Button>
       </div>
 
@@ -105,8 +105,8 @@ export function ApprovalList() {
                 <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Documento</th>
                 <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Valor</th>
                 <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Contato</th>
-                <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Motivo rejeicao</th>
-                <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Acoes</th>
+                <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Motivo rejeição</th>
+                <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -128,13 +128,13 @@ export function ApprovalList() {
                       onChange={(event) =>
                         setReasonById((previous) => ({ ...previous, [item.entryId]: event.target.value }))
                       }
-                      placeholder="Obrigatorio para rejeitar"
+                      placeholder="Obrigatório para rejeitar"
                     />
                   </td>
                   <td className="px-3 py-2">
                     <PermissionGate
                       permission="financial.entries.approve"
-                      fallback={<span className="text-xs text-slate-500">Sem permissao para aprovar</span>}
+                      fallback={<span className="text-xs text-slate-500">Sem permissão para aprovar</span>}
                     >
                       <div className="flex items-center gap-2">
                         <Button

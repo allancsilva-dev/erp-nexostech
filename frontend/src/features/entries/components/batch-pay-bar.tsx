@@ -15,7 +15,7 @@ export function BatchPayBar({
 
   return (
     <div className="surface-card sticky bottom-4 z-20 flex items-center justify-between p-3 shadow">
-      <span className="text-sm">{selectedCount} lancamentos selecionados</span>
+      <span className="text-sm">{selectedCount} lançamentos selecionados</span>
       <Button onClick={onPay}>Pagar selecionados</Button>
     </div>
   );

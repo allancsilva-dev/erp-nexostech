@@ -8,9 +8,9 @@ export function ApprovalActions() {
 
   return (
     <div className="surface-card p-4 text-sm">
-      <p className="font-medium">Pendencias de aprovacao</p>
+      <p className="font-medium">Pendências de aprovação</p>
       <p className="mt-1 text-slate-500">
-        {count === 0 ? 'Nao ha lancamentos aguardando aprovacao.' : `${count} lancamento(s) aguardando decisao.`}
+        {count === 0 ? 'Não há lançamentos aguardando aprovação.' : `${count} lançamento(s) aguardando decisão.`}
       </p>
     </div>
   );

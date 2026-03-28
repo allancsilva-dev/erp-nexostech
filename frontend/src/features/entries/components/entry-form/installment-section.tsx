@@ -27,13 +27,13 @@ export function InstallmentSection({
           checked={installment}
           onChange={(event) => form.setValue('installment', event.target.checked)}
         />
-        Parcelar lancamento
+        Parcelar lançamento
       </label>
 
       {installment ? (
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm">Numero de parcelas</label>
+            <label className="mb-1 block text-sm">Número de parcelas</label>
             <Input
               type="number"
               min={2}
@@ -43,7 +43,7 @@ export function InstallmentSection({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm">Frequencia</label>
+            <label className="mb-1 block text-sm">Frequência</label>
             <Select
               value={form.watch('installmentFrequency') || 'MONTHLY'}
               onChange={(event) =>
@@ -61,7 +61,7 @@ export function InstallmentSection({
 
       {preview.length > 0 ? (
         <div className="rounded-md border p-3 text-sm">
-          <p className="mb-2 font-medium">Preview de parcelas</p>
+          <p className="mb-2 font-medium">Pré-visualização de parcelas</p>
           <div className="space-y-1">
             {preview.slice(0, 8).map((item) => (
               <p key={item.installment}>{item.installment} - R$ {item.value.replace('.', ',')}</p>

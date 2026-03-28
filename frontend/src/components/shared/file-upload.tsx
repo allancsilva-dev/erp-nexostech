@@ -81,7 +81,7 @@ export function FileUpload({
 
   async function startUpload(file: File): Promise<void> {
     if (!entryId) {
-      setError('Nao e possivel anexar sem um lancamento valido.');
+      setError('Não é possível anexar sem um lançamento válido.');
       setStep('error');
       onChange(null);
       return;
@@ -164,8 +164,8 @@ export function FileUpload({
               return;
             }
             if (!ALLOWED.includes(file.type) || file.size > 10 * 1024 * 1024) {
-              setFileName('Arquivo invalido');
-              setError('Arquivo invalido. Aceito: PDF/JPG/PNG ate 10MB.');
+              setFileName('Arquivo inválido');
+              setError('Arquivo inválido. Aceito: PDF/JPG/PNG até 10MB.');
               setStep('error');
               onChange(null);
               return;

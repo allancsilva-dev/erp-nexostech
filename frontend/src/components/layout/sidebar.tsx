@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   Clock4,
   FileText,
-  
   GitCompare,
   LayoutDashboard,
   LogOut,
@@ -317,7 +316,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         !isVisible && 'lg:w-0 lg:overflow-hidden lg:border-r-0 lg:p-0',
         isVisible && (isCollapsed ? 'w-16 py-2 pl-2 pr-0' : 'w-[var(--sidebar-width)] py-3 pl-3 pr-0'),
       )}
-      aria-label="Menu lateral principal"
+      aria-label="Navegação do ERP"
     >
         <button
           type="button"
@@ -329,7 +328,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         {!isCollapsed ? <span className="text-[14px] font-semibold text-[hsl(var(--sidebar-text))]">Nexos Financeiro</span> : null}
       </button>
 
-      <nav className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pr-0" aria-label="Navegacao do ERP">
+      <nav className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pr-0" aria-label="Navegação do ERP">
         <div className="space-y-1">{sections.main.map(renderItem)}</div>
         {renderSection('financeiro')}
         {renderSection('controle')}

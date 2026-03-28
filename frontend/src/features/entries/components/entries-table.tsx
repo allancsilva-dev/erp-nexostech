@@ -28,16 +28,16 @@ export function EntriesTable({
     () => [
       {
         accessorKey: 'documentNumber',
-        header: 'Codigo',
+        header: 'Código',
         enableSorting: true,
         cell: ({ row }) => {
           if (!row.original.documentNumber) {
             return (
               <Badge
                 className="bg-[var(--bg-surface-raised)] text-[var(--text-secondary)]"
-                title="O numero do documento sera gerado apos aprovacao"
+                title="O número do documento será gerado após aprovação"
               >
-                Sem numero
+                Sem número
               </Badge>
             );
           }
@@ -47,7 +47,7 @@ export function EntriesTable({
       },
       {
         accessorKey: 'description',
-        header: 'Descricao',
+        header: 'Descrição',
         enableSorting: true,
       },
       {

@@ -50,7 +50,7 @@ export function AuditLogTable() {
   const list = toAuditList(logs.data?.data);
 
   if (list.length === 0) {
-    return <EmptyState title="Sem logs de auditoria" description="Nao ha eventos para o periodo atual." />;
+    return <EmptyState title="Sem logs de auditoria" description="Não há eventos para o período atual." />;
   }
 
   return (
@@ -68,8 +68,8 @@ export function AuditLogTable() {
           <thead>
             <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
               <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Data</th>
-              <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Usuario</th>
-              <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Acao</th>
+              <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Usuário</th>
+              <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Ação</th>
               <th className="px-3 py-2 font-medium text-slate-600 dark:text-slate-300">Entidade</th>
             </tr>
           </thead>

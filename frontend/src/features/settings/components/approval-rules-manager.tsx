@@ -164,7 +164,7 @@ export function ApprovalRulesManager() {
 
   async function handleDelete(rule: ApprovalRule): Promise<void> {
     const approved = window.confirm(
-      `Ao excluir esta regra, lancamentos acima de R$ ${normalizeAmount(rule.minAmount)} irao direto para PENDING sem aprovacao.`,
+      `Ao excluir esta regra, lançamentos acima de R$ ${normalizeAmount(rule.minAmount)} irão direto para PENDING sem aprovação.`,
     );
 
     if (!approved) {
@@ -177,9 +177,9 @@ export function ApprovalRulesManager() {
   if (!canManageRules) {
     return (
       <EmptyState
-        title="Sem permissao para regras de aprovacao"
-        description="Sua conta nao possui acesso financial.approval_rules.manage."
-      />
+          title="Sem permissão para regras de aprovação"
+          description="Sua conta não possui acesso financial.approval_rules.manage."
+        />
     );
   }
 
@@ -206,7 +206,7 @@ export function ApprovalRulesManager() {
         </label>
 
         <label className="text-xs font-semibold uppercase tracking-wide">
-          Valor minimo
+          Valor mínimo
           <Input
             value={form.minAmount}
             onChange={(event) => setForm((current) => ({ ...current, minAmount: event.target.value }))}
@@ -216,7 +216,7 @@ export function ApprovalRulesManager() {
         </label>
 
         <label className="text-xs font-semibold uppercase tracking-wide">
-          Role aprovadora
+          Perfil aprovador
           <select
             className="mt-1 h-10 w-full rounded-md border px-3 text-sm"
             value={form.approverRoleId}
@@ -241,7 +241,7 @@ export function ApprovalRulesManager() {
         </label>
       </div>
 
-      <div className="flex gap-2">
+        <div className="flex gap-2">
         <Button type="button" onClick={() => void submitForm()} disabled={isSubmitting || !form.approverRoleId}>
           {editingId ? 'Salvar alteracoes' : 'Criar regra'}
         </Button>
@@ -253,7 +253,7 @@ export function ApprovalRulesManager() {
       </div>
 
       {rules.length === 0 ? (
-        <EmptyState title="Nenhuma regra cadastrada" description="Crie regras para encaminhar lancamentos para aprovacao." />
+        <EmptyState title="Nenhuma regra cadastrada" description="Crie regras para encaminhar lançamentos para aprovação." />
       ) : (
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[720px] border-collapse text-sm">
@@ -272,7 +272,7 @@ export function ApprovalRulesManager() {
                   <td className="px-3 py-2">{rule.entryType ?? 'Ambos'}</td>
                   <td className="px-3 py-2">R$ {normalizeAmount(rule.minAmount)}</td>
                   <td className="px-3 py-2">{roleMap.get(rule.approverRoleId) ?? rule.approverRoleId}</td>
-                  <td className="px-3 py-2">{rule.active ? 'Sim' : 'Nao'}</td>
+                  <td className="px-3 py-2">{rule.active ? 'Sim' : 'Não'}</td>
                   <td className="px-3 py-2">
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => startEdit(rule)} disabled={isSubmitting || isDeleting}>

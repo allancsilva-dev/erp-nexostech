@@ -19,7 +19,7 @@ export default function ConfiguracoesLayout({ children }: { children: React.Reac
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Configurações" subtitle="Hub de configurações do sistema" />
+      <PageHeader title="Configurações" />
       {children}
     </div>
   );

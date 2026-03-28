@@ -39,7 +39,7 @@ export default function DashboardPage() {
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          label="Saldo actual"
+          label="Saldo atual"
           value={summary.data?.totalBalance}
           icon={Wallet}
           color="var(--text-primary)"
@@ -62,7 +62,7 @@ export default function DashboardPage() {
           isLoading={summary.isLoading}
         />
         <MetricCard
-          label="Resultado do mes"
+          label="Resultado do mês"
           value={summary.data?.monthResult}
           icon={Target}
           color="var(--accent-text)"

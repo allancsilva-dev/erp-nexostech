@@ -2,7 +2,7 @@
 
 const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = {
   DRAFT: { label: 'Rascunho', bg: 'var(--bg-surface-raised)', text: 'var(--text-muted)' },
-  PENDING_APPROVAL: { label: 'Aguard. Aprovacao', bg: 'var(--warning-muted)', text: 'var(--warning)' },
+  PENDING_APPROVAL: { label: 'Aguard. Aprovação', bg: 'var(--warning-muted)', text: 'var(--warning)' },
   PENDING: { label: 'Pendente', bg: 'var(--info-muted)', text: 'var(--info)' },
   PARTIAL: { label: 'Parcial', bg: '239 50% 50% / 0.12', text: 'var(--accent-text)' },
   PAID: { label: 'Pago', bg: 'var(--success-muted)', text: 'var(--success)' },

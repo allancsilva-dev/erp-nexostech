@@ -49,7 +49,7 @@ export default function CategoriasPage() {
             Carregando categorias...
           </p>
         ) : categoryTree.length === 0 ? (
-          <EmptyState title="Sem categorias" description="Ainda nao ha categorias cadastradas." />
+          <EmptyState title="Sem categorias" description="Ainda não há categorias cadastradas." />
         ) : (
           <CategoryTree categories={categoryTree} />
         )}

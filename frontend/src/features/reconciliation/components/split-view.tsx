@@ -38,9 +38,9 @@ export function SplitView() {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="surface-card p-4">
-        <h3 className="mb-3 text-sm font-semibold">Extrato bancario</h3>
+        <h3 className="mb-3 text-sm font-semibold">Extrato bancário</h3>
         {statementItems.length === 0 ? (
-          <EmptyState title="Sem itens para conciliar" description="Importe um lote ou aguarde itens pendentes de conciliacao." />
+          <EmptyState title="Sem itens para conciliar" description="Importe um lote ou aguarde itens pendentes de conciliação." />
         ) : (
           <div className="max-h-96 overflow-auto rounded-lg border">
             <table className="w-full min-w-[520px] border-collapse text-sm">
@@ -81,15 +81,15 @@ export function SplitView() {
       </div>
 
       <div className="surface-card p-4">
-        <h3 className="mb-3 text-sm font-semibold">Lancamentos ERP</h3>
+        <h3 className="mb-3 text-sm font-semibold">Lançamentos ERP</h3>
         {entries.length === 0 ? (
-          <EmptyState title="Sem lancamentos" description="Nao ha lancamentos disponiveis para vinculo no momento." />
+          <EmptyState title="Sem lançamentos" description="Não há lançamentos disponíveis para vínculo no momento." />
         ) : (
           <div className="max-h-96 overflow-auto rounded-lg border">
             <table className="w-full min-w-[560px] border-collapse text-sm">
               <thead>
                 <tr className="border-b text-left" style={{ background: 'var(--bg-surface-raised)' }}>
-                  <th className="px-3 py-2 font-medium">Descricao</th>
+                  <th className="px-3 py-2 font-medium">Descrição</th>
                   <th className="px-3 py-2 font-medium">Valor</th>
                   <th className="px-3 py-2 font-medium">Vencimento</th>
                   <th className="px-3 py-2 font-medium">Status</th>

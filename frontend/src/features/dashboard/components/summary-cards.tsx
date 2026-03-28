@@ -13,7 +13,7 @@ function SummaryCardsComponent({ data }: { data?: DashboardSummary }) {
       ['Saldo atual', data?.currentBalance ?? '0.00', ROUTES.dashboard],
       ['A receber 30d', data?.totalReceivable30d ?? '0.00', ROUTES.contasReceber],
       ['A pagar 30d', data?.totalPayable30d ?? '0.00', ROUTES.contasPagar],
-      ['Resultado do mes', data?.monthResult ?? '0.00', ROUTES.fluxoCaixa],
+      ['Resultado do mês', data?.monthResult ?? '0.00', ROUTES.fluxoCaixa],
     ] as const,
     [data?.currentBalance, data?.monthResult, data?.totalPayable30d, data?.totalReceivable30d],
   );

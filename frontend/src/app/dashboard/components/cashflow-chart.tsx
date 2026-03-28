@@ -68,7 +68,7 @@ export const CashflowChart = React.memo(function CashflowChart({
           Sem dados de fluxo de caixa
         </p>
         <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-          Os dados aparecerao quando houver lancamentos registados
+          Os dados aparecerão quando houver lançamentos registrados
         </p>
       </div>
     );
@@ -77,7 +77,7 @@ export const CashflowChart = React.memo(function CashflowChart({
   return (
     <div className="surface-card p-5">
       <h3 className="mb-4 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-        Fluxo de caixa - ultimos 12 meses
+        Fluxo de caixa - últimos 12 meses
       </h3>
       <ResponsiveContainer width="100%" height={240}>
         <ComposedChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
@@ -105,7 +105,7 @@ export const CashflowChart = React.memo(function CashflowChart({
           />
           <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: 'var(--text-muted)' }} />
           <Bar dataKey="income" name="Entradas" fill="var(--success)" opacity={0.85} radius={[3, 3, 0, 0]} barSize={12} />
-          <Bar dataKey="expense" name="Saidas" fill="var(--danger)" opacity={0.85} radius={[3, 3, 0, 0]} barSize={12} />
+          <Bar dataKey="expense" name="Saídas" fill="var(--danger)" opacity={0.85} radius={[3, 3, 0, 0]} barSize={12} />
           <Line dataKey="balance" name="Saldo" stroke="var(--accent-text)" strokeWidth={2} dot={false} />
         </ComposedChart>
       </ResponsiveContainer>

@@ -7,7 +7,7 @@ import { CategoryForm } from '@/features/categories/components/category-form';
 import { CategoryTree } from '@/features/categories/components/category-tree';
 import { useCategories } from '@/features/categories/hooks/use-categories';
 import type { Category } from '@/features/categories/types/category.types';
-import { UsuariosView } from '@/features/users/usuarios-view';
+import { UsuariosView } from '@/features/users/components/usuarios-view';
 import { RolesManager } from '@/features/settings/components/roles-manager';
 import { BranchManager } from '@/features/settings/components/branch-manager';
 import { FinancialSettings } from '@/features/settings/components/financial-settings';

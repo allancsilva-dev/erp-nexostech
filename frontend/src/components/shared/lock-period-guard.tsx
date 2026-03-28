@@ -41,7 +41,7 @@ export function checkLockPeriod(periods: LockPeriod[], date?: string): {
   return {
     isLocked: true,
     lockedUntil: blockingLockedUntil,
-    message: `Periodo contabil fechado ate ${formatDate(blockingLockedUntil)}`,
+    message: `Período contábil fechado até ${formatDate(blockingLockedUntil)}`,
   };
 }
 

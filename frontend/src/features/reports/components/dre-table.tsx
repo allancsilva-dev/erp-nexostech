@@ -117,7 +117,7 @@ export function DreTable() {
       {exportError ? <ErrorBanner message={exportError} /> : null}
 
       {!dre.isLoading && !dre.isError && !report ? (
-        <EmptyState title="Sem dados de DRE" description="Nao ha movimentacao para o periodo selecionado." />
+        <EmptyState title="Sem dados de DRE" description="Não há movimentação para o período selecionado." />
       ) : null}
 
       {!dre.isLoading && !dre.isError && report ? (
@@ -139,7 +139,7 @@ export function DreTable() {
                 <TableCell className="text-right font-semibold">{formatCurrency(report.expenseTotal)}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell>Resultado liquido</TableCell>
+                <TableCell>Resultado líquido</TableCell>
                 <TableCell className="text-right font-semibold">{formatCurrency(report.netResult)}</TableCell>
               </TableRow>
             </TableBody>

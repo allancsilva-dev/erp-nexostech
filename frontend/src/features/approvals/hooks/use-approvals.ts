@@ -53,7 +53,7 @@ export function useApprovals(options?: { enabled?: boolean }) {
   const approve = useMutation({
     mutationFn: (entryId: string) => api.post(`/approvals/${entryId}/approve`),
     onSuccess: () => {
-      toast.success('Lancamento aprovado com sucesso');
+      toast.success('Lançamento aprovado com sucesso');
       void queryClient.invalidateQueries({ queryKey: queryKeys.approvals.pending(activeBranchId || 'default') });
       void queryClient.invalidateQueries({ queryKey: ['approvals', 'history', activeBranchId] });
     },
@@ -67,7 +67,7 @@ export function useApprovals(options?: { enabled?: boolean }) {
     mutationFn: ({ entryId, reason }: { entryId: string; reason: string }) =>
       api.post(`/approvals/${entryId}/reject`, { reason }),
     onSuccess: () => {
-      toast.success('Lancamento rejeitado com sucesso');
+      toast.success('Lançamento rejeitado com sucesso');
       void queryClient.invalidateQueries({ queryKey: queryKeys.approvals.pending(activeBranchId || 'default') });
       void queryClient.invalidateQueries({ queryKey: ['approvals', 'history', activeBranchId] });
     },
@@ -80,7 +80,7 @@ export function useApprovals(options?: { enabled?: boolean }) {
   const batchApprove = useMutation({
     mutationFn: (entryIds: string[]) => api.post('/approvals/batch-approve', { entryIds }),
     onSuccess: () => {
-      toast.success('Lancamentos aprovados em lote');
+      toast.success('Lançamentos aprovados em lote');
       queryClient.invalidateQueries({ queryKey: queryKeys.approvals.pending(activeBranchId || 'default') });
       queryClient.invalidateQueries({ queryKey: ['approvals', 'history', activeBranchId] });
     },

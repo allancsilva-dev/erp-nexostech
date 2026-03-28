@@ -118,7 +118,7 @@ export function BalanceSheetTable() {
       {exportError ? <ErrorBanner message={exportError} /> : null}
 
       {!balanceSheet.isLoading && !balanceSheet.isError && rows.length === 0 ? (
-        <EmptyState title="Sem dados de balancete" description="Nao ha categorias movimentadas para o periodo selecionado." />
+        <EmptyState title="Sem dados de balancete" description="Não há categorias movimentadas para o período selecionado." />
       ) : null}
 
       {!balanceSheet.isLoading && !balanceSheet.isError && rows.length > 0 ? (
@@ -128,7 +128,7 @@ export function BalanceSheetTable() {
               <TableRow>
                 <TableHead>Categoria</TableHead>
                 <TableHead className="text-right">Entradas</TableHead>
-                <TableHead className="text-right">Saidas</TableHead>
+                <TableHead className="text-right">Saídas</TableHead>
                 <TableHead className="text-right">Saldo</TableHead>
               </TableRow>
             </TableHeader>

@@ -29,7 +29,7 @@ export function CancelModal({ entryId }: { entryId: string }) {
       <Dialog open={open}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancelar lancamento</DialogTitle>
+            <DialogTitle>Cancelar lançamento</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>

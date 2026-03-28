@@ -4,7 +4,7 @@ import { EntryPaymentsHistory } from '@/features/entries/components/entry-paymen
 export default function ContaPagarPagamentosPage({ params }: { params: { id: string } }) {
   return (
     <div className="space-y-6">
-      <PageHeader title="Historico de pagamentos" subtitle="Registros de pagamento deste lancamento" />
+      <PageHeader title="Histórico de pagamentos" subtitle="Registros de pagamento deste lançamento" />
       <EntryPaymentsHistory entryId={params.id} />
     </div>
   );

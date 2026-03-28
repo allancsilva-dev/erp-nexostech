@@ -50,7 +50,7 @@ export function useCreateEntry() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(activeBranchId || 'default') });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(activeBranchId || 'default') });
-      toast.success('Lancamento criado com sucesso');
+      toast.success('Lançamento criado com sucesso');
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -117,7 +117,7 @@ export function useUpdateEntry() {
       queryClient.invalidateQueries({ queryKey: queryKeys.entries.detail(branchId, variables.entryId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(branchId) });
-      toast.success('Lancamento atualizado com sucesso');
+      toast.success('Lançamento atualizado com sucesso');
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -137,7 +137,7 @@ export function useCancelEntry() {
       queryClient.invalidateQueries({ queryKey: queryKeys.entries.detail(branchId, variables.entryId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(branchId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(branchId) });
-      toast.success('Lancamento cancelado');
+      toast.success('Lançamento cancelado');
     },
     onError: (error: Error) => {
       toast.error(error.message);

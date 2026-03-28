@@ -20,13 +20,13 @@ export function EntryDetail({ id }: { id: string }) {
 
   const entry = data?.data;
   if (!entry) {
-    return <p>Lancamento nao encontrado.</p>;
+    return <p>Lançamento não encontrado.</p>;
   }
 
   return (
     <div className="space-y-4 surface-card p-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">{entry.documentNumber ?? 'Sem numero'}</h2>
+        <h2 className="text-xl font-semibold">{entry.documentNumber ?? 'Sem número'}</h2>
         <StatusBadge status={entry.status} type={entry.type} />
       </div>
       <div className="flex flex-wrap gap-2">
@@ -74,7 +74,7 @@ export function EntryDetail({ id }: { id: string }) {
       <MoneyDisplay value={entry.amount} className="text-lg" />
       <p className="text-sm text-slate-500">Categoria: {entry.categoryName}</p>
       <p className="text-sm text-slate-500">Contato: {entry.contactName ?? '-'}</p>
-      <p className="text-sm text-slate-500">Observacoes: {entry.notes ?? '-'}</p>
+      <p className="text-sm text-slate-500">Observações: {entry.notes ?? '-'}</p>
     </div>
   );
 }

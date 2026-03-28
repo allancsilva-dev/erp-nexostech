@@ -58,7 +58,7 @@ export function LockPeriodForm() {
   const createMutation = useMutation({
     mutationFn: (payload: { lockedUntil: string; reason: string }) => api.post<LockPeriod>('/lock-periods', payload),
     onSuccess: () => {
-      toast.success('Periodo de bloqueio criado com sucesso');
+      toast.success('Período de bloqueio criado com sucesso');
       setReason('');
       void queryClient.invalidateQueries({ queryKey: ['lock-periods', activeBranchId] });
     },
@@ -72,7 +72,7 @@ export function LockPeriodForm() {
   const removeMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/lock-periods/${id}`),
     onSuccess: () => {
-      toast.success('Periodo de bloqueio removido com sucesso');
+      toast.success('Período de bloqueio removido com sucesso');
       void queryClient.invalidateQueries({ queryKey: ['lock-periods', activeBranchId] });
     },
     onError: (error: unknown) => {
@@ -93,9 +93,9 @@ export function LockPeriodForm() {
   if (!canManage) {
     return (
       <EmptyState
-        title="Sem permissao para bloqueio contabil"
-        description="Sua conta nao possui acesso financial.settings.manage."
-      />
+          title="Sem permissão para bloqueio contábil"
+          description="Sua conta não possui acesso financial.settings.manage."
+        />
     );
   }
 
@@ -114,7 +114,7 @@ export function LockPeriodForm() {
     event.preventDefault();
 
     if (reason.trim().length < 5) {
-      toast.error('Informe um motivo com no minimo 5 caracteres.');
+      toast.error('Informe um motivo com no mínimo 5 caracteres.');
       return;
     }
 
@@ -130,7 +130,7 @@ export function LockPeriodForm() {
     }
 
     const shouldRemove = window.confirm(
-      `Todos os lancamentos ate ${formatDate(item.lockedUntil)} serao desbloqueados para edicao. Confirmar?`,
+      `Todos os lançamentos até ${formatDate(item.lockedUntil)} serão desbloqueados para edição. Confirmar?`,
     );
 
     if (!shouldRemove) {
@@ -143,8 +143,8 @@ export function LockPeriodForm() {
   return (
     <div className="space-y-4">
       {activeLock ? (
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-          Lancamentos com data ate {formatDate(activeLock.lockedUntil)} estao bloqueados para alteracao.
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+          Lançamentos com data até {formatDate(activeLock.lockedUntil)} estão bloqueados para alteração.
         </div>
       ) : null}
 
@@ -180,16 +180,16 @@ export function LockPeriodForm() {
       </form>
 
       {periods.length === 0 ? (
-        <EmptyState title="Nenhum bloqueio cadastrado" description="Crie um bloqueio contabil para proteger periodos fechados." />
+        <EmptyState title="Nenhum bloqueio cadastrado" description="Crie um bloqueio contábil para proteger períodos fechados." />
       ) : (
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[680px] border-collapse text-sm">
             <thead>
               <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
-                <th className="px-3 py-2 font-medium">Bloqueado ate</th>
+                <th className="px-3 py-2 font-medium">Bloqueado até</th>
                 <th className="px-3 py-2 font-medium">Motivo</th>
                 <th className="px-3 py-2 font-medium">Criado em</th>
-                <th className="px-3 py-2 font-medium">Acoes</th>
+                <th className="px-3 py-2 font-medium">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -209,8 +209,8 @@ export function LockPeriodForm() {
                       >
                         {removeMutation.isPending ? 'Processando...' : 'Remover bloqueio'}
                       </Button>
-                    ) : (
-                      <span className="text-xs text-slate-500">Sem permissao para remover</span>
+                      ) : (
+                      <span className="text-xs text-slate-500">Sem permissão para remover</span>
                     )}
                   </td>
                 </tr>
