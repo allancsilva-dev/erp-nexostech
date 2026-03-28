@@ -156,7 +156,7 @@ const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = 
 const baseItem =
   'group/sidebar-item relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition-[background-color,color,transform,padding,border-radius,box-shadow,opacity] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--sidebar-active-bg))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--sidebar-bg))]';
 const normalItem = `${baseItem} text-[hsl(var(--sidebar-text-muted))] hover:translate-x-0.5 hover:bg-[hsl(var(--sidebar-hover)/0.22)] hover:text-[hsl(var(--sidebar-text))]`;
-const activeItem = `${baseItem} bg-[hsl(var(--background))] text-[var(--text-primary)] shadow-sm after:pointer-events-none after:absolute after:-right-3 after:top-0 after:h-full after:w-3 after:bg-[hsl(var(--background))] after:content-['']`;
+const activeItem = `${baseItem} bg-[hsl(var(--background))] text-[var(--text-primary)] shadow-sm after:pointer-events-none after:absolute after:-right-[4px] after:top-0 after:h-full after:w-[4px] after:bg-[hsl(var(--background))] after:content-['']`;
 
 function getIdentityLabel(user: { name?: string | null; email: string | null; roles?: Array<{ name: string }> } | null): string {
   return user?.name || user?.email || 'Utilizador';
@@ -240,7 +240,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
     const itemClassName = cn(
       isActive ? activeItem : normalItem,
       isCollapsed ? 'justify-center px-2.5' : '',
-      isActive && !isCollapsed ? '-mr-3 rounded-r-none pr-6' : '',
+      isActive && !isCollapsed ? '-mr-[4px] rounded-r-none pr-6' : '',
       isActive && isCollapsed ? 'rounded-2xl after:hidden' : '',
     );
     const labelClassName = cn(
@@ -334,14 +334,16 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         {renderSection('financeiro')}
         {renderSection('controle')}
         {sections.relatorios.length ? (
-          <CollapsibleMenu id="relatorios" title={SECTION_LABELS.relatorios} isCollapsed={isCollapsed}>
-            <div className="space-y-1">{sections.relatorios.map(renderItem)}</div>
-          </CollapsibleMenu>
+          <div className="mt-3">
+            <CollapsibleMenu id="relatorios" title={SECTION_LABELS.relatorios} isCollapsed={isCollapsed}>
+              <div className="space-y-1">{sections.relatorios.map(renderItem)}</div>
+            </CollapsibleMenu>
+          </div>
         ) : null}
         {renderSection('configuracoes')}
       </nav>
 
-      <div className="mt-3 border-t pt-3 border-[hsl(var(--sidebar-border))]">
+      <div className="mt-3 border-t border-transparent pt-3">
         <div className={cn('flex items-center gap-2', isCollapsed ? 'justify-center' : '')}>
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-bold text-[var(--accent-foreground)]">
             {getIdentityInitials(identity)}
