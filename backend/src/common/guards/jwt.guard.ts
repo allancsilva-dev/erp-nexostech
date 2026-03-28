@@ -55,7 +55,13 @@ export class JwtGuard implements CanActivate {
       cooldownDuration: 30_000,
     });
 
+    // Temp diagnostic: confirm config values available inside guard
+    console.log('[JwtGuard] Config:', { jwksUrl, audience, issuer });
+
     try {
+      // Temp diagnostic: show token presence (do not log full token in prod)
+      console.log('[JwtGuard] Token preview:', token ? `${token.substring(0, 20)}...` : 'empty');
+
       const { payload } = await jwtVerify(token, jwks, {
         audience,
         issuer,
@@ -64,7 +70,17 @@ export class JwtGuard implements CanActivate {
 
       request.user = this.mapPayload(payload);
       return true;
-    } catch {
+    } catch (err) {
+      // Log detalhado para diagnóstico — remover após resolver
+      console.error('[JwtGuard] JWT validation failed:', {
+        error: err instanceof Error ? err.message : String(err),
+        errorName: err instanceof Error ? err.name : 'unknown',
+        jwksUrl,
+        audience,
+        issuer,
+        tokenPreview: token ? `${token.substring(0, 20)}...` : 'empty',
+      });
+
       throw new UnauthorizedException({
         error: { code: 'UNAUTHORIZED', message: 'Token inválido ou expirado' },
       });
