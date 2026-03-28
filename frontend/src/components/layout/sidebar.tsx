@@ -154,9 +154,9 @@ const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = 
 };
 
 const baseItem =
-  'flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-[7px] text-[13px] font-medium transition-all duration-150';
-const normalItem = `${baseItem} text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))]`;
-const activeItem = `${baseItem} bg-[hsl(var(--sidebar-active-bg))] text-[hsl(var(--sidebar-active-text))]`;
+  'group/sidebar-item relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition-[background-color,color,transform,padding,border-radius,box-shadow,opacity] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--sidebar-active-bg))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--sidebar-bg))]';
+const normalItem = `${baseItem} text-[hsl(var(--sidebar-text-muted))] hover:translate-x-0.5 hover:bg-[hsl(var(--sidebar-hover)/0.22)] hover:text-[hsl(var(--sidebar-text))]`;
+const activeItem = `${baseItem} bg-[hsl(var(--background))] text-[var(--text-primary)] shadow-sm after:pointer-events-none after:absolute after:-right-3 after:top-0 after:h-full after:w-3 after:bg-[hsl(var(--background))] after:content-['']`;
 
 function getIdentityLabel(user: { name?: string | null; email: string | null; roles?: Array<{ name: string }> } | null): string {
   return user?.name || user?.email || 'Utilizador';
@@ -237,21 +237,49 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
   function renderItem(item: SidebarItem) {
     const isActive = pathname === item.href || pathname.startsWith(item.href);
     const Icon = item.icon;
+    const itemClassName = cn(
+      isActive ? activeItem : normalItem,
+      isCollapsed ? 'justify-center px-2.5' : '',
+      isActive && !isCollapsed ? 'rounded-r-none pr-6' : '',
+      isActive && isCollapsed ? 'rounded-2xl after:hidden' : '',
+    );
+    const labelClassName = cn(
+      'truncate transition-transform duration-300 ease-out',
+      !isActive && 'group-hover/sidebar-item:translate-x-0.5',
+    );
+    const subtitleClassName = cn(
+      'truncate text-[11px] transition-colors duration-300',
+      isActive ? 'text-[var(--text-secondary)]' : 'text-[hsl(var(--sidebar-text-muted))]',
+    );
 
     return (
       <Link
         key={item.href}
         href={item.href}
-        className={cn(isActive ? activeItem : normalItem, isCollapsed ? 'justify-center px-2.5' : '')}
+        className={itemClassName}
         title={isCollapsed ? item.label : undefined}
         aria-label={item.label}
       >
-            <Icon size={18} strokeWidth={1.8} className="shrink-0 text-current" />
+        <span
+          aria-hidden="true"
+          className={cn(
+            'absolute bottom-1 left-0 top-1 h-auto w-1 -translate-x-2 rounded-full bg-[hsl(var(--sidebar-active-bg))] opacity-0 transition-[opacity,transform] duration-300 ease-out',
+            isActive && 'translate-x-0 opacity-100',
+          )}
+        />
+        <Icon
+          size={18}
+          strokeWidth={1.8}
+          className={cn(
+            'shrink-0 text-current transition-transform duration-300 ease-out',
+            isActive ? 'scale-105' : 'group-hover/sidebar-item:translate-x-0.5 group-hover/sidebar-item:scale-105',
+          )}
+        />
             {!isCollapsed ? (
               <div className="min-w-0">
-                <span className="truncate">{item.label}</span>
+                <span className={labelClassName}>{item.label}</span>
                 {item.subtitle ? (
-                  <div className="text-[11px] text-[hsl(var(--sidebar-text-muted))] truncate">{item.subtitle}</div>
+                  <div className={subtitleClassName}>{item.subtitle}</div>
                 ) : null}
               </div>
             ) : null}
@@ -273,7 +301,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
     return (
       <div key={section}>
         {!isCollapsed ? (
-          <p className="px-3 pb-1.5 pt-5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[hsl(var(--sidebar-section-label))]">
+          <p className="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[hsl(var(--sidebar-section-label))]">
             {SECTION_LABELS[section]}
           </p>
         ) : null}
@@ -285,7 +313,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
   return (
     <aside
       className={cn(
-        'hidden shrink-0 border-r transition-all duration-200 lg:flex lg:flex-col bg-[hsl(var(--sidebar-bg))] border-[hsl(var(--sidebar-border))]',
+        'hidden shrink-0 border-r transition-[width,padding,border-color,background-color] duration-300 lg:flex lg:flex-col bg-[hsl(var(--sidebar-bg))] border-[hsl(var(--sidebar-border))]',
         !isVisible && 'lg:w-0 lg:overflow-hidden lg:border-r-0 lg:p-0',
         isVisible && (isCollapsed ? 'w-16 p-2' : 'w-[var(--sidebar-width)] p-3'),
       )}
@@ -293,11 +321,11 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
     >
         <button
           type="button"
-          className="mb-3 inline-flex items-center gap-2 overflow-hidden rounded-lg px-2 py-2 text-left"
+          className="group/sidebar-brand mb-3 inline-flex items-center gap-2 overflow-hidden rounded-xl px-2 py-2 text-left transition-colors duration-300 hover:bg-[hsl(var(--sidebar-hover)/0.22)]"
           onClick={() => setIsCollapsed((previous) => !previous)}
           aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent)] text-sm font-bold text-[var(--accent-foreground)]">■</span>
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--accent)] text-sm font-bold text-[var(--accent-foreground)] transition-transform duration-300 group-hover/sidebar-brand:scale-105">■</span>
         {!isCollapsed ? <span className="text-[14px] font-semibold text-[hsl(var(--sidebar-text))]">Nexos Financeiro</span> : null}
       </button>
 
