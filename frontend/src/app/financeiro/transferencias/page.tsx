@@ -11,11 +11,15 @@ import { ErrorBanner } from '@/components/shared/error-banner';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { useBranch } from '@/hooks/use-branch';
+import Loading from './loading';
 
 export default function TransferenciasPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [accountId, setAccountId] = useState('');
+
+  const { activeBranchId, isLoading: branchLoading } = useBranch();
 
   const transfers = useTransfers({
     startDate: startDate || undefined,
@@ -27,6 +31,10 @@ export default function TransferenciasPage() {
 
   const transferList = Array.isArray(transfers.data?.data) ? transfers.data?.data : [];
   const accountList = Array.isArray(bankAccounts.data?.data) ? bankAccounts.data?.data : [];
+
+  if (branchLoading || !activeBranchId) {
+    return <Loading />;
+  }
 
   return (
     <div>
