@@ -4,7 +4,7 @@ import { Buffer } from 'node:buffer';
 const AUTH_URL = process.env.AUTH_URL ?? process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://erp.zonadev.tech';
 const APP_AUD = process.env.NEXT_PUBLIC_APP_AUDIENCE ?? 'erp.zonadev.tech';
-const COOKIE_NAME = 'erp_access_token';
+const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? 'erp_access_token';
 const PUBLIC_PATHS = ['/login', '/api/', '/_next', '/favicon.ico'];
 
 export async function middleware(req: NextRequest) {
@@ -24,7 +24,7 @@ export async function middleware(req: NextRequest) {
   const sid = req.cookies.get('zonadev_sid')?.value;
   if (sid) {
     try {
-      const tokenRes = await fetch(`${AUTH_URL}/api/oauth/token?aud=${APP_AUD}`, {
+      const tokenRes = await fetch(`${AUTH_URL}/oauth/token?aud=${APP_AUD}`, {
         headers: { Cookie: `zonadev_sid=${sid}` },
         signal: AbortSignal.timeout(3000),
       });
