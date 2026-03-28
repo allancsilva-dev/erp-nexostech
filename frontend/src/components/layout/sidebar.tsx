@@ -313,7 +313,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
   return (
     <aside
       className={cn(
-        'hidden shrink-0 border-r transition-[width,padding,border-color,background-color] duration-300 lg:flex lg:flex-col bg-[hsl(var(--sidebar-bg))] border-[hsl(var(--sidebar-border))]',
+        'hidden shrink-0 border-r-0 transition-[width,padding,background-color] duration-300 lg:flex lg:flex-col bg-[hsl(var(--sidebar-bg))]',
         !isVisible && 'lg:w-0 lg:overflow-hidden lg:border-r-0 lg:p-0',
         isVisible && (isCollapsed ? 'w-16 py-2 pl-2 pr-0' : 'w-[var(--sidebar-width)] py-3 pl-3 pr-0'),
       )}
