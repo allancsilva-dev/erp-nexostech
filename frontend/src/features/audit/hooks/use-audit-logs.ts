@@ -68,7 +68,7 @@ export function useExportAuditLogs() {
       anchor.download = file.filename || `auditoria-${new Date().toISOString().slice(0, 10)}.csv`;
       anchor.click();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      toast.success('Exportacao concluida com sucesso');
+      toast.success('Exportação concluída com sucesso');
     },
     onError: (error: unknown) => {
       const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
