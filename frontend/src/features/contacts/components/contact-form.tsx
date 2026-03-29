@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { DocumentInput } from '@/components/shared/document-input';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { api } from '@/lib/api-client';
@@ -26,8 +25,14 @@ const contactSchema = z.object({
 
 export type ContactFormValues = z.infer<typeof contactSchema>;
 
-export function ContactForm({ initialValues, onSaved }: { initialValues?: Partial<ContactFormValues> | null; onSaved?: () => void }) {
-  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<ContactFormValues>({
+export function ContactForm({
+  initialValues,
+  onSaved,
+}: {
+  initialValues?: Partial<ContactFormValues> | null;
+  onSaved?: () => void;
+}) {
+  const { control, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
       name: '',
@@ -52,10 +57,6 @@ export function ContactForm({ initialValues, onSaved }: { initialValues?: Partia
 
   async function onSubmit(values: ContactFormValues) {
     try {
-      // debug: ensure submit runs
-      // eslint-disable-next-line no-console
-      console.log('ContactForm onSubmit', values);
-
       if (values.id) {
         await api.put(`/contacts/${values.id}`, values);
         toast.success('Contato atualizado com sucesso');
@@ -63,15 +64,7 @@ export function ContactForm({ initialValues, onSaved }: { initialValues?: Partia
         await api.post('/contacts', values);
         toast.success('Contato criado com sucesso');
       }
-
-      // Invalidate contacts queries so lists/autocompletes refresh
-      try {
-        queryClient.invalidateQueries({ queryKey: queryKeys.contacts.all });
-      } catch {
-        // fallback: invalidate by prefix
-        queryClient.invalidateQueries({ queryKey: ['contacts'] });
-      }
-
+      queryClient.invalidateQueries({ queryKey: queryKeys.contacts.all });
       onSaved?.();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao salvar contato.';
@@ -79,47 +72,84 @@ export function ContactForm({ initialValues, onSaved }: { initialValues?: Partia
     }
   }
 
-  // DEBUG — remover depois
-  // eslint-disable-next-line no-console
-  console.log('[ContactForm] watch():', watch());
-  // eslint-disable-next-line no-console
-  console.log('[ContactForm] errors:', (errors));
-
   return (
     <form className="grid gap-3" onSubmit={handleSubmit(onSubmit)}>
       <label className="text-sm font-medium">
         Nome
-        <Input {...register('name')} />
-        {errors.name ? <p className="text-xs text-red-600">{String(errors.name.message)}</p> : null}
+        <Controller
+          name="name"
+          control={control}
+          render={({ field }) => (
+            <Input
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
+        />
+        {errors.name && (
+          <p className="text-xs text-red-600">{String(errors.name.message)}</p>
+        )}
       </label>
 
       <label className="text-sm font-medium">
         Tipo
-        <Select {...register('type')}>
-          <option value="FORNECEDOR">Fornecedor</option>
-          <option value="CLIENTE">Cliente</option>
-          <option value="AMBOS">Fornecedor e Cliente</option>
-        </Select>
+        <Controller
+          name="type"
+          control={control}
+          render={({ field }) => (
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={field.value ?? 'FORNECEDOR'}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            >
+              <option value="FORNECEDOR">Fornecedor</option>
+              <option value="CLIENTE">Cliente</option>
+              <option value="AMBOS">Fornecedor e Cliente</option>
+            </select>
+          )}
+        />
+        {errors.type && (
+          <p className="text-xs text-red-600">{String(errors.type.message)}</p>
+        )}
       </label>
 
       <label className="text-sm font-medium">
         CPF / CNPJ
-        <DocumentInput value={watch('document') ?? ''} onChange={(v) => setValue('document', v)} />
+        <DocumentInput
+          value={watch('document') ?? ''}
+          onChange={(v) => setValue('document', v)}
+        />
       </label>
 
       <label className="text-sm font-medium">
         Telefone
-        <PhoneInput value={watch('phone') ?? ''} onChange={(v) => setValue('phone', v)} />
+        <PhoneInput
+          value={watch('phone') ?? ''}
+          onChange={(v) => setValue('phone', v)}
+        />
       </label>
 
       <label className="text-sm font-medium">
         E-mail
-        <Input {...register('email')} />
+        <Controller
+          name="email"
+          control={control}
+          render={({ field }) => (
+            <Input
+              type="email"
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
+        />
       </label>
 
-      <div className="flex gap-2">
-        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Processando...' : 'Salvar'}</Button>
-      </div>
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Salvando...' : 'Salvar'}
+      </Button>
     </form>
   );
 }
