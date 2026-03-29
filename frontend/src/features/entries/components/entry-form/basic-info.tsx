@@ -10,6 +10,7 @@ import type { CreateEntryInput } from '@/features/entries/types/entry.schemas';
 export function BasicInfo({ form }: { form: UseFormReturn<CreateEntryInput> }) {
   const entryType = form.watch('type');
   const contactType = entryType === 'PAYABLE' ? 'FORNECEDOR' : 'CLIENTE';
+  const contactLabel = entryType === 'PAYABLE' ? 'Fornecedor' : 'Cliente';
   const contacts = useContacts(contactType);
 
   return (
@@ -35,13 +36,13 @@ export function BasicInfo({ form }: { form: UseFormReturn<CreateEntryInput> }) {
         />
       </div>
       <div>
-        <label className="mb-1 block text-sm">Fornecedor/Cliente</label>
+        <label className="mb-1 block text-sm">{contactLabel}</label>
         <Select
           value={form.watch('contactId') || ''}
           onChange={(event) => form.setValue('contactId', event.target.value, { shouldValidate: true })}
           disabled={contacts.isLoading}
         >
-          <option value="">{contacts.isLoading ? 'Carregando contatos...' : 'Não vincular contato'}</option>
+          <option value="">{contacts.isLoading ? 'Carregando contatos...' : entryType === 'PAYABLE' ? 'Não vincular fornecedor' : 'Não vincular cliente'}</option>
           {(contacts.data?.data ?? []).map((contact) => (
             <option key={contact.id} value={contact.id}>
               {contact.name}

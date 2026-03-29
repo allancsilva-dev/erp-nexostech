@@ -1,13 +1,14 @@
 ﻿"use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CurrencyInput } from '@/components/shared/currency-input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { usePayEntry } from '@/features/entries/hooks/use-entries';
+import { usePayEntry, useEntry } from '@/features/entries/hooks/use-entries';
 import { useBankAccounts } from '@/features/settings/hooks/use-bank-accounts';
+import Decimal from 'decimal.js';
 import type { PaymentMethod } from '@/features/entries/types/entry.types';
 
 interface BankAccountOption {
@@ -38,6 +39,9 @@ export function PaymentModal({ entryId }: { entryId: string }) {
   const payEntry = usePayEntry();
   const bankAccounts = useBankAccounts();
   const accountOptions = toBankAccountOptions(bankAccounts.data?.data);
+  const { data: entryResp } = useEntry(entryId);
+  const entry = entryResp?.data;
+  const [isInitialized, setIsInitialized] = useState(false);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -58,6 +62,19 @@ export function PaymentModal({ entryId }: { entryId: string }) {
       },
     );
   }
+
+  // Prefill amount with remaining balance when modal first opens
+  useEffect(() => {
+    if (entry && !isInitialized) {
+      try {
+        const remaining = new Decimal(entry.amount || '0').minus(new Decimal(entry.paidAmount || '0')).toFixed(2);
+        setAmount(remaining);
+      } catch {
+        // fallback: don't change amount
+      }
+      setIsInitialized(true);
+    }
+  }, [entry, isInitialized]);
 
   return (
     <>
