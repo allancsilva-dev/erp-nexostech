@@ -4,7 +4,9 @@ import { ContactType } from './create-contact.dto';
 
 export class ListContactsDto extends PaginationDto {
   @IsOptional()
-  @IsEnum(ContactType, { message: 'type deve ser FORNECEDOR, CLIENTE ou AMBOS' })
+  @IsEnum(ContactType, {
+    message: 'type deve ser FORNECEDOR, CLIENTE ou AMBOS',
+  })
   type?: ContactType;
 
   @IsOptional()

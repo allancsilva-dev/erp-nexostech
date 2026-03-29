@@ -1,4 +1,8 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Injectable,
+  UnprocessableEntityException,
+  BadRequestException,
+} from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { BusinessException } from '../../../common/exceptions/business.exception';
@@ -20,6 +24,7 @@ import {
   EntriesRepository,
 } from './entries.repository';
 import { ApprovalRulesService } from '../approval-rules/approval-rules.service';
+import { CategoriesService } from '../categories/categories.service';
 
 @Injectable()
 export class EntriesService {
@@ -32,6 +37,7 @@ export class EntriesService {
     private readonly eventBus: EventBusService,
     private readonly drizzleService: DrizzleService,
     private readonly approvalRulesService: ApprovalRulesService,
+    private readonly categoriesService: CategoriesService,
   ) {}
 
   private toDate(date: string | Date): Date {
@@ -132,20 +138,50 @@ export class EntriesService {
         )
       : [dto.amount];
 
+    // Server-side: validate category exists and matches entry type
+    if (dto.categoryId) {
+      const category = await this.categoriesService.findById(
+        dto.categoryId,
+        branchId,
+      );
+      if (!category) {
+        throw new BadRequestException(
+          'Categoria nao encontrada para a filial informada',
+        );
+      }
+      const expectedCategoryType =
+        dto.type === 'PAYABLE' ? 'DESPESA' : 'RECEITA';
+      if (category.type !== expectedCategoryType) {
+        throw new BadRequestException(
+          `Categoria do tipo ${category.type} não é compatível com lançamento ${
+            dto.type === 'PAYABLE' ? 'a pagar' : 'a receber'
+          }`,
+        );
+      }
+    }
+
     const created = await this.txHelper.run(async (tx) => {
       const firstInstallmentAmount = installments[0] ?? dto.amount;
 
       // Determine initial status based on submit flag and approval rules
       let initialStatus = 'DRAFT';
       if (dto.submit) {
-        const needsApproval = await this.checkApprovalRules(branchId, dto.type, dto.amount);
+        const needsApproval = await this.checkApprovalRules(
+          branchId,
+          dto.type,
+          dto.amount,
+        );
         initialStatus = needsApproval ? 'PENDING_APPROVAL' : 'PENDING';
       }
 
       // Generate document number only for PENDING
       let documentNumber: string | null = null;
       if (initialStatus === 'PENDING') {
-        documentNumber = await this.generateDocumentNumber(branchId, dto.type, tx);
+        documentNumber = await this.generateDocumentNumber(
+          branchId,
+          dto.type,
+          tx,
+        );
       }
 
       const createdEntry = await this.entriesRepository.create(
@@ -163,7 +199,9 @@ export class EntriesService {
           paidAmount: null,
           remainingBalance: firstInstallmentAmount,
           installmentNumber: dto.installment ? 1 : null,
-          installmentTotal: dto.installment ? (dto.installmentCount ?? null) : null,
+          installmentTotal: dto.installment
+            ? (dto.installmentCount ?? null)
+            : null,
           categoryId: dto.categoryId,
           contactId: dto.contactId ?? null,
         },
@@ -183,7 +221,11 @@ export class EntriesService {
     return created;
   }
 
-  private async checkApprovalRules(branchId: string, entryType: string, amount: string): Promise<boolean> {
+  private async checkApprovalRules(
+    branchId: string,
+    entryType: string,
+    amount: string,
+  ): Promise<boolean> {
     try {
       const rules = await this.approvalRulesService.list(branchId);
       if (!rules || rules.length === 0) return false;
@@ -205,7 +247,11 @@ export class EntriesService {
     }
   }
 
-  private async generateDocumentNumber(branchId: string, type: string, tx: Parameters<Parameters<DrizzleService['transaction']>[0]>[0]): Promise<string> {
+  private async generateDocumentNumber(
+    branchId: string,
+    type: string,
+    tx: Parameters<Parameters<DrizzleService['transaction']>[0]>[0],
+  ): Promise<string> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
     const year = new Date().getFullYear();
@@ -224,7 +270,11 @@ export class EntriesService {
     );
 
     let nextSeq = 1;
-    if (selectResult && Array.isArray((selectResult as any).rows) && (selectResult as any).rows.length > 0) {
+    if (
+      selectResult &&
+      Array.isArray((selectResult as any).rows) &&
+      (selectResult as any).rows.length > 0
+    ) {
       const row = (selectResult as any).rows[0];
       const last = Number(row.last_sequence ?? 0) || 0;
       nextSeq = last + 1;
@@ -343,6 +393,15 @@ export class EntriesService {
   ) {
     const entry = await this.getById(entryId, branchId);
     await this.checkLockPeriod(branchId, entry.issueDate);
+
+    // Validate reason length if provided
+    if (
+      typeof reason === 'string' &&
+      reason.trim().length > 0 &&
+      reason.trim().length < 10
+    ) {
+      throw new BadRequestException('Motivo deve ter no mínimo 10 caracteres');
+    }
 
     if (entry.status === 'CANCELLED') {
       return entry;

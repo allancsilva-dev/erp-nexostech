@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
 import {
   PaymentCreatedEvent,
@@ -13,7 +13,7 @@ import { PaymentRules } from './domain/payment.rules';
 import { RefundPaymentDto } from './dto/refund-payment.dto';
 import { RegisterPaymentDto } from './dto/register-payment.dto';
 import { PaymentEntity } from './dto/payment.response';
-import { PaymentsRepository } from './payments.repository';
+import { PaymentsRepository, EntryStub } from './payments.repository';
 import { BatchPayDto } from './dto/batch-pay.dto';
 
 @Injectable()
@@ -37,11 +37,12 @@ export class PaymentsService {
     // para evitar race condition quando dois usuários pagam a mesma entry simultaneamente.
     const payment = await this.txHelper.run(async (tx) => {
       // 1. SELECT FOR UPDATE — trava a linha da entry para este request
-      const entry = await this.paymentsRepository.findEntryByIdForUpdate(
-        entryId,
-        branchId,
-        tx,
-      );
+      const entry: EntryStub | null =
+        await this.paymentsRepository.findEntryByIdForUpdate(
+          entryId,
+          branchId,
+          tx,
+        );
 
       if (!entry) {
         throw new BusinessException(
@@ -49,6 +50,16 @@ export class PaymentsService {
           'Lancamento nao encontrado para pagamento',
           { entryId, branchId },
           HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Validate entry status before inserting a payment
+      const allowedStatuses = ['PENDING', 'PARTIAL', 'OVERDUE'];
+      const entryStatus = entry.status ?? '';
+      if (!allowedStatuses.includes(entryStatus)) {
+        throw new BadRequestException(
+          'Não é possível registrar pagamento para lançamento com status ' +
+            entryStatus,
         );
       }
 
@@ -125,10 +136,14 @@ export class PaymentsService {
 
   async refund(
     entryId: string,
-    _dto: RefundPaymentDto,
+    dto: RefundPaymentDto,
     user: AuthUser,
     branchId: string,
   ) {
+    // Validate reason length
+    if (!dto?.reason || dto.reason.trim().length < 10) {
+      throw new BadRequestException('Motivo deve ter no mínimo 10 caracteres');
+    }
     // Estorno também usa SELECT FOR UPDATE para evitar estorno duplo simultâneo
     const removedPayment = await this.txHelper.run(async (tx) => {
       // 1. SELECT FOR UPDATE — trava a entry para este request

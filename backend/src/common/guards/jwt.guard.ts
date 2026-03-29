@@ -60,7 +60,10 @@ export class JwtGuard implements CanActivate {
 
     try {
       // Temp diagnostic: show token presence (do not log full token in prod)
-      console.log('[JwtGuard] Token preview:', token ? `${token.substring(0, 20)}...` : 'empty');
+      console.log(
+        '[JwtGuard] Token preview:',
+        token ? `${token.substring(0, 20)}...` : 'empty',
+      );
 
       const { payload } = await jwtVerify(token, jwks, {
         audience,

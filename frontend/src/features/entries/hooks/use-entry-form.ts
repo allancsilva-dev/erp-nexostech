@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 import Decimal from 'decimal.js';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +15,7 @@ function todayDate(): string {
 
 export function useEntryForm(type: 'PAYABLE' | 'RECEIVABLE') {
   const createEntry = useCreateEntry();
+  const router = useRouter();
 
   const form = useForm<CreateEntryInput>({
     resolver: zodResolver(createEntrySchema),
@@ -53,6 +55,8 @@ export function useEntryForm(type: 'PAYABLE' | 'RECEIVABLE') {
           {
             onSuccess: () => {
               toast.success('Rascunho salvo com sucesso');
+              const basePath = type === 'PAYABLE' ? '/financeiro/contas-pagar' : '/financeiro/contas-receber';
+              router.push(basePath);
             },
           },
         );
@@ -72,6 +76,8 @@ export function useEntryForm(type: 'PAYABLE' | 'RECEIVABLE') {
               if (type === 'RECEIVABLE') {
                 toast.info('O envio automático de cobrança será habilitado em breve.');
               }
+              const basePath = type === 'PAYABLE' ? '/financeiro/contas-pagar' : '/financeiro/contas-receber';
+              router.push(basePath);
             },
           },
         );

@@ -139,7 +139,11 @@ export class ApprovalsRepository {
         );
 
         let nextSeq = 1;
-        if (seqRes && Array.isArray((seqRes as any).rows) && (seqRes as any).rows.length > 0) {
+        if (
+          seqRes &&
+          Array.isArray((seqRes as any).rows) &&
+          (seqRes as any).rows.length > 0
+        ) {
           const row = (seqRes as any).rows[0];
           const last = Number(row.last_sequence ?? 0) || 0;
           nextSeq = last + 1;

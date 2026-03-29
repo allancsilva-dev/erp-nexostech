@@ -35,6 +35,7 @@ export function CancelModal({ entryId }: { entryId: string }) {
             <div>
               <label className="mb-1 block text-sm">Motivo do cancelamento</label>
               <Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Obrigatorio" />
+              <p className="mt-1 text-sm text-muted-foreground">Mínimo 10 caracteres</p>
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -43,7 +44,7 @@ export function CancelModal({ entryId }: { entryId: string }) {
               <Button
                 type="button"
                 variant="destructive"
-                disabled={cancelEntry.isPending || reason.trim().length < 3}
+                disabled={cancelEntry.isPending || reason.trim().length < 10}
                 onClick={handleCancel}
               >
                 {cancelEntry.isPending ? 'Cancelando...' : 'Confirmar cancelamento'}

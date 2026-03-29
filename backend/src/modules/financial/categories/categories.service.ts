@@ -13,6 +13,10 @@ export class CategoriesService {
     return this.categoriesRepository.list(branchId);
   }
 
+  async findById(id: string, branchId: string) {
+    return this.categoriesRepository.findById(id, branchId);
+  }
+
   async create(branchId: string, dto: CreateCategoryDto) {
     return this.categoriesRepository.create(branchId, dto);
   }

@@ -50,7 +50,6 @@ export function useCreateEntry() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(activeBranchId || 'default') });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(activeBranchId || 'default') });
-      toast.success('Lançamento criado com sucesso');
     },
     onError: (error: unknown) => {
       let message = 'Falha ao salvar lançamento.';

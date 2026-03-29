@@ -35,6 +35,7 @@ export function RefundModal({ entryId }: { entryId: string }) {
             <div>
               <label className="mb-1 block text-sm">Motivo do estorno</label>
               <Input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Obrigatorio" />
+              <p className="mt-1 text-sm text-muted-foreground">Mínimo 10 caracteres</p>
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -42,7 +43,7 @@ export function RefundModal({ entryId }: { entryId: string }) {
               </Button>
               <Button
                 type="button"
-                disabled={refundPayment.isPending || reason.trim().length < 3}
+                disabled={refundPayment.isPending || reason.trim().length < 10}
                 onClick={handleRefund}
               >
                 {refundPayment.isPending ? 'Processando...' : 'Confirmar estorno'}

@@ -6,11 +6,13 @@ import {
   quoteLiteral,
 } from '../../../infrastructure/database/sql-builder.util';
 import { PaymentEntity } from './dto/payment.response';
+import Decimal from 'decimal.js';
 import { RegisterPaymentDto } from './dto/register-payment.dto';
 
 export type EntryStub = {
   id: string;
   amount: string;
+  status?: string;
   remainingBalance: string;
   lastPaymentDate?: string;
 };
@@ -72,38 +74,49 @@ export class PaymentsRepository {
     forUpdate: boolean,
   ): Promise<EntryStub | null> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const entry = quoteLiteral(entryId);
+    const entryLit = quoteLiteral(entryId);
     const branch = quoteLiteral(branchId);
-    const lock = forUpdate ? 'FOR UPDATE OF e' : '';
 
-    const result = await executor.execute(
+    // Query 1: lock the entry row (no joins, no GROUP BY)
+    const lock = forUpdate ? 'FOR UPDATE' : '';
+    const entryResult = await executor.execute(
       sql.raw(`
-      SELECT
-        e.id,
-        e.amount,
-        (e.amount - COALESCE(SUM(p.amount), 0))::text AS remaining_balance,
-        MAX(p.payment_date) AS last_payment_date
-      FROM ${schema}.financial_entries e
-      LEFT JOIN ${schema}.financial_entry_payments p ON p.entry_id = e.id
-      WHERE e.id = ${entry}
-        AND e.branch_id = ${branch}
-        AND e.deleted_at IS NULL
-      GROUP BY e.id, e.amount
+      SELECT id, amount, status, branch_id
+      FROM ${schema}.financial_entries
+      WHERE id = ${entryLit}
+        AND branch_id = ${branch}
+        AND deleted_at IS NULL
       LIMIT 1
       ${lock}
     `),
     );
 
-    const row = result.rows[0] as Record<string, unknown> | undefined;
-    if (!row) {
-      return null;
-    }
+    const entryRow = entryResult.rows[0] as Record<string, unknown> | undefined;
+    if (!entryRow) return null;
+
+    // Query 2: aggregate payments for the entry (no FOR UPDATE)
+    const paymentsResult = await executor.execute(
+      sql.raw(`
+      SELECT COALESCE(SUM(amount), 0)::text AS total_paid, MAX(payment_date) AS last_payment_date
+      FROM ${schema}.financial_entry_payments
+      WHERE entry_id = ${entryLit}
+    `),
+    );
+
+    const paymentsRow = paymentsResult.rows[0] as
+      | Record<string, unknown>
+      | undefined;
+    const totalPaidText = this.toText(paymentsRow?.total_paid ?? '0');
+    const remaining = new Decimal(this.toText(entryRow.amount)).minus(
+      new Decimal(totalPaidText),
+    );
 
     return {
-      id: this.toText(row.id),
-      amount: this.toText(row.amount),
-      remainingBalance: this.toText(row.remaining_balance),
-      lastPaymentDate: this.toNullableText(row.last_payment_date) ?? undefined,
+      id: this.toText(entryRow.id),
+      amount: this.toText(entryRow.amount),
+      remainingBalance: remaining.toFixed(2),
+      lastPaymentDate:
+        this.toNullableText(paymentsRow?.last_payment_date) ?? undefined,
     };
   }
 
