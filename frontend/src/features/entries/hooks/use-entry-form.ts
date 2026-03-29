@@ -45,19 +45,31 @@ export function useEntryForm(type: 'PAYABLE' | 'RECEIVABLE') {
     }));
   }, [amount, installmentCount, isInstallment]);
 
-  const onSubmit = form.handleSubmit((values) => {
-    createEntry.mutate({ ...values, notes: values.notes || undefined }, {
-      onSuccess: () => {
-        if (type === 'RECEIVABLE') {
-          toast.info('O envio automático de cobrança será habilitado em breve.');
-        }
-      },
+  function submitWithStatus(status: 'DRAFT' | 'PENDING' | 'PENDING_APPROVAL') {
+    return form.handleSubmit((values) => {
+      createEntry.mutate(
+        { ...values, status, notes: values.notes || undefined },
+        {
+          onSuccess: () => {
+            if (type === 'RECEIVABLE') {
+              toast.info('O envio automático de cobrança será habilitado em breve.');
+            }
+          },
+        },
+      );
     });
-  });
+  }
+
+  const onSubmitDraft = submitWithStatus('DRAFT');
+  const onSubmitPending = submitWithStatus('PENDING');
+  // default for compatibility
+  const onSubmit = onSubmitPending;
 
   return {
     form,
     onSubmit,
+    onSubmitDraft,
+    onSubmitPending,
     isPending: createEntry.isPending,
     installmentPreview,
     isInstallment,

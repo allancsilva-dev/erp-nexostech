@@ -25,7 +25,7 @@ const contactSchema = z.object({
 export type ContactFormValues = z.infer<typeof contactSchema>;
 
 export function ContactForm({ initialValues, onSaved }: { initialValues?: Partial<ContactFormValues> | null; onSaved?: () => void }) {
-  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<ContactFormValues>({
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
       name: '',
@@ -81,12 +81,12 @@ export function ContactForm({ initialValues, onSaved }: { initialValues?: Partia
 
       <label className="text-sm font-medium">
         Documento
-        <DocumentInput value={String(initialValues?.document ?? '')} onChange={(v) => setValue('document', v)} />
+        <DocumentInput value={watch('document') ?? ''} onChange={(v) => setValue('document', v)} />
       </label>
 
       <label className="text-sm font-medium">
         Telefone
-        <PhoneInput value={String(initialValues?.phone ?? '')} onChange={(v) => setValue('phone', v)} />
+        <PhoneInput value={watch('phone') ?? ''} onChange={(v) => setValue('phone', v)} />
       </label>
 
       <label className="text-sm font-medium">
