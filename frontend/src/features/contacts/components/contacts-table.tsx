@@ -32,8 +32,7 @@ export function ContactsTable() {
 
   return (
     <div className="surface-card overflow-x-auto p-3">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold">Contatos</h3>
+      <div className="flex items-center justify-end mb-4">
         <PermissionGate permission="contacts.manage">
           <Button onClick={() => setShowForm(true)}>Novo Contato</Button>
         </PermissionGate>
@@ -41,6 +40,11 @@ export function ContactsTable() {
 
       {showForm ? (
         <div className="mb-4">
+          <div className="flex justify-end mb-2">
+            <Button variant="ghost" onClick={() => setShowForm(false)}>
+              Cancelar
+            </Button>
+          </div>
           <ContactForm
             onSaved={() => {
               setShowForm(false);
@@ -48,9 +52,7 @@ export function ContactsTable() {
             }}
           />
         </div>
-      ) : null}
-
-      {list.length === 0 ? (
+      ) : list.length === 0 ? (
         <EmptyState
           title="Nenhum contato"
           description="Crie um contato para começar."

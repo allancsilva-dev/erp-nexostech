@@ -80,7 +80,7 @@ export function ContactForm({ initialValues, onSaved }: { initialValues?: Partia
       </label>
 
       <label className="text-sm font-medium">
-        Documento
+        CPF / CNPJ
         <DocumentInput value={watch('document') ?? ''} onChange={(v) => setValue('document', v)} />
       </label>
 
