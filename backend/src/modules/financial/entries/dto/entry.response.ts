@@ -1,6 +1,6 @@
 type EntryEntity = {
   id: string;
-  documentNumber: string;
+  documentNumber: string | null;
   type: string;
   description: string;
   amount: string;
@@ -19,7 +19,7 @@ type EntryEntity = {
 
 export class EntryResponse {
   id!: string;
-  documentNumber!: string;
+  documentNumber!: string | null;
   type!: string;
   description!: string;
   amount!: string;

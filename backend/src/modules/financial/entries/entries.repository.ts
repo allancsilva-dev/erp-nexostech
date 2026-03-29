@@ -9,7 +9,7 @@ import {
 export type EntryRecord = {
   id: string;
   branchId: string;
-  documentNumber: string;
+  documentNumber: string | null;
   type: string;
   description: string;
   amount: string;
@@ -354,7 +354,7 @@ export class EntriesRepository {
     return {
       id: toText(row.id),
       branchId: toText(row.branch_id),
-      documentNumber: toText(row.document_number),
+      documentNumber: toNullableText(row.document_number),
       type: toText(row.type),
       description: toText(row.description),
       amount: toText(row.amount),

@@ -187,7 +187,7 @@ export class EntriesService {
     try {
       const rules = await this.approvalRulesService.list(branchId);
       if (!rules || rules.length === 0) return false;
-      const Decimal = (await import('decimal.js')).default;
+      const Decimal: any = (await import('decimal.js')).default;
       const value = new Decimal(amount);
       for (const r of rules) {
         // r.entryType may be null/empty meaning applies to both
