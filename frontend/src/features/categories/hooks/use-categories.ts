@@ -8,9 +8,16 @@ import { queryKeys } from '@/lib/query-keys';
 
 export function useCategories(type?: 'PAYABLE' | 'RECEIVABLE') {
   const { activeBranchId } = useBranch();
+
   return useQuery({
-    queryKey: queryKeys.categories.tree(activeBranchId || 'default', type),
-    queryFn: () => api.get<Category[]>('/categories', type ? { type } : undefined),
+    queryKey: queryKeys.categories.tree(activeBranchId || 'default'),
+    queryFn: async () => {
+      const res = await api.get<Category[]>('/categories');
+      return res.data;
+    },
     enabled: Boolean(activeBranchId),
+    select: (allCategories: Category[]) => (
+      type ? allCategories.filter((c) => c.type === type) : allCategories
+    ),
   });
 }

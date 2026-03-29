@@ -63,7 +63,7 @@ export default function ConfiguracoesPage() {
   });
 
   const categories = useCategories();
-  const categoryTree = buildCategoryTree(categories.data?.data ?? []);
+  const categoryTree = buildCategoryTree(categories.data ?? []);
   const [financeTab, setFinanceTab] = useState<'geral' | 'contas' | 'aprovacoes' | 'periodo' | 'categorias'>('geral');
 
   return (

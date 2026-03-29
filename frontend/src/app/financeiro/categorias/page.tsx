@@ -35,7 +35,7 @@ function buildCategoryTree(categories: Category[]): Category[] {
 
 export default function CategoriasPage() {
   const categories = useCategories();
-  const categoryTree = buildCategoryTree(categories.data?.data ?? []);
+  const categoryTree = buildCategoryTree(categories.data ?? []);
 
   return (
     <div>

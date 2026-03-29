@@ -47,7 +47,7 @@ export function FinancialInfo({ form }: { form: UseFormReturn<CreateEntryInput> 
                 className={fieldState.error ? 'border-red-500' : ''}
               >
                 <option value="">{categories.isLoading ? 'Carregando categorias...' : 'Selecione uma categoria'}</option>
-                {(categories.data?.data ?? []).map((category) => (
+                {(categories.data ?? [])?.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
