@@ -1,6 +1,7 @@
 'use client';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ACTION_LABELS, ENTITY_LABELS } from '../audit-labels';
 import { formatDateTime } from '@/lib/format';
 
 interface FieldChange {
@@ -74,8 +75,8 @@ export function AuditLogDetail({
 
         <div className="space-y-3 text-sm">
           <div className="grid gap-2 md:grid-cols-2">
-            <p><strong>Acao:</strong> {item.action}</p>
-            <p><strong>Entidade:</strong> {item.entity}</p>
+            <p><strong>Ação:</strong> {ACTION_LABELS[item.action] ?? item.action}</p>
+            <p><strong>Entidade:</strong> {ENTITY_LABELS[item.entity] ?? item.entity}</p>
             <p><strong>Usuario:</strong> {item.userEmail ?? item.userId}</p>
             <p><strong>Data:</strong> {formatDateTime(item.createdAt)}</p>
             <p><strong>IP:</strong> {item.ipAddress ?? '-'}</p>
@@ -83,9 +84,9 @@ export function AuditLogDetail({
           </div>
 
           <div>
-            <p className="mb-2 font-semibold">Alteracoes de campos</p>
+            <p className="mb-2 font-semibold">Alterações de campos</p>
             {changes.length === 0 ? (
-              <p className="text-slate-500">Nenhuma alteracao de campo registrada.</p>
+              <p className="text-slate-500">Nenhuma alteração de campo registrada.</p>
             ) : (
               <div className="overflow-x-auto rounded-lg border">
                 <table className="w-full min-w-[620px] border-collapse text-sm">
