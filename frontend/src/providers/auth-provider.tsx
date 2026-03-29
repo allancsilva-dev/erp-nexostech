@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       process.env.NEXT_PUBLIC_APP_URL || 'https://erp.zonadev.tech';
     const AUTH_URL =
       process.env.NEXT_PUBLIC_AUTH_URL || 'https://auth.zonadev.tech';
-    const returnTo = encodeURIComponent(`${APP_URL}/login`);
+    const returnTo = encodeURIComponent(APP_URL);
 
     try {
       await httpFetch('/api/auth/local-logout', {
