@@ -28,6 +28,7 @@ export function CurrencyInput({
       value={value ? new Decimal(value).toNumber() : ''}
       placeholder={placeholder}
       disabled={disabled}
+      onFocus={(e) => e.target.select()}
       onValueChange={(values) => {
         if (values.floatValue === undefined || values.floatValue === null) {
           onChange('');
