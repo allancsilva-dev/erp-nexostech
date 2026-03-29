@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useMemo } from 'react';
+import { toast } from 'sonner';
 import Decimal from 'decimal.js';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -45,7 +46,13 @@ export function useEntryForm(type: 'PAYABLE' | 'RECEIVABLE') {
   }, [amount, installmentCount, isInstallment]);
 
   const onSubmit = form.handleSubmit((values) => {
-    createEntry.mutate({ ...values, notes: values.notes || undefined });
+    createEntry.mutate({ ...values, notes: values.notes || undefined }, {
+      onSuccess: () => {
+        if (type === 'RECEIVABLE') {
+          toast.info('O envio automático de cobrança será habilitado em breve.');
+        }
+      },
+    });
   });
 
   return {
