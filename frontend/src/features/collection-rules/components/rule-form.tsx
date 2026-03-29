@@ -101,49 +101,54 @@ export function RuleForm() {
 
       <div className="flex gap-2">
         <Button type="button" onClick={() => void handleSubmit()} disabled={isSubmitting}>
-          {isSubmitting ? 'Salvando...' : editId ? 'Salvar alteracoes' : 'Criar regra'}
+          {isSubmitting ? 'Salvando...' : editId ? 'Salvar Alterações' : 'Criar regra'}
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full min-w-[700px] border-collapse text-sm">
-          <thead>
-            <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
-              <th className="px-3 py-2 font-medium">Evento</th>
-              <th className="px-3 py-2 font-medium">Offset</th>
-              <th className="px-3 py-2 font-medium">Template</th>
-              <th className="px-3 py-2 font-medium">Ativa</th>
-              <th className="px-3 py-2 font-medium">Acoes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ruleList.map((rule) => (
-              <tr key={rule.id} className="border-b">
-                <td className="px-3 py-2">{rule.event}</td>
-                <td className="px-3 py-2">{rule.daysOffset}</td>
-                <td className="px-3 py-2">{templateList.find((template) => template.id === rule.emailTemplateId)?.name ?? rule.emailTemplateId}</td>
-                <td className="px-3 py-2">{rule.active ? 'Sim' : 'Nao'}</td>
-                <td className="px-3 py-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setEditId(rule.id);
-                      setEvent(rule.event);
-                      setDaysOffset(String(rule.daysOffset));
-                      setEmailTemplateId(rule.emailTemplateId);
-                      setActive(rule.active);
-                      setSortOrder(String(rule.sortOrder));
-                    }}
-                  >
-                    Editar
-                  </Button>
-                </td>
+      <div>
+        <p className="mb-2 font-semibold">Regras existentes</p>
+        {ruleList.length === 0 ? (
+          <p className="text-slate-500">Nenhuma regra cadastrada.</p>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
+                <th className="px-3 py-2 font-medium">Evento</th>
+                <th className="px-3 py-2 font-medium">Offset</th>
+                <th className="px-3 py-2 font-medium">Template</th>
+                <th className="px-3 py-2 font-medium">Ativa</th>
+                <th className="px-3 py-2 font-medium">Ações</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {ruleList.map((rule) => (
+                <tr key={rule.id} className="border-b">
+                  <td className="px-3 py-2">{rule.event}</td>
+                  <td className="px-3 py-2">{rule.daysOffset}</td>
+                  <td className="px-3 py-2">{templateList.find((template) => template.id === rule.emailTemplateId)?.name ?? rule.emailTemplateId}</td>
+                  <td className="px-3 py-2">{rule.active ? 'Sim' : 'Não'}</td>
+                  <td className="px-3 py-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditId(rule.id);
+                        setEvent(rule.event);
+                        setDaysOffset(String(rule.daysOffset));
+                        setEmailTemplateId(rule.emailTemplateId);
+                        setActive(rule.active);
+                        setSortOrder(String(rule.sortOrder));
+                      }}
+                    >
+                      Editar
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
