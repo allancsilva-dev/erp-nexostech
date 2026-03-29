@@ -46,18 +46,26 @@ export function useEntryForm(type: 'PAYABLE' | 'RECEIVABLE') {
   }, [amount, installmentCount, isInstallment]);
 
   function submitWithStatus(status: 'DRAFT' | 'PENDING' | 'PENDING_APPROVAL') {
-    return form.handleSubmit((values) => {
-      createEntry.mutate(
-        { ...values, status, notes: values.notes || undefined },
-        {
-          onSuccess: () => {
-            if (type === 'RECEIVABLE') {
-              toast.info('O envio automático de cobrança será habilitado em breve.');
-            }
+    return form.handleSubmit(
+      (values) => {
+        // eslint-disable-next-line no-console
+        console.log('[EntryForm] submit OK, values:', values);
+        createEntry.mutate(
+          { ...values, status, notes: values.notes || undefined },
+          {
+            onSuccess: () => {
+              if (type === 'RECEIVABLE') {
+                toast.info('O envio automático de cobrança será habilitado em breve.');
+              }
+            },
           },
-        },
-      );
-    });
+        );
+      },
+      (errors) => {
+        // eslint-disable-next-line no-console
+        console.log('[EntryForm] VALIDATION ERRORS:', errors);
+      },
+    );
   }
 
   const onSubmitDraft = submitWithStatus('DRAFT');
