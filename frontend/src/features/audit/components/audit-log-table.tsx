@@ -6,6 +6,7 @@ import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '@/hooks/use-permissions';
+import { ACTION_LABELS, ENTITY_LABELS } from '../audit-labels';
 import { formatDateTime } from '@/lib/format';
 import { AuditLogDetail } from '@/features/audit/components/audit-log-detail';
 import { useAuditLogDetail, useAuditLogs, useExportAuditLogs } from '@/features/audit/hooks/use-audit-logs';
@@ -78,8 +79,8 @@ export function AuditLogTable() {
               <tr key={log.id} className="cursor-pointer border-b hover:bg-blue-50/50 dark:hover:bg-blue-900/20" onClick={() => setSelectedId(log.id)}>
                 <td className="px-3 py-2">{log.createdAt ? formatDateTime(log.createdAt) : '-'}</td>
                 <td className="px-3 py-2">{log.userEmail ?? '-'}</td>
-                <td className="px-3 py-2">{log.action ?? '-'}</td>
-                <td className="px-3 py-2">{log.entity ?? '-'}</td>
+                <td className="px-3 py-2">{ACTION_LABELS[log.action ?? ''] ?? log.action ?? '-'}</td>
+                <td className="px-3 py-2">{ENTITY_LABELS[log.entity ?? ''] ?? log.entity ?? '-'}</td>
               </tr>
             ))}
           </tbody>
