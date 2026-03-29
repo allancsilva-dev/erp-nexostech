@@ -9,8 +9,8 @@ import { UpdateContactDto } from './dto/update-contact.dto';
 export class ContactsService {
   constructor(private readonly contactsRepository: ContactsRepository) {}
 
-  async list(page: number, pageSize: number) {
-    return this.contactsRepository.list(page, pageSize);
+  async list(page: number, pageSize: number, type?: string, search?: string) {
+    return this.contactsRepository.list(page, pageSize, type, search);
   }
 
   async create(dto: CreateContactDto) {

@@ -11,6 +11,7 @@ import {
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { Idempotent } from '../../../common/decorators/idempotent.decorator';
 import { PaginationDto } from '../../../common/dtos/pagination.dto';
+import { ListContactsDto } from '../../../modules/contacts/dto/list-contacts.dto';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
 import { RbacGuard } from '../../../common/guards/rbac.guard';
@@ -27,11 +28,13 @@ export class ContactsController {
   @Get()
   @RequirePermission('financial.entries.view')
   async list(
-    @Query() query: PaginationDto,
+    @Query() query: ListContactsDto,
   ): Promise<ApiResponse<ContactResponse[]>> {
     const { items, total } = await this.contactsService.list(
       query.page,
       query.pageSize,
+      query.type,
+      query.search,
     );
     return ApiResponse.paginated(
       items.map((item) => ContactResponse.from(item)),

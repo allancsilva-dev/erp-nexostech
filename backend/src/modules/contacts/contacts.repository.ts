@@ -44,16 +44,33 @@ export class ContactsRepository {
   async list(
     page: number,
     pageSize: number,
+    type?: string,
+    search?: string,
   ): Promise<{ items: ContactEntity[]; total: number }> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const offset = (page - 1) * pageSize;
+
+    const filters: string[] = ['deleted_at IS NULL'];
+
+    if (type) {
+      const typeLiteral = quoteLiteral(type);
+      const ambosLiteral = quoteLiteral('AMBOS');
+      filters.push(`(type = ${typeLiteral} OR type = ${ambosLiteral})`);
+    }
+
+    if (search) {
+      const searchLiteral = quoteLiteral(`%${search}%`);
+      filters.push(`name ILIKE ${searchLiteral}`);
+    }
+
+    const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
 
     const rowsResult = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT id, name, type, document, phone, email, active, created_at
       FROM ${schema}.contacts
-      WHERE deleted_at IS NULL
-      ORDER BY created_at DESC
+      ${whereClause}
+      ORDER BY name ASC
       LIMIT ${pageSize} OFFSET ${offset}
     `),
     );
@@ -62,7 +79,7 @@ export class ContactsRepository {
       sql.raw(`
       SELECT COUNT(*)::int AS total
       FROM ${schema}.contacts
-      WHERE deleted_at IS NULL
+      ${whereClause}
     `),
     );
 
