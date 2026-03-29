@@ -9,7 +9,7 @@ import type { CreateEntryInput } from '@/features/entries/types/entry.schemas';
 
 export function FinancialInfo({ form }: { form: UseFormReturn<CreateEntryInput> }) {
   const entryType = form.watch('type');
-  const categoryType = entryType === 'PAYABLE' ? 'DESPESA' : 'RECEITA';
+  const categoryType = entryType === 'PAYABLE' ? 'PAYABLE' : 'RECEIVABLE';
   const categories = useCategories(categoryType);
 
   return (

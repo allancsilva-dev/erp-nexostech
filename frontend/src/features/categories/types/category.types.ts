@@ -1,7 +1,7 @@
 ﻿export interface Category {
   id: string;
   name: string;
-  type: 'RECEITA' | 'DESPESA';
+  type: 'PAYABLE' | 'RECEIVABLE';
   parentId: string | null;
   color: string;
   active: boolean;

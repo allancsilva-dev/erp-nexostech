@@ -6,7 +6,7 @@ import { useBranch } from '@/hooks/use-branch';
 import type { Category } from '@/features/categories/types/category.types';
 import { queryKeys } from '@/lib/query-keys';
 
-export function useCategories(type?: 'RECEITA' | 'DESPESA') {
+export function useCategories(type?: 'PAYABLE' | 'RECEIVABLE') {
   const { activeBranchId } = useBranch();
   return useQuery({
     queryKey: queryKeys.categories.tree(activeBranchId || 'default', type),

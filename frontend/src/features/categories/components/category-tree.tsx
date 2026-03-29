@@ -3,7 +3,7 @@
 import type { Category } from '@/features/categories/types/category.types';
 
 function TypeBadge({ type }: { type: Category['type'] }) {
-  if (type === 'DESPESA') {
+  if (type === 'PAYABLE') {
     return (
       <span
         className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
@@ -45,8 +45,8 @@ function CategoryNode({ category }: { category: Category }) {
 }
 
 export function CategoryTree({ categories }: { categories: Category[] }) {
-  const receitas = categories.filter((category) => category.type === 'RECEITA');
-  const despesas = categories.filter((category) => category.type === 'DESPESA');
+  const receitas = categories.filter((category) => category.type === 'RECEIVABLE');
+  const despesas = categories.filter((category) => category.type === 'PAYABLE');
 
   return (
     <div className="space-y-4">
