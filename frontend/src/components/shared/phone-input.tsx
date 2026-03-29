@@ -1,14 +1,21 @@
 ﻿'use client';
 
-import InputMask from 'react-input-mask';
+import { MaskedInput } from '@/components/ui/masked-input';
 
-export function PhoneInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+interface PhoneInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+}
+
+export function PhoneInput({ value, onChange, disabled }: PhoneInputProps) {
   return (
-    <InputMask
-      mask="(99) 99999-9999"
+    <MaskedInput
+      maskType="phone"
       value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+      onChange={onChange}
+      disabled={disabled}
+      placeholder="(00) 00000-0000"
     />
   );
 }
