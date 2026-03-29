@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import type { UseFormReturn } from 'react-hook-form';
+import { formatCurrency } from '@/lib/format';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import type { CreateEntryInput } from '@/features/entries/types/entry.schemas';
@@ -64,7 +65,7 @@ export function InstallmentSection({
           <p className="mb-2 font-medium">Pré-visualização de parcelas</p>
           <div className="space-y-1">
             {preview.slice(0, 8).map((item) => (
-              <p key={item.installment}>{item.installment} - R$ {item.value.replace('.', ',')}</p>
+              <p key={item.installment}>{item.installment} - {formatCurrency(item.value)}</p>
             ))}
           </div>
         </div>

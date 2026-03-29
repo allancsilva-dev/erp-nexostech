@@ -1,5 +1,6 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -263,14 +264,14 @@ export function ApprovalRulesManager() {
                 <th className="px-3 py-2 font-medium">Valor minimo</th>
                 <th className="px-3 py-2 font-medium">Role</th>
                 <th className="px-3 py-2 font-medium">Ativa</th>
-                <th className="px-3 py-2 font-medium">Acoes</th>
+                <th className="px-3 py-2 font-medium">Ações</th>
               </tr>
             </thead>
             <tbody>
               {rules.map((rule) => (
                 <tr key={rule.id} className="border-b">
                   <td className="px-3 py-2">{rule.entryType ?? 'Ambos'}</td>
-                  <td className="px-3 py-2">R$ {normalizeAmount(rule.minAmount)}</td>
+                  <td className="px-3 py-2">{formatCurrency(normalizeAmount(rule.minAmount))}</td>
                   <td className="px-3 py-2">{roleMap.get(rule.approverRoleId) ?? rule.approverRoleId}</td>
                   <td className="px-3 py-2">{rule.active ? 'Sim' : 'Não'}</td>
                   <td className="px-3 py-2">

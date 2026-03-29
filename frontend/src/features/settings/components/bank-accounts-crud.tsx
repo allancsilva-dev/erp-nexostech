@@ -1,5 +1,6 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { v4 as uuid } from 'uuid';
@@ -279,7 +280,7 @@ export function BankAccountsCrud() {
                 <th className="px-3 py-2 font-medium">Tipo</th>
                 <th className="px-3 py-2 font-medium">Saldo inicial</th>
                 <th className="px-3 py-2 font-medium">Status</th>
-                <th className="px-3 py-2 font-medium">Acoes</th>
+                <th className="px-3 py-2 font-medium">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -289,7 +290,7 @@ export function BankAccountsCrud() {
                   <td className="px-3 py-2">{account.bankCode ?? '-'}</td>
                   <td className="px-3 py-2">{`${account.agency ?? '-'} / ${account.accountNumber ?? '-'}`}</td>
                   <td className="px-3 py-2">{account.type}</td>
-                  <td className="px-3 py-2">R$ {account.initialBalance}</td>
+                  <td className="px-3 py-2">{formatCurrency(account.initialBalance)}</td>
                   <td className="px-3 py-2">{account.active ? 'Ativa' : 'Inativa'}</td>
                   <td className="px-3 py-2">
                     {canManage ? (

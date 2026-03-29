@@ -1,5 +1,6 @@
 'use client';
 
+import { formatCurrency } from '@/lib/format';
 import { useState } from 'react';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
@@ -120,7 +121,7 @@ export function ApprovalList() {
                     />
                   </td>
                   <td className="px-3 py-2 font-mono">{item.documentNumber}</td>
-                  <td className="px-3 py-2">R$ {item.amount}</td>
+                  <td className="px-3 py-2">{formatCurrency(item.amount)}</td>
                   <td className="px-3 py-2">{item.contactName ?? '-'}</td>
                   <td className="px-3 py-2">
                     <Input
