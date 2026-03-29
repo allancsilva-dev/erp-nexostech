@@ -21,7 +21,7 @@ export function EntryForm({ type }: { type: 'PAYABLE' | 'RECEIVABLE' }) {
 
       <div className="flex justify-end gap-2">
         <Button type="submit" disabled={isPending}>
-          {isPending ? 'Salvando...' : 'Salvar e enviar'}
+          {isPending ? 'Salvando...' : type === 'RECEIVABLE' ? 'Salvar e Enviar' : 'Salvar'}
         </Button>
       </div>
     </form>
