@@ -56,18 +56,68 @@ export function ContactForm({
   }, [initialValues, setValue]);
 
   async function onSubmit(values: ContactFormValues) {
+    function formatDocumentForApi(digits?: string | null) {
+      if (!digits) return null;
+      const d = String(digits).replace(/\D/g, '');
+      if (d.length <= 11) {
+        return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+      }
+      return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+
+    function formatPhoneForApi(digits?: string | null) {
+      if (!digits) return null;
+      const d = String(digits).replace(/\D/g, '');
+      if (d.length === 11) {
+        return d.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+      }
+      if (d.length === 10) {
+        return d.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+      }
+      return String(digits);
+    }
+
     try {
-      if (values.id) {
-        await api.put(`/contacts/${values.id}`, values);
+      const { id } = values as ContactFormValues & Record<string, unknown>;
+
+      const cloned = { ...(values as Record<string, unknown>) };
+      delete cloned.active;
+      delete cloned.id;
+      const payload = cloned;
+
+      const apiPayload = {
+        ...payload,
+        document: payload.document ? formatDocumentForApi(String(payload.document)) : null,
+        phone: payload.phone ? formatPhoneForApi(String(payload.phone)) : null,
+        email: payload.email || null,
+      } as Record<string, unknown>;
+
+      if (id) {
+        await api.put(`/contacts/${id}`, apiPayload);
         toast.success('Contato atualizado com sucesso');
       } else {
-        await api.post('/contacts', values);
+        await api.post('/contacts', apiPayload);
         toast.success('Contato criado com sucesso');
       }
+
       queryClient.invalidateQueries({ queryKey: queryKeys.contacts.all });
       onSaved?.();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao salvar contato.';
+    } catch (error: unknown) {
+      let message = 'Falha ao salvar contato.';
+      if (error && typeof error === 'object' && 'message' in error) {
+        const raw = String((error as { message: string }).message);
+        if (raw.includes('should not exist')) {
+          message = 'Erro de validação. Tente novamente.';
+        } else if (raw.includes('document must match')) {
+          message = 'CPF ou CNPJ em formato inválido.';
+        } else if (raw.includes('digito verificador')) {
+          message = 'CPF ou CNPJ inválido. Verifique os dígitos.';
+        } else if (raw.includes('Telefone')) {
+          message = 'Telefone em formato inválido.';
+        } else {
+          message = raw;
+        }
+      }
       toast.error(message);
     }
   }
