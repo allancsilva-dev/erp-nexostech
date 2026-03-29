@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowDownLeft,
   ArrowLeftRight,
+  Users,
   BarChart3,
   BookOpen,
   CheckCircle2,
@@ -61,6 +62,13 @@ const ITEMS: SidebarItem[] = [
     href: ROUTES.contasReceber,
     permission: 'financial.entries.view',
     icon: ArrowDownLeft,
+  },
+  {
+    section: 'financeiro',
+    label: 'Contatos',
+    href: '/financeiro/contatos',
+    permission: 'contacts.view',
+    icon: Users,
   },
   {
     section: 'financeiro',
