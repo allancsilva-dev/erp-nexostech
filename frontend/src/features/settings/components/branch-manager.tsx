@@ -266,7 +266,7 @@ export function BranchManager() {
       return;
     }
 
-    const approved = window.confirm('Filiais inativas nao aparecem no branch switcher. Confirmar desativacao?');
+    const approved = window.confirm('Filiais inativas não aparecem no branch switcher. Confirmar desativação?');
     if (!approved) {
       return;
     }
@@ -304,7 +304,7 @@ export function BranchManager() {
       </div>
 
       {sortedBranches.length === 0 ? (
-        <EmptyState title="Nenhuma filial cadastrada" description="Crie a primeira filial para habilitar operacao multiunidade." />
+        <EmptyState title="Nenhuma filial cadastrada" description="Crie a primeira filial para habilitar operação multifilial." />
       ) : (
         <div className="overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[900px] border-collapse text-sm">
@@ -489,7 +489,7 @@ export function BranchManager() {
                 Fechar
               </Button>
               <Button type="submit" disabled={isMutating}>
-                {isMutating ? 'Processando...' : editingId ? 'Salvar alteracoes' : 'Criar filial'}
+                {isMutating ? 'Processando...' : editingId ? 'Salvar Alterações' : 'Criar filial'}
               </Button>
             </div>
           </form>
