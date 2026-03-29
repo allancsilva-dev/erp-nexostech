@@ -21,6 +21,7 @@ export const queryKeys = {
   contacts: {
     all: ['contacts'] as const,
     list: (filters?: Record<string, unknown>) => ['contacts', 'list', safeJsonStringify(filters ?? {})] as const,
+    detail: (id: string) => ['contacts', 'detail', id] as const,
   },
   approvals: {
     pending: (branchId: string) => ['approvals', branchId, 'pending'] as const,
