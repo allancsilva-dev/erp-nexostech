@@ -11,6 +11,8 @@ import { Select } from '@/components/ui/select';
 import { DocumentInput } from '@/components/shared/document-input';
 import { PhoneInput } from '@/components/shared/phone-input';
 import { api } from '@/lib/api-client';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/query-keys';
 
 const contactSchema = z.object({
   id: z.string().optional(),
@@ -38,6 +40,8 @@ export function ContactForm({ initialValues, onSaved }: { initialValues?: Partia
     },
   });
 
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     if (initialValues) {
       Object.entries(initialValues).forEach(([k, v]) => {
@@ -48,6 +52,10 @@ export function ContactForm({ initialValues, onSaved }: { initialValues?: Partia
 
   async function onSubmit(values: ContactFormValues) {
     try {
+      // debug: ensure submit runs
+      // eslint-disable-next-line no-console
+      console.log('ContactForm onSubmit', values);
+
       if (values.id) {
         await api.put(`/contacts/${values.id}`, values);
         toast.success('Contato atualizado com sucesso');
@@ -55,6 +63,15 @@ export function ContactForm({ initialValues, onSaved }: { initialValues?: Partia
         await api.post('/contacts', values);
         toast.success('Contato criado com sucesso');
       }
+
+      // Invalidate contacts queries so lists/autocompletes refresh
+      try {
+        queryClient.invalidateQueries({ queryKey: queryKeys.contacts.all });
+      } catch {
+        // fallback: invalidate by prefix
+        queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      }
+
       onSaved?.();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao salvar contato.';
