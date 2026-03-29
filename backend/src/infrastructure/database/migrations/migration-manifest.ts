@@ -582,4 +582,14 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
       `CREATE UNIQUE INDEX IF NOT EXISTS uq_attachments_storage_key ON ${schema}.attachments(storage_key)`,
     ],
   },
+  {
+    name: '016_document_number_nullable_and_unique_index',
+    run: (schema) => [
+      `ALTER TABLE ${schema}.financial_entries
+       ALTER COLUMN document_number DROP NOT NULL`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS uq_entries_branch_document_number
+       ON ${schema}.financial_entries(branch_id, document_number)
+       WHERE document_number IS NOT NULL AND deleted_at IS NULL`,
+    ],
+  },
 ];

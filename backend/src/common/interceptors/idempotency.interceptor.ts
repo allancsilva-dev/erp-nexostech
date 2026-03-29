@@ -49,7 +49,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
       throw new BadRequestException({
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'Header Idempotency-Key obrigatorio para esta operacao',
+          message: 'Chave de segurança obrigatória. Tente novamente.',
         },
       });
     }
@@ -73,7 +73,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
             throw new ConflictException({
               error: {
                 code: 'CONFLICT',
-                message: 'Idempotency-Key ja utilizado com payload diferente',
+                message: 'Esta operação já foi processada.',
               },
             });
           }

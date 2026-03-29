@@ -86,4 +86,8 @@ export class CreateEntryDto {
   @IsString()
   @MaxLength(500)
   notes?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  submit?: boolean;
 }

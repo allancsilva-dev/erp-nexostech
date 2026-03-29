@@ -23,7 +23,7 @@ export const createEntrySchema = z
     installmentCount: z.number().int().min(2).max(120).optional(),
     installmentFrequency: z.enum(['WEEKLY', 'BIWEEKLY', 'MONTHLY', 'YEARLY']).optional(),
     notes: z.string().max(500).optional(),
-    status: z.enum(['DRAFT', 'PENDING', 'PENDING_APPROVAL']).optional().default('PENDING'),
+    submit: z.boolean().optional().default(false),
   })
   .refine((data) => data.dueDate >= data.issueDate, {
     message: 'Vencimento deve ser maior ou igual a emissao',

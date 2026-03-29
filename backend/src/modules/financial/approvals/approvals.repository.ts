@@ -96,27 +96,97 @@ export class ApprovalsRepository {
     const actionLiteral = quoteLiteral(action);
     const notesLiteral = quoteLiteral(notes ?? null);
 
-    const result = await this.drizzleService.getClient().execute(
-      sql.raw(`
-      INSERT INTO ${schema}.entry_approvals (
-        entry_id, branch_id, approved_by, action, notes
-      ) VALUES (
-        ${entryLiteral}, ${branchLiteral}, ${userLiteral}, ${actionLiteral}, ${notesLiteral}
-      )
-      RETURNING id, entry_id, approved_by, action, notes, created_at
-    `),
-    );
+    // Run approval and potential document number generation in a single transaction
+    const result = await this.drizzleService.transaction(async (tx) => {
+      const insertRes = await tx.execute(
+        sql.raw(`
+        INSERT INTO ${schema}.entry_approvals (
+          entry_id, branch_id, approved_by, action, notes
+        ) VALUES (
+          ${entryLiteral}, ${branchLiteral}, ${userLiteral}, ${actionLiteral}, ${notesLiteral}
+        )
+        RETURNING id, entry_id, approved_by, action, notes, created_at
+      `),
+      );
 
-    const nextStatus = action === 'APPROVED' ? 'PENDING' : 'CANCELLED';
-    await this.drizzleService.getClient().execute(
-      sql.raw(`
-      UPDATE ${schema}.financial_entries
-      SET status = ${quoteLiteral(nextStatus)}
-      WHERE id = ${entryLiteral}
-        AND branch_id = ${branchLiteral}
-        AND deleted_at IS NULL
-    `),
-    );
+      if (action === 'APPROVED') {
+        // fetch entry type to determine sequence prefix and lock sequence row
+        const entryRow = await tx.execute(
+          sql.raw(`
+          SELECT type
+          FROM ${schema}.financial_entries
+          WHERE id = ${entryLiteral}
+            AND branch_id = ${branchLiteral}
+            AND deleted_at IS NULL
+          LIMIT 1
+          FOR UPDATE
+        `),
+        );
+        const entryType = entryRow.rows[0]?.type ?? 'RECEIVABLE';
+        const prefix = entryType === 'PAYABLE' ? 'PAY' : 'REC';
+        const year = new Date().getFullYear();
+
+        // select sequence row FOR UPDATE
+        const seqRes = await tx.execute(
+          sql.raw(`
+          SELECT last_sequence
+          FROM ${schema}.document_sequences
+          WHERE branch_id = ${branchLiteral}
+            AND type = ${quoteLiteral(prefix)}
+            AND year = ${quoteLiteral(String(year))}
+          FOR UPDATE
+        `),
+        );
+
+        let nextSeq = 1;
+        if (seqRes && Array.isArray((seqRes as any).rows) && (seqRes as any).rows.length > 0) {
+          const row = (seqRes as any).rows[0];
+          const last = Number(row.last_sequence ?? 0) || 0;
+          nextSeq = last + 1;
+          await tx.execute(
+            sql.raw(`
+            UPDATE ${schema}.document_sequences
+            SET last_sequence = ${quoteLiteral(String(nextSeq))}, updated_at = NOW()
+            WHERE branch_id = ${branchLiteral}
+              AND type = ${quoteLiteral(prefix)}
+              AND year = ${quoteLiteral(String(year))}
+          `),
+          );
+        } else {
+          await tx.execute(
+            sql.raw(`
+            INSERT INTO ${schema}.document_sequences (branch_id, type, year, last_sequence)
+            VALUES (${branchLiteral}, ${quoteLiteral(prefix)}, ${quoteLiteral(String(year))}, 1)
+          `),
+          );
+          nextSeq = 1;
+        }
+
+        const documentNumber = `${prefix}-${year}-${String(nextSeq).padStart(5, '0')}`;
+
+        await tx.execute(
+          sql.raw(`
+          UPDATE ${schema}.financial_entries
+          SET status = 'PENDING', document_number = ${quoteLiteral(documentNumber)}
+          WHERE id = ${entryLiteral}
+            AND branch_id = ${branchLiteral}
+            AND deleted_at IS NULL
+        `),
+        );
+      } else {
+        await tx.execute(
+          sql.raw(`
+          UPDATE ${schema}.financial_entries
+          SET status = 'CANCELLED'
+          WHERE id = ${entryLiteral}
+            AND branch_id = ${branchLiteral}
+            AND deleted_at IS NULL
+        `),
+        );
+      }
+
+      return insertRes;
+    });
 
     const row = result.rows[0];
     return {

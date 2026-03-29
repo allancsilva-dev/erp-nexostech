@@ -56,10 +56,13 @@ export function useCreateEntry() {
       let message = 'Falha ao salvar lançamento.';
       if (error instanceof Error) {
         const raw = String(error.message || '');
-        if (raw.includes('Idempotency') || raw.includes('Idempotency-Key')) {
+        const low = raw.toLowerCase();
+        if (raw.includes('segurança') || raw.includes('Idempotency') || raw.includes('Idempotency-Key')) {
           message = 'Erro interno. Tente novamente.';
-        } else if (raw.toLowerCase().includes('locked') || raw.toLowerCase().includes('bloqueado')) {
+        } else if (low.includes('bloqueado') || low.includes('locked')) {
           message = 'Período contábil bloqueado. Não é possível criar lançamento nesta data.';
+        } else if (low.includes('já foi processada') || low.includes('ja foi processada') || low.includes('já foi processado')) {
+          message = 'Esta operação já foi processada. Atualize a página.';
         } else {
           message = raw || message;
         }

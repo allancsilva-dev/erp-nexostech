@@ -45,23 +45,43 @@ export function useEntryForm(type: 'PAYABLE' | 'RECEIVABLE') {
     }));
   }, [amount, installmentCount, isInstallment]);
 
-  function submitWithStatus(status: 'DRAFT' | 'PENDING' | 'PENDING_APPROVAL') {
-    return form.handleSubmit((values) => {
-      createEntry.mutate(
-        { ...values, status, notes: values.notes || undefined },
-        {
-          onSuccess: () => {
-            if (type === 'RECEIVABLE') {
-              toast.info('O envio automático de cobrança será habilitado em breve.');
-            }
+  function submitAsDraft() {
+    return form.handleSubmit(
+      (values) => {
+        createEntry.mutate(
+          { ...values, submit: false, notes: values.notes || undefined },
+          {
+            onSuccess: () => {
+              toast.success('Rascunho salvo com sucesso');
+            },
           },
-        },
-      );
-    });
+        );
+      },
+      (errors) => console.error('[EntryForm] Erros:', errors),
+    );
   }
 
-  const onSubmitDraft = submitWithStatus('DRAFT');
-  const onSubmitPending = submitWithStatus('PENDING');
+  function submitAndSend() {
+    return form.handleSubmit(
+      (values) => {
+        createEntry.mutate(
+          { ...values, submit: true, notes: values.notes || undefined },
+          {
+            onSuccess: () => {
+              toast.success('Lançamento enviado com sucesso');
+              if (type === 'RECEIVABLE') {
+                toast.info('O envio automático de cobrança será habilitado em breve.');
+              }
+            },
+          },
+        );
+      },
+      (errors) => console.error('[EntryForm] Erros:', errors),
+    );
+  }
+
+  const onSubmitDraft = submitAsDraft();
+  const onSubmitPending = submitAndSend();
   // default for compatibility
   const onSubmit = onSubmitPending;
 

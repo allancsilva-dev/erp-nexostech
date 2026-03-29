@@ -19,6 +19,7 @@ import {
   EntriesListOptions,
   EntriesRepository,
 } from './entries.repository';
+import { ApprovalRulesService } from '../approval-rules/approval-rules.service';
 
 @Injectable()
 export class EntriesService {
@@ -30,6 +31,7 @@ export class EntriesService {
     private readonly txHelper: TransactionHelper,
     private readonly eventBus: EventBusService,
     private readonly drizzleService: DrizzleService,
+    private readonly approvalRulesService: ApprovalRulesService,
   ) {}
 
   private toDate(date: string | Date): Date {
@@ -130,28 +132,45 @@ export class EntriesService {
         )
       : [dto.amount];
 
-    const created = await this.txHelper.run(async () => {
+    const created = await this.txHelper.run(async (tx) => {
       const firstInstallmentAmount = installments[0] ?? dto.amount;
-      return this.entriesRepository.create({
-        branchId,
-        documentNumber: `${dto.type === EntryType.PAYABLE ? 'PAY' : 'REC'}-${new Date().getFullYear()}-00001`,
-        type: dto.type,
-        description: dto.description,
-        amount: firstInstallmentAmount,
-        issueDate: dto.issueDate,
-        dueDate: dto.dueDate,
-        status: 'DRAFT',
-        categoryName: 'Categoria provisoria',
-        contactName: null,
-        paidAmount: null,
-        remainingBalance: firstInstallmentAmount,
-        installmentNumber: dto.installment ? 1 : null,
-        installmentTotal: dto.installment
-          ? (dto.installmentCount ?? null)
-          : null,
-        categoryId: dto.categoryId,
-        contactId: dto.contactId ?? null,
-      });
+
+      // Determine initial status based on submit flag and approval rules
+      let initialStatus = 'DRAFT';
+      if (dto.submit) {
+        const needsApproval = await this.checkApprovalRules(branchId, dto.type, dto.amount);
+        initialStatus = needsApproval ? 'PENDING_APPROVAL' : 'PENDING';
+      }
+
+      // Generate document number only for PENDING
+      let documentNumber: string | null = null;
+      if (initialStatus === 'PENDING') {
+        documentNumber = await this.generateDocumentNumber(branchId, dto.type, tx);
+      }
+
+      const createdEntry = await this.entriesRepository.create(
+        {
+          branchId,
+          documentNumber,
+          type: dto.type,
+          description: dto.description,
+          amount: firstInstallmentAmount,
+          issueDate: dto.issueDate,
+          dueDate: dto.dueDate,
+          status: initialStatus,
+          categoryName: 'Categoria provisoria',
+          contactName: null,
+          paidAmount: null,
+          remainingBalance: firstInstallmentAmount,
+          installmentNumber: dto.installment ? 1 : null,
+          installmentTotal: dto.installment ? (dto.installmentCount ?? null) : null,
+          categoryId: dto.categoryId,
+          contactId: dto.contactId ?? null,
+        },
+        tx,
+      );
+
+      return createdEntry;
     });
 
     this.eventBus.emit('entry.created', {
@@ -162,6 +181,74 @@ export class EntriesService {
     });
 
     return created;
+  }
+
+  private async checkApprovalRules(branchId: string, entryType: string, amount: string): Promise<boolean> {
+    try {
+      const rules = await this.approvalRulesService.list(branchId);
+      if (!rules || rules.length === 0) return false;
+      const Decimal = (await import('decimal.js')).default;
+      const value = new Decimal(amount);
+      for (const r of rules) {
+        // r.entryType may be null/empty meaning applies to both
+        if (r.active) {
+          if (!r.entryType || r.entryType === entryType) {
+            const min = new Decimal(r.minAmount || '0');
+            if (value.greaterThanOrEqualTo(min)) return true;
+          }
+        }
+      }
+      return false;
+    } catch (e) {
+      // If anything fails, be permissive: don't require approval
+      return false;
+    }
+  }
+
+  private async generateDocumentNumber(branchId: string, type: string, tx: Parameters<Parameters<DrizzleService['transaction']>[0]>[0]): Promise<string> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const branchLiteral = quoteLiteral(branchId);
+    const year = new Date().getFullYear();
+    const prefix = type === EntryType.PAYABLE ? 'PAY' : 'REC';
+
+    // Try to select the sequence row FOR UPDATE
+    const selectResult: unknown = await tx.execute(
+      sql.raw(`
+      SELECT last_sequence
+      FROM ${schema}.document_sequences
+      WHERE branch_id = ${branchLiteral}
+        AND type = ${quoteLiteral(prefix)}
+        AND year = ${quoteLiteral(String(year))}
+      FOR UPDATE
+    `),
+    );
+
+    let nextSeq = 1;
+    if (selectResult && Array.isArray((selectResult as any).rows) && (selectResult as any).rows.length > 0) {
+      const row = (selectResult as any).rows[0];
+      const last = Number(row.last_sequence ?? 0) || 0;
+      nextSeq = last + 1;
+      await tx.execute(
+        sql.raw(`
+        UPDATE ${schema}.document_sequences
+        SET last_sequence = ${quoteLiteral(String(nextSeq))}, updated_at = NOW()
+        WHERE branch_id = ${branchLiteral}
+          AND type = ${quoteLiteral(prefix)}
+          AND year = ${quoteLiteral(String(year))}
+      `),
+      );
+    } else {
+      // insert initial sequence
+      await tx.execute(
+        sql.raw(`
+        INSERT INTO ${schema}.document_sequences (branch_id, type, year, last_sequence)
+        VALUES (${branchLiteral}, ${quoteLiteral(prefix)}, ${quoteLiteral(String(year))}, 1)
+      `),
+      );
+      nextSeq = 1;
+    }
+
+    return `${prefix}-${year}-${String(nextSeq).padStart(5, '0')}`;
   }
 
   async update(

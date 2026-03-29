@@ -288,11 +288,13 @@ export class EntriesRepository {
     data: Omit<EntryRecord, 'id' | 'createdAt'> & {
       categoryId: string;
       contactId?: string | null;
+      documentNumber?: string | null;
     },
+    tx?: { execute: (q: unknown) => Promise<unknown> },
   ): Promise<EntryRecord> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchId = quoteLiteral(data.branchId);
-    const documentNumber = quoteLiteral(data.documentNumber);
+    const documentNumber = quoteLiteral(data.documentNumber ?? null);
     const type = quoteLiteral(data.type);
     const description = quoteLiteral(data.description);
     const amount = quoteLiteral(data.amount);
@@ -305,7 +307,8 @@ export class EntriesRepository {
     const installmentNumber = quoteLiteral(data.installmentNumber);
     const installmentTotal = quoteLiteral(data.installmentTotal);
 
-    const result: unknown = await this.drizzleService.getClient().execute(
+    const runner = tx ? tx : this.drizzleService.getClient();
+    const result: unknown = await runner.execute(
       sql.raw(`
       INSERT INTO ${schema}.financial_entries (
         branch_id,
