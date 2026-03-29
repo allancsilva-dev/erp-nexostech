@@ -79,6 +79,12 @@ export function ContactForm({ initialValues, onSaved }: { initialValues?: Partia
     }
   }
 
+  // DEBUG — remover depois
+  // eslint-disable-next-line no-console
+  console.log('[ContactForm] watch():', watch());
+  // eslint-disable-next-line no-console
+  console.log('[ContactForm] errors:', (errors));
+
   return (
     <form className="grid gap-3" onSubmit={handleSubmit(onSubmit)}>
       <label className="text-sm font-medium">
