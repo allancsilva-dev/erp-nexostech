@@ -52,8 +52,19 @@ export function useCreateEntry() {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(activeBranchId || 'default') });
       toast.success('Lançamento criado com sucesso');
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
+    onError: (error: unknown) => {
+      let message = 'Falha ao salvar lançamento.';
+      if (error instanceof Error) {
+        const raw = String(error.message || '');
+        if (raw.includes('Idempotency') || raw.includes('Idempotency-Key')) {
+          message = 'Erro interno. Tente novamente.';
+        } else if (raw.toLowerCase().includes('locked') || raw.toLowerCase().includes('bloqueado')) {
+          message = 'Período contábil bloqueado. Não é possível criar lançamento nesta data.';
+        } else {
+          message = raw || message;
+        }
+      }
+      toast.error(message);
     },
   });
 }
