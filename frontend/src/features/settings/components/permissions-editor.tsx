@@ -38,7 +38,7 @@ export function PermissionsEditor({ role, onSave, onDelete }: Props) {
   }
 
   async function handleDelete() {
-    if (!confirm(`Excluir perfil "${role.name}"? Esta acao e irreversivel.`)) return;
+    if (!confirm(`Excluir perfil "${role.name}"? Esta ação é irreversível.`)) return;
     setIsDeleting(true);
     try {
       await onDelete(role.id);
