@@ -8,15 +8,18 @@ import { Button } from '@/components/ui/button';
 import { PermissionGate } from '@/components/shared/permission-gate';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { useContacts, useDeleteContact } from '@/features/contacts/hooks/use-contacts';
+import { ContactForm } from '@/features/contacts/components/contact-form';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Contact } from '@/features/contacts/types/contact.types';
 
 export function ContactsTable() {
   const contactsQuery = useContacts(undefined, undefined);
   const deleteContact = useDeleteContact();
+  const queryClient = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [targetId, setTargetId] = useState<string | null>(null);
-
   if (contactsQuery.isLoading) {
     return <TableSkeleton rows={6} cols={6} />;
   }
@@ -27,13 +30,38 @@ export function ContactsTable() {
 
   const list: Contact[] = Array.isArray(contactsQuery.data?.data) ? contactsQuery.data!.data : [];
 
-  if (list.length === 0) {
-    return <EmptyState title="Nenhum contato" description="Crie um contato para começar." />;
-  }
-
   return (
     <div className="surface-card overflow-x-auto p-3">
-      <table className="w-full min-w-[760px] border-collapse text-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-semibold">Contatos</h3>
+        <PermissionGate permission="contacts.manage">
+          <Button onClick={() => setShowForm(true)}>Novo Contato</Button>
+        </PermissionGate>
+      </div>
+
+      {showForm ? (
+        <div className="mb-4">
+          <ContactForm
+            onSaved={() => {
+              setShowForm(false);
+              void queryClient.invalidateQueries({ queryKey: ['contacts'] });
+            }}
+          />
+        </div>
+      ) : null}
+
+      {list.length === 0 ? (
+        <EmptyState
+          title="Nenhum contato"
+          description="Crie um contato para começar."
+          action={
+            <PermissionGate permission="contacts.manage">
+              <Button onClick={() => setShowForm(true)}>Novo Contato</Button>
+            </PermissionGate>
+          }
+        />
+      ) : (
+        <table className="w-full min-w-[760px] border-collapse text-sm">
         <thead>
           <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
             <th className="px-3 py-2 font-medium">Nome</th>
@@ -79,6 +107,7 @@ export function ContactsTable() {
           ))}
         </tbody>
       </table>
+      )}
       <ConfirmDialog
         open={confirmOpen}
         title="Excluir contato"
