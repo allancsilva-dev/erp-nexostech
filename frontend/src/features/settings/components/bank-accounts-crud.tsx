@@ -248,9 +248,9 @@ export function BankAccountsCrud() {
             />
           </label>
 
-          <div className="flex items-end gap-2">
+            <div className="flex items-end gap-2">
             <Button type="submit" disabled={isMutating}>
-              {isMutating ? 'Processando...' : editingId ? 'Salvar alteracoes' : 'Criar conta'}
+              {isMutating ? 'Processando...' : editingId ? 'Salvar Alterações' : 'Criar conta'}
             </Button>
             {editingId ? (
               <Button type="button" variant="outline" onClick={resetForm} disabled={isMutating}>
