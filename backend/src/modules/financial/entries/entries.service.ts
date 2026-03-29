@@ -149,13 +149,16 @@ export class EntriesService {
           'Categoria nao encontrada para a filial informada',
         );
       }
-      const expectedCategoryType =
-        dto.type === 'PAYABLE' ? 'DESPESA' : 'RECEITA';
+      const expectedCategoryType = dto.type === 'PAYABLE' ? 'PAYABLE' : 'RECEIVABLE';
+      const categoryTypeLabels: Record<string, string> = {
+        PAYABLE: 'Despesa',
+        RECEIVABLE: 'Receita',
+      };
       if (category.type !== expectedCategoryType) {
+        const categoryLabel = categoryTypeLabels[category.type] || category.type;
+        const entryLabel = dto.type === 'PAYABLE' ? 'a pagar' : 'a receber';
         throw new BadRequestException(
-          `Categoria do tipo ${category.type} não é compatível com lançamento ${
-            dto.type === 'PAYABLE' ? 'a pagar' : 'a receber'
-          }`,
+          `Categoria do tipo "${categoryLabel}" não é compatível com lançamento ${entryLabel}`,
         );
       }
     }

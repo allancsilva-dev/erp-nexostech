@@ -55,7 +55,7 @@ export class PaymentsService {
 
       // Validate entry status before inserting a payment
       const allowedStatuses = ['PENDING', 'PARTIAL', 'OVERDUE'];
-      const entryStatus = entry.status ?? '';
+      const entryStatus = (entry.status ?? '').toUpperCase();
       if (!allowedStatuses.includes(entryStatus)) {
         throw new BadRequestException(
           'Não é possível registrar pagamento para lançamento com status ' +

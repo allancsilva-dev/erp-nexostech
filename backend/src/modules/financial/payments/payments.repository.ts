@@ -12,9 +12,10 @@ import { RegisterPaymentDto } from './dto/register-payment.dto';
 export type EntryStub = {
   id: string;
   amount: string;
-  status?: string;
+  status: string;
+  branchId: string;
   remainingBalance: string;
-  lastPaymentDate?: string;
+  lastPaymentDate: string | null;
 };
 
 /** Executor mínimo compatível com NodePgDatabase e com tx do drizzle.transaction() */
@@ -114,9 +115,10 @@ export class PaymentsRepository {
     return {
       id: this.toText(entryRow.id),
       amount: this.toText(entryRow.amount),
+      status: this.toText(entryRow.status),
+      branchId: this.toText(entryRow.branch_id),
       remainingBalance: remaining.toFixed(2),
-      lastPaymentDate:
-        this.toNullableText(paymentsRow?.last_payment_date) ?? undefined,
+      lastPaymentDate: this.toNullableText(paymentsRow?.last_payment_date) ?? null,
     };
   }
 
