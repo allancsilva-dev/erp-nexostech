@@ -32,16 +32,11 @@ export function ContactsTable() {
 
   return (
     <div className="surface-card overflow-x-auto p-3">
-      <div className="flex items-center justify-end mb-4">
-        <PermissionGate permission="contacts.manage">
-          <Button onClick={() => setShowForm(true)}>Novo Contato</Button>
-        </PermissionGate>
-      </div>
 
       {showForm ? (
         <div className="mb-4">
           <div className="flex justify-end mb-2">
-            <Button variant="ghost" onClick={() => setShowForm(false)}>
+            <Button variant="outline" onClick={() => setShowForm(false)}>
               Cancelar
             </Button>
           </div>
@@ -53,17 +48,25 @@ export function ContactsTable() {
           />
         </div>
       ) : list.length === 0 ? (
-        <EmptyState
-          title="Nenhum contato"
-          description="Crie um contato para começar."
-          action={
+        <div className="py-8">
+          <EmptyState
+            title="Nenhum contato"
+            description="Crie um contato para começar."
+            action={
+              <PermissionGate permission="contacts.manage">
+                <Button onClick={() => setShowForm(true)}>Novo Contato</Button>
+              </PermissionGate>
+            }
+          />
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-end mb-4">
             <PermissionGate permission="contacts.manage">
               <Button onClick={() => setShowForm(true)}>Novo Contato</Button>
             </PermissionGate>
-          }
-        />
-      ) : (
-        <table className="w-full min-w-[760px] border-collapse text-sm">
+          </div>
+          <table className="w-full min-w-[760px] border-collapse text-sm">
         <thead>
           <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
             <th className="px-3 py-2 font-medium">Nome</th>
@@ -109,7 +112,8 @@ export function ContactsTable() {
           ))}
         </tbody>
       </table>
-      )}
+            </>
+          )}
       <ConfirmDialog
         open={confirmOpen}
         title="Excluir contato"
