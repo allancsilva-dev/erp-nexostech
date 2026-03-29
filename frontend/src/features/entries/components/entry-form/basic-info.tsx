@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import type { UseFormReturn } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useContacts } from '@/features/contacts/hooks/use-contacts';
@@ -15,7 +16,23 @@ export function BasicInfo({ form }: { form: UseFormReturn<CreateEntryInput> }) {
     <div className="grid gap-4 md:grid-cols-2">
       <div>
         <label className="mb-1 block text-sm">Descrição</label>
-        <Input {...form.register('description')} />
+        <Controller
+          name="description"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <>
+              <Input
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                className={fieldState.error ? 'border-red-500' : ''}
+              />
+              {fieldState.error && (
+                <p className="text-xs text-red-600 mt-1">{String(fieldState.error.message)}</p>
+              )}
+            </>
+          )}
+        />
       </div>
       <div>
         <label className="mb-1 block text-sm">Fornecedor/Cliente</label>
@@ -34,7 +51,13 @@ export function BasicInfo({ form }: { form: UseFormReturn<CreateEntryInput> }) {
       </div>
       <div>
         <label className="mb-1 block text-sm">Observações</label>
-        <Input {...form.register('notes')} />
+        <Controller
+          name="notes"
+          control={form.control}
+          render={({ field }) => (
+            <Input value={field.value ?? ''} onChange={field.onChange} onBlur={field.onBlur} />
+          )}
+        />
       </div>
     </div>
   );

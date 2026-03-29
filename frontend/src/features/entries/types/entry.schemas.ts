@@ -10,13 +10,13 @@ export const monetaryAmount = z
 
 export const createEntrySchema = z
   .object({
-    description: z.string().min(3, 'Minimo 3 caracteres').max(200, 'Maximo 200 caracteres'),
+    description: z.string().min(3, 'Mínimo 3 caracteres').max(200, 'Máximo 200 caracteres'),
     type: z.enum(['PAYABLE', 'RECEIVABLE']),
     amount: monetaryAmount,
-    issueDate: z.string().min(1, 'Data obrigatoria'),
-    dueDate: z.string().min(1, 'Data obrigatoria'),
-    categoryId: z.string().uuid('Categoria obrigatoria'),
-    contactId: z.string().uuid('Contato invalido').optional().or(z.literal('')),
+    issueDate: z.string().min(1, 'Data de emissão é obrigatória'),
+    dueDate: z.string().min(1, 'Data de vencimento é obrigatória'),
+    categoryId: z.string().uuid('Categoria é obrigatória'),
+    contactId: z.string().uuid('Contato inválido').optional().or(z.literal('')),
     bankAccountId: z.string().uuid('Conta bancaria invalida').optional().or(z.literal('')),
     paymentMethod: z.enum(['BOLETO', 'PIX', 'TRANSFER', 'CARD', 'CASH', 'OTHER']).optional(),
     installment: z.boolean().default(false),

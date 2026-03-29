@@ -9,12 +9,14 @@ export function CurrencyInput({
   placeholder,
   disabled,
   id,
+  className,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
   id?: string;
+  className?: string;
 }) {
   return (
     <NumericFormat
@@ -36,7 +38,7 @@ export function CurrencyInput({
         }
         onChange(values.floatValue.toFixed(2));
       }}
-      className="flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text-input)] placeholder:text-[var(--placeholder-input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed disabled:opacity-50"
+      className={`${className ?? ''} flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm bg-[var(--bg-input)] text-[var(--text-input)] placeholder:text-[var(--placeholder-input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed disabled:opacity-50`}
     />
   );
 }

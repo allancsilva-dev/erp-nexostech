@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import type { UseFormReturn } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 import { CurrencyInput } from '@/components/shared/currency-input';
 import { Select } from '@/components/ui/select';
 import { useCategories } from '@/features/categories/hooks/use-categories';
@@ -15,22 +16,49 @@ export function FinancialInfo({ form }: { form: UseFormReturn<CreateEntryInput> 
     <div className="grid gap-4 md:grid-cols-2">
       <div>
         <label className="mb-1 block text-sm">Valor</label>
-        <CurrencyInput value={form.watch('amount') || ''} onChange={(value) => form.setValue('amount', value)} />
+        <Controller
+          name="amount"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <>
+              <CurrencyInput
+                value={field.value || ''}
+                onChange={(value) => field.onChange(value)}
+                className={fieldState.error ? 'border-red-500' : ''}
+              />
+              {fieldState.error && (
+                <p className="text-xs text-red-600 mt-1">{String(fieldState.error.message)}</p>
+              )}
+            </>
+          )}
+        />
       </div>
       <div>
         <label className="mb-1 block text-sm">Categoria</label>
-        <Select
-          value={form.watch('categoryId') || ''}
-          onChange={(event) => form.setValue('categoryId', event.target.value, { shouldValidate: true })}
-          disabled={categories.isLoading}
-        >
-          <option value="">{categories.isLoading ? 'Carregando categorias...' : 'Selecione uma categoria'}</option>
-          {(categories.data?.data ?? []).map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </Select>
+        <Controller
+          name="categoryId"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <>
+              <Select
+                value={field.value || ''}
+                onChange={(event) => field.onChange(event.target.value)}
+                disabled={categories.isLoading}
+                className={fieldState.error ? 'border-red-500' : ''}
+              >
+                <option value="">{categories.isLoading ? 'Carregando categorias...' : 'Selecione uma categoria'}</option>
+                {(categories.data?.data ?? []).map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </Select>
+              {fieldState.error && (
+                <p className="text-xs text-red-600 mt-1">{String(fieldState.error.message)}</p>
+              )}
+            </>
+          )}
+        />
       </div>
     </div>
   );
