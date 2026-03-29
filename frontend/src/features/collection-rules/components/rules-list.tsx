@@ -44,7 +44,7 @@ export function RulesList() {
   const list = toRulesList(rules.data?.data);
 
   async function handleDelete(ruleId: string): Promise<void> {
-    const confirmed = window.confirm('Remover esta regra de cobranca?');
+    const confirmed = window.confirm('Remover esta regra de cobrança?');
     if (!confirmed) {
       return;
     }
@@ -63,7 +63,7 @@ export function RulesList() {
   }
 
   if (list.length === 0) {
-    return <EmptyState title="Nenhuma regra cadastrada" description="Crie regras para automatizar cobrancas." />;
+    return <EmptyState title="Nenhuma regra cadastrada" description="Crie regras para automatizar cobranças." />;
   }
 
   return (
