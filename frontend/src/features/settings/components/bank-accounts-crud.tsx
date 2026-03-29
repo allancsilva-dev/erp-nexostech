@@ -207,7 +207,7 @@ export function BankAccountsCrud() {
               disabled={isMutating}
             >
               <option value="CORRENTE">Corrente</option>
-              <option value="POUPANCA">Poupanca</option>
+              <option value="POUPANCA">Poupança</option>
               <option value="INVESTIMENTO">Investimento</option>
               <option value="CAIXA">Caixa</option>
             </Select>

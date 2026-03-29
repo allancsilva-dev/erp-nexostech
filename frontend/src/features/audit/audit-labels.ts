@@ -27,4 +27,8 @@ export const ENTITY_LABELS: Record<string, string> = {
   settings: 'Configurações',
   reconciliation: 'Conciliação Bancária',
   collection_rules: 'Regra de Cobrança',
+  tenants: 'Tenant',
+  approval_rules: 'Regra de Aprovação',
+  document_sequences: 'Sequência de Documento',
+  financial_lock_periods: 'Período Contábil',
 };

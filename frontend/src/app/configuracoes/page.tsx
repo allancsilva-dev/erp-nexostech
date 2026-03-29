@@ -14,12 +14,15 @@ import { FinancialSettings } from '@/features/settings/components/financial-sett
 import { BankAccountsCrud } from '@/features/settings/components/bank-accounts-crud';
 import { ApprovalRulesManager } from '@/features/settings/components/approval-rules-manager';
 import { LockPeriodForm } from '@/features/settings/components/lock-period-form';
+import { ContactsTable } from '@/features/contacts/components/contacts-table';
+import { PermissionGate } from '@/components/shared/permission-gate';
 
 const TABS = [
   { key: 'financeiro', label: 'Financeiro' },
   { key: 'usuarios', label: 'Usuários' },
   { key: 'permissoes', label: 'Permissões' },
   { key: 'filiais', label: 'Filiais' },
+  { key: 'contatos', label: 'Contatos' },
 ];
 
 function buildCategoryTree(categories: Category[]) {
@@ -48,7 +51,7 @@ function buildCategoryTree(categories: Category[]) {
 
 export default function ConfiguracoesPage() {
   const STORAGE_KEY = 'settings_active_tab';
-  const [activeTab, setActiveTab] = useState(() => {
+  const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       const saved = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
       if (saved && TABS.some((t) => t.key === saved)) return saved;
@@ -198,6 +201,16 @@ export default function ConfiguracoesPage() {
                       ) : (
                         <CategoryTree categories={categoryTree} />
                       )}
+                    </div>
+                  </div>
+                )}
+                {String(activeTab) === 'contatos' && (
+                  <div className="surface-card p-5">
+                    <h3 className="text-base font-semibold">Contatos</h3>
+                    <div className="mt-3">
+                      <PermissionGate permission="contacts.view">
+                        <ContactsTable />
+                      </PermissionGate>
                     </div>
                   </div>
                 )}

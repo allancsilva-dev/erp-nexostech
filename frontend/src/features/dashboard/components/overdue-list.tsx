@@ -50,7 +50,7 @@ function OverdueListComponent({ items }: { items: OverdueItem[] }) {
           <TableHeader>
             <TableRow>
               <TableHead>Documento</TableHead>
-              <TableHead>Descricao</TableHead>
+              <TableHead>Descrição</TableHead>
               <TableHead>Contato</TableHead>
               <TableHead>Vencimento</TableHead>
               <TableHead className="text-right">Valor</TableHead>

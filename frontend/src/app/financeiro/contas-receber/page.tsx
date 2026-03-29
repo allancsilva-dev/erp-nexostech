@@ -79,7 +79,7 @@ export default function ContasReceberPage() {
         >
           <Search size={14} style={{ color: 'var(--text-muted)' }} />
           <input
-            placeholder="Buscar por descricao, cliente ou codigo..."
+            placeholder="Buscar por descrição, cliente ou código..."
             value={search}
             onChange={(event) => {
               void setSearch(event.target.value || null);

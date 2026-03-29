@@ -54,7 +54,7 @@ export function PaymentModal({ entryId }: { entryId: string }) {
               <Input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
             </div>
             <div>
-              <label className="mb-1 block text-sm">Observacoes</label>
+              <label className="mb-1 block text-sm">Observações</label>
               <Input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Opcional" />
             </div>
             <div className="flex justify-end gap-2">

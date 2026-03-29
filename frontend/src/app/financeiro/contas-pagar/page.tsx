@@ -79,7 +79,7 @@ export default function ContasPagarPage() {
         >
           <Search size={14} style={{ color: 'var(--text-muted)' }} />
           <input
-            placeholder="Buscar por descricao, fornecedor ou codigo..."
+            placeholder="Buscar por descrição, fornecedor ou código..."
             value={search}
             onChange={(event) => {
               void setSearch(event.target.value || null);

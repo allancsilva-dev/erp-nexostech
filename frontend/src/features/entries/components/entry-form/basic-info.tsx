@@ -14,7 +14,7 @@ export function BasicInfo({ form }: { form: UseFormReturn<CreateEntryInput> }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <div>
-        <label className="mb-1 block text-sm">Descricao</label>
+        <label className="mb-1 block text-sm">Descrição</label>
         <Input {...form.register('description')} />
       </div>
       <div>
@@ -24,7 +24,7 @@ export function BasicInfo({ form }: { form: UseFormReturn<CreateEntryInput> }) {
           onChange={(event) => form.setValue('contactId', event.target.value, { shouldValidate: true })}
           disabled={contacts.isLoading}
         >
-          <option value="">{contacts.isLoading ? 'Carregando contatos...' : 'Nao vincular contato'}</option>
+          <option value="">{contacts.isLoading ? 'Carregando contatos...' : 'Não vincular contato'}</option>
           {(contacts.data?.data ?? []).map((contact) => (
             <option key={contact.id} value={contact.id}>
               {contact.name}
@@ -33,7 +33,7 @@ export function BasicInfo({ form }: { form: UseFormReturn<CreateEntryInput> }) {
         </Select>
       </div>
       <div>
-        <label className="mb-1 block text-sm">Observacoes</label>
+        <label className="mb-1 block text-sm">Observações</label>
         <Input {...form.register('notes')} />
       </div>
     </div>

@@ -63,13 +63,13 @@ export const OverdueTable = React.memo(function OverdueTable({
               className="pb-2 text-left text-[10px] font-medium uppercase tracking-wider"
               style={{ color: 'var(--text-muted)' }}
             >
-              Codigo
+              Código
             </th>
             <th
               className="pb-2 text-left text-[10px] font-medium uppercase tracking-wider"
               style={{ color: 'var(--text-muted)' }}
             >
-              Descricao
+              Descrição
             </th>
             <th
               className="pb-2 text-right text-[10px] font-medium uppercase tracking-wider"
