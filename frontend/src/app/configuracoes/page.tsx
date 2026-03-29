@@ -204,16 +204,7 @@ export default function ConfiguracoesPage() {
                     </div>
                   </div>
                 )}
-                {String(activeTab) === 'contatos' && (
-                  <div className="surface-card p-5">
-                    <h3 className="text-base font-semibold">Contatos</h3>
-                    <div className="mt-3">
-                      <PermissionGate permission="contacts.view">
-                        <ContactsTable />
-                      </PermissionGate>
-                    </div>
-                  </div>
-                )}
+                
               </div>
             </div>
           )}
@@ -238,6 +229,17 @@ export default function ConfiguracoesPage() {
           {activeTab === 'filiais' && (
             <div className="surface-card p-5">
               <BranchManager />
+            </div>
+          )}
+
+          {activeTab === 'contatos' && (
+            <div className="surface-card p-5">
+              <h3 className="text-base font-semibold">Contatos</h3>
+              <div className="mt-3">
+                <PermissionGate permission="contacts.view">
+                  <ContactsTable />
+                </PermissionGate>
+              </div>
             </div>
           )}
         </div>
