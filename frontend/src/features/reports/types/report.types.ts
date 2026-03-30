@@ -20,6 +20,8 @@ export interface CashflowReport {
   startBalance: string;
   rows: CashflowRow[];
   accumulated: string[];
+  actualRows?: CashflowRow[];
+  actualAccumulated?: string[];
 }
 
 export interface BalanceSheetRow {

@@ -87,6 +87,10 @@ export function CashflowDetailed() {
 
   const report = cashflow.data?.data;
   const rows = report?.rows ?? [];
+  const actualRows = report?.actualRows ?? [];
+
+  rows.sort((a, b) => a.date.localeCompare(b.date));
+  actualRows.sort((a, b) => a.date.localeCompare(b.date));
 
   return (
     <div className="space-y-4">
@@ -126,12 +130,15 @@ export function CashflowDetailed() {
         </div>
       ) : null}
 
-      {!cashflow.isLoading && !cashflow.isError && rows.length === 0 ? (
+      {!cashflow.isLoading && !cashflow.isError && rows.length === 0 && actualRows.length === 0 ? (
         <EmptyState title="Sem fluxo no período" description="Não há entradas ou saídas para o intervalo selecionado." />
       ) : null}
 
       {!cashflow.isLoading && !cashflow.isError && rows.length > 0 ? (
         <div className="surface-card overflow-x-auto">
+          <h4 className="px-4 pt-4 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Previsto (por vencimento)
+          </h4>
           <Table>
             <TableHeader>
               <TableRow>
@@ -149,6 +156,36 @@ export function CashflowDetailed() {
                   <TableCell className="text-right">{formatCurrency(row.outflow)}</TableCell>
                   <TableCell className="text-right font-semibold">
                     {formatCurrency(report?.accumulated[index] ?? '0')}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : null}
+
+      {!cashflow.isLoading && !cashflow.isError && actualRows.length > 0 ? (
+        <div className="surface-card overflow-x-auto">
+          <h4 className="px-4 pt-4 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Realizado (por data de pagamento)
+          </h4>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead className="text-right">Entradas</TableHead>
+                <TableHead className="text-right">Saídas</TableHead>
+                <TableHead className="text-right">Acumulado</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {actualRows.map((row, index) => (
+                <TableRow key={`actual-${row.date}-${index}`}>
+                  <TableCell>{row.date}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(row.inflow)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(row.outflow)}</TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(report?.actualAccumulated?.[index] ?? '0')}
                   </TableCell>
                 </TableRow>
               ))}

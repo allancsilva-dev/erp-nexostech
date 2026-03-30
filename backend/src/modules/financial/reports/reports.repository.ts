@@ -77,11 +77,24 @@ export class ReportsRepository {
       SELECT
         (
           COALESCE((SELECT SUM(initial_balance) FROM ${schema}.bank_accounts WHERE branch_id = ${branchLiteral} AND deleted_at IS NULL), 0)
-          + COALESCE((SELECT SUM(CASE WHEN type = 'RECEIVABLE' THEN amount ELSE -amount END)
-                      FROM ${schema}.financial_entries
-                      WHERE branch_id = ${branchLiteral}
-                        AND due_date < ${startLiteral}
-                        AND deleted_at IS NULL), 0)
+          + COALESCE((SELECT SUM(fep.amount)
+                      FROM ${schema}.financial_entry_payments fep
+                      JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
+                      WHERE fe.branch_id = ${branchLiteral}
+                        AND fe.type = 'RECEIVABLE'
+                        AND fe.status = 'PAID'
+                        AND fe.deleted_at IS NULL
+                        AND fep.payment_date < ${startLiteral}
+                      ), 0)
+          - COALESCE((SELECT SUM(fep.amount)
+                      FROM ${schema}.financial_entry_payments fep
+                      JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
+                      WHERE fe.branch_id = ${branchLiteral}
+                        AND fe.type = 'PAYABLE'
+                        AND fe.status = 'PAID'
+                        AND fe.deleted_at IS NULL
+                        AND fep.payment_date < ${startLiteral}
+                      ), 0)
         )::text AS start_balance
     `),
       );
@@ -97,17 +110,42 @@ export class ReportsRepository {
         AND due_date >= ${startLiteral}
         AND due_date <= ${endLiteral}
         AND deleted_at IS NULL
+          AND status NOT IN ('DRAFT', 'CANCELLED')
       GROUP BY due_date
       ORDER BY due_date ASC
     `),
     );
 
     const balanceRow = getRows(balanceResult)[0];
+
+    const actualResult: unknown = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT
+        fep.payment_date::text AS row_date,
+        COALESCE(SUM(CASE WHEN fe.type = 'RECEIVABLE' THEN fep.amount ELSE 0 END), 0)::text AS inflow,
+        COALESCE(SUM(CASE WHEN fe.type = 'PAYABLE' THEN fep.amount ELSE 0 END), 0)::text AS outflow
+      FROM ${schema}.financial_entry_payments fep
+      JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
+      WHERE fe.branch_id = ${branchLiteral}
+        AND fep.payment_date >= ${startLiteral}
+        AND fep.payment_date <= ${endLiteral}
+        AND fe.deleted_at IS NULL
+        AND fe.status = 'PAID'
+      GROUP BY fep.payment_date
+      ORDER BY fep.payment_date ASC
+    `),
+    );
+
     return {
       startBalance: balanceRow
         ? toText(balanceRow.start_balance, '0.00')
         : '0.00',
       rows: getRows(rowsResult).map((row) => ({
+        date: toText(row.row_date),
+        inflow: toText(row.inflow),
+        outflow: toText(row.outflow),
+      })),
+      actualRows: getRows(actualResult).map((row) => ({
         date: toText(row.row_date),
         inflow: toText(row.inflow),
         outflow: toText(row.outflow),
@@ -134,6 +172,7 @@ export class ReportsRepository {
         AND e.due_date >= ${startLiteral}
         AND e.due_date <= ${endLiteral}
         AND e.deleted_at IS NULL
+          AND e.status NOT IN ('DRAFT', 'CANCELLED')
       GROUP BY COALESCE(c.name, 'Sem categoria')
       ORDER BY category_name ASC
     `),

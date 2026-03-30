@@ -20,6 +20,8 @@ type CashflowData = {
   startBalance: string;
   rows: CashflowRow[];
   accumulated: string[];
+  actualRows?: CashflowRow[];
+  actualAccumulated?: string[];
 };
 
 type BalanceSheetData = {
@@ -88,14 +90,22 @@ export class ReportsService {
       startDate,
       endDate,
     );
-    const accumulated = this.cashflowCalculator.calculateAccumulated(
+
+    const forecastAccumulated = this.cashflowCalculator.calculateAccumulated(
       base.startBalance,
       base.rows.map((row) => ({ inflow: row.inflow, outflow: row.outflow })),
     );
 
+    const actualAccumulated = this.cashflowCalculator.calculateAccumulated(
+      base.startBalance,
+      (base.actualRows ?? []).map((row) => ({ inflow: row.inflow, outflow: row.outflow })),
+    );
+
     const result: CashflowData = {
       ...base,
-      accumulated,
+      accumulated: forecastAccumulated,
+      actualRows: base.actualRows ?? [],
+      actualAccumulated,
     };
     await this.cacheService.set(cacheKey, result, 300_000);
     return result;
