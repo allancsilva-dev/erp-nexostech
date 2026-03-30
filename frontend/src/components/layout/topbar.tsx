@@ -2,6 +2,7 @@
 
 import { BranchSwitcher } from '@/components/layout/branch-switcher';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { BellButton } from '@/components/notifications/bell-button';
 import { useAuthContext } from '@/providers/auth-provider';
 
 function getInitials(nameOrEmail?: string | null): string {
@@ -46,6 +47,7 @@ export function Topbar() {
 
       <div className="flex items-center gap-3">
         <ThemeToggle />
+        <BellButton />
         <div className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold"
           style={{ background: 'var(--accent)', color: '#fff' }}
           title={identity}

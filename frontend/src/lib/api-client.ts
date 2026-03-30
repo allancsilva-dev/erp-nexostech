@@ -5,7 +5,7 @@ const API_BASE = '/api/v1';
 let rateLimitRemaining: number | null = null;
 let throttleUntil = 0;
 
-const TENANT_LEVEL_ENDPOINTS = ['/contacts', '/branches', '/roles', '/users', '/tenants'];
+const TENANT_LEVEL_ENDPOINTS = ['/contacts', '/branches', '/roles', '/users', '/tenants', '/notifications'];
 
 function isTenantLevelEndpoint(endpoint: string): boolean {
   return TENANT_LEVEL_ENDPOINTS.some((prefix) => endpoint.startsWith(prefix));
