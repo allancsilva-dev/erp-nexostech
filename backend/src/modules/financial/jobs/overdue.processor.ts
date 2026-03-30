@@ -2,32 +2,63 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import { QueueService } from '../../../infrastructure/queue/queue.service';
+import { EventBusService } from '../../../infrastructure/events/event-bus.service';
 import { resolveTenantSchema, optionalBranchClause } from './jobs.util';
+import { quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
 
 @Injectable()
 export class OverdueProcessor implements OnModuleInit {
   constructor(
     private readonly queueService: QueueService,
     private readonly drizzleService: DrizzleService,
+    private readonly eventBus: EventBusService,
   ) {}
 
   onModuleInit(): void {
     this.queueService.registerProcessor(
       'financial.overdue',
       async (payload) => {
-        const schema = resolveTenantSchema(payload);
-        const branchClause = optionalBranchClause(payload);
+          const schema = resolveTenantSchema(payload);
+          const branchClause = optionalBranchClause(payload);
 
-        await this.drizzleService.getClient().execute(
-          sql.raw(`
-        UPDATE ${schema}.financial_entries
-        SET status = 'OVERDUE', updated_at = NOW()
-        WHERE due_date < CURRENT_DATE
-          AND status IN ('PENDING', 'PARTIAL')
-          AND deleted_at IS NULL
-          ${branchClause}
-      `),
-        );
+          // First SELECT entries that will become overdue
+          const selectResult: any = await this.drizzleService.getClient().execute(
+            sql.raw(`
+            SELECT id, branch_id, type, document_number, amount::text AS amount, created_by
+            FROM ${schema}.financial_entries
+            WHERE due_date < CURRENT_DATE
+              AND status IN ('PENDING', 'PARTIAL')
+              AND deleted_at IS NULL
+              ${branchClause}
+          `),
+          );
+
+          const rows = Array.isArray(selectResult?.rows) ? selectResult.rows : [];
+          if (rows.length === 0) return;
+
+          const idsList = rows.map((r: any) => quoteLiteral(String(r.id))).join(', ');
+
+          // Update affected entries
+          await this.drizzleService.getClient().execute(
+            sql.raw(`
+            UPDATE ${schema}.financial_entries
+            SET status = 'OVERDUE', updated_at = NOW()
+            WHERE id IN (${idsList})
+          `),
+          );
+
+          // Emit event for each entry updated
+          for (const entry of rows) {
+            this.eventBus.emit('entry.overdue', {
+              tenantId: payload.tenantId,
+              branchId: String(entry.branch_id),
+              entryId: String(entry.id),
+              entryType: String(entry.type),
+              documentNumber: entry.document_number ?? null,
+              amount: String(entry.amount ?? '0'),
+              createdBy: String(entry.created_by ?? null),
+            });
+          }
       },
     );
   }

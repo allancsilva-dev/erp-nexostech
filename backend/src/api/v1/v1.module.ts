@@ -26,6 +26,7 @@ import { MetricsController } from './controllers/metrics.controller';
 import { TenantsController } from './controllers/tenants.controller';
 import { AuthController } from './controllers/auth.controller';
 import { AttachmentsController } from './controllers/attachments.controller';
+import { NotificationsController } from './controllers/notifications.controller';
 import { FinancialModule } from '../../modules/financial/financial.module';
 import { RbacModule } from '../../modules/rbac/rbac.module';
 import { TenantsModule } from '../../modules/tenants/tenants.module';
@@ -35,6 +36,7 @@ import { RbacGuard } from '../../common/guards/rbac.guard';
 import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { CacheModule } from '../../infrastructure/cache/cache.module';
 import { MetricsService } from '../../infrastructure/observability/metrics.service';
+import { NotificationsModule } from '../../modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -45,6 +47,10 @@ import { MetricsService } from '../../infrastructure/observability/metrics.servi
     DatabaseModule,
     CacheModule,
     TenantsModule,
+    NotificationsModule,
+    // NotificationsModule lives alongside other feature modules
+    // and provides NotificationsService/Controller
+    // Module import is optional if controller is registered here, but keep symmetry.
   ],
   controllers: [
     HealthController,
@@ -72,6 +78,7 @@ import { MetricsService } from '../../infrastructure/observability/metrics.servi
     TenantsController,
     AuthController,
     AttachmentsController,
+    NotificationsController,
   ],
   providers: [BranchGuard, RbacGuard, FeatureFlagGuard, MetricsService],
 })

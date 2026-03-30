@@ -221,6 +221,19 @@ export class EntriesService {
       type: created.type,
     });
 
+    // If entry requires approval, emit pending_approval so listeners can notify approvers
+    if (created.status === 'PENDING_APPROVAL') {
+      this.eventBus.emit('entry.pending_approval', {
+        tenantId: user.tenantId,
+        branchId,
+        entryId: created.id,
+        entryType: created.type,
+        documentNumber: created.documentNumber,
+        amount: created.amount,
+        createdBy: user.sub,
+      });
+    }
+
     return created;
   }
 

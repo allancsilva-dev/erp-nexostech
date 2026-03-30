@@ -592,4 +592,45 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
        WHERE document_number IS NOT NULL AND deleted_at IS NULL`,
     ],
   },
+  {
+    name: '017_create_notifications_table',
+    run: (schema) => [
+      `-- Notifications table: stores per-user notifications. created_at uses TIMESTAMP (without timezone)
+       CREATE TABLE IF NOT EXISTS ${schema}.notifications (
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+         user_id UUID NOT NULL,
+         branch_id UUID,
+         type VARCHAR(50) NOT NULL,
+         title VARCHAR(200) NOT NULL,
+         message TEXT NOT NULL,
+         metadata JSONB,
+         read_at TIMESTAMP,
+         deleted_at TIMESTAMP,
+         created_at TIMESTAMP NOT NULL DEFAULT NOW()
+       )`,
+      `-- Active listing index: only non-deleted rows
+       CREATE INDEX IF NOT EXISTS idx_notifications_user_active
+       ON ${schema}.notifications (user_id, created_at DESC)
+       WHERE deleted_at IS NULL`,
+      `-- Unread index (also excludes soft-deleted rows)
+       CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
+       ON ${schema}.notifications (user_id)
+       WHERE read_at IS NULL AND deleted_at IS NULL`,
+      `-- Deduplication / idempotency index: dedupe per user/entry/day.
+       -- Deduplicação por dia usa date_trunc('day', created_at).
+       -- Assume created_at armazenado em UTC (TIMESTAMP WITHOUT TIME ZONE).
+       -- Se o servidor PG não estiver em UTC, ajustar para:
+       -- date_trunc('day', created_at AT TIME ZONE 'UTC')
+       -- Opção A MVP: soft-deleted notifications still block re-creation
+       -- within the same day. By design.
+       CREATE UNIQUE INDEX IF NOT EXISTS uq_notifications_idempotency
+       ON ${schema}.notifications (
+         user_id,
+         type,
+         (metadata->>'entry_id')::uuid,
+         date_trunc('day', created_at)
+       )
+       WHERE metadata->>'entry_id' IS NOT NULL`,
+    ],
+  },
 ];

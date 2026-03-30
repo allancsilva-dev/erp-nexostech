@@ -1,25 +1,63 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { QueueService } from '../../infrastructure/queue/queue.service';
+import { DrizzleService } from '../../infrastructure/database/drizzle.service';
+import { sql } from 'drizzle-orm';
+import { resolveTenantSchema } from '../../modules/financial/jobs/jobs.util';
+import { quoteLiteral } from '../../infrastructure/database/sql-builder.util';
 
 type EntryApprovedPayload = {
   tenantId: string;
+  branchId?: string;
   entryId: string;
-  approverId: string;
+  approverId?: string;
+  documentNumber?: string | null;
+  amount?: string;
+  createdBy?: string;
 };
 
 type EntryRejectedPayload = {
   tenantId: string;
+  branchId?: string;
   entryId: string;
-  approverId: string;
+  approverId?: string;
   reason?: string;
+  documentNumber?: string | null;
+  amount?: string;
+  createdBy?: string;
 };
 
 type PaymentCreatedPayload = {
   tenantId: string;
-  branchId: string;
+  branchId?: string;
   entryId: string;
-  amount: string;
+  paymentId?: string;
+  amount?: string;
+  documentNumber?: string | null;
+  createdBy?: string;
+  createdAt?: string;
+};
+
+type OverduePayload = {
+  tenantId: string;
+  branchId?: string;
+  entryId: string;
+  entryType?: string;
+  documentNumber?: string | null;
+  amount?: string;
+  createdBy?: string;
+};
+
+type DueSoonPayload = OverduePayload & { daysUntilDue?: number };
+
+type PendingApprovalPayload = {
+  tenantId: string;
+  branchId?: string;
+  entryId: string;
+  entryType?: string;
+  documentNumber?: string | null;
+  amount?: string;
+  createdBy?: string;
 };
 
 /**
@@ -36,17 +74,50 @@ type PaymentCreatedPayload = {
 export class NotificationListener {
   private readonly logger = new Logger(NotificationListener.name);
 
-  constructor(private readonly queueService: QueueService) {}
-
+  constructor(
+    private readonly queueService: QueueService,
+    private readonly drizzleService: DrizzleService,
+  ) {}
   @OnEvent('entry.approved')
   async onEntryApproved(payload: EntryApprovedPayload): Promise<void> {
     try {
-      await this.queueService.add('financial.notifications', 'entry-approved', {
-        tenantId: payload.tenantId,
-        entryId: payload.entryId,
-        approverId: payload.approverId,
-        notificationType: 'ENTRY_APPROVED',
-      });
+      // Enrich payload if necessary (single query)
+      const schema = resolveTenantSchema(payload as Record<string, unknown>);
+      if (!payload.documentNumber || !payload.branchId || !payload.amount || !payload.createdBy) {
+        const entryIdLiteral = quoteLiteral(payload.entryId);
+        const row: any = (
+          await this.drizzleService.getClient().execute(
+            sql.raw(`
+          SELECT branch_id, document_number, amount::text AS amount, created_by
+          FROM ${schema}.financial_entries
+          WHERE id = ${entryIdLiteral}
+          LIMIT 1
+        `),
+          )
+        ).rows[0];
+
+        if (row) {
+          payload.branchId = payload.branchId ?? String(row.branch_id);
+          payload.documentNumber = payload.documentNumber ?? (row.document_number ?? null);
+          payload.amount = payload.amount ?? String(row.amount ?? '0');
+          payload.createdBy = payload.createdBy ?? String(row.created_by ?? '');
+        }
+      }
+
+      await this.queueService.add(
+        'financial.notifications',
+        'entry-approved',
+        {
+          tenantId: payload.tenantId,
+          branchId: payload.branchId,
+          entryId: payload.entryId,
+          documentNumber: payload.documentNumber ?? null,
+          amount: payload.amount ?? null,
+          createdBy: payload.createdBy ?? null,
+          jobType: 'approval.approved',
+        },
+        { jobId: `notif.approved.${payload.entryId}` },
+      );
     } catch (error) {
       // Falha de notificação não deve bloquear o fluxo principal
       this.logger.error(
@@ -59,13 +130,43 @@ export class NotificationListener {
   @OnEvent('entry.rejected')
   async onEntryRejected(payload: EntryRejectedPayload): Promise<void> {
     try {
-      await this.queueService.add('financial.notifications', 'entry-rejected', {
-        tenantId: payload.tenantId,
-        entryId: payload.entryId,
-        approverId: payload.approverId,
-        reason: payload.reason ?? null,
-        notificationType: 'ENTRY_REJECTED',
-      });
+      const schema = resolveTenantSchema(payload as Record<string, unknown>);
+      if (!payload.documentNumber || !payload.branchId || !payload.amount || !payload.createdBy) {
+        const entryIdLiteral = quoteLiteral(payload.entryId);
+        const row: any = (
+          await this.drizzleService.getClient().execute(
+            sql.raw(`
+          SELECT branch_id, document_number, amount::text AS amount, created_by
+          FROM ${schema}.financial_entries
+          WHERE id = ${entryIdLiteral}
+          LIMIT 1
+        `),
+          )
+        ).rows[0];
+
+        if (row) {
+          payload.branchId = payload.branchId ?? String(row.branch_id);
+          payload.documentNumber = payload.documentNumber ?? (row.document_number ?? null);
+          payload.amount = payload.amount ?? String(row.amount ?? '0');
+          payload.createdBy = payload.createdBy ?? String(row.created_by ?? '');
+        }
+      }
+
+      await this.queueService.add(
+        'financial.notifications',
+        'entry-rejected',
+        {
+          tenantId: payload.tenantId,
+          branchId: payload.branchId,
+          entryId: payload.entryId,
+          documentNumber: payload.documentNumber ?? null,
+          amount: payload.amount ?? null,
+          createdBy: payload.createdBy ?? null,
+          reason: payload.reason ?? null,
+          jobType: 'approval.rejected',
+        },
+        { jobId: `notif.rejected.${payload.entryId}` },
+      );
     } catch (error) {
       this.logger.error(
         `Falha ao enfileirar notificação de rejeição para entry ${payload.entryId}`,
@@ -85,12 +186,157 @@ export class NotificationListener {
           tenantId: payload.tenantId,
           branchId: payload.branchId,
           entryId: payload.entryId,
-          amount: payload.amount,
+          paymentId: payload.paymentId ?? null,
+          amount: payload.amount ?? null,
         },
+        { jobId: `notif.payment.${payload.entryId}.${payload.paymentId ?? payload.createdAt ?? ''}` },
       );
     } catch (error) {
       this.logger.error(
         `Falha ao enfileirar job de agradecimento para entry ${payload.entryId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  @OnEvent('entry.overdue')
+  async onEntryOverdue(payload: OverduePayload): Promise<void> {
+    try {
+      const schema = resolveTenantSchema(payload as Record<string, unknown>);
+      if (!payload.documentNumber || !payload.branchId || !payload.amount || !payload.createdBy || !payload.entryType) {
+        const entryIdLiteral = quoteLiteral(payload.entryId);
+        const row: any = (
+          await this.drizzleService.getClient().execute(
+            sql.raw(`
+          SELECT branch_id, document_number, amount::text AS amount, created_by, type
+          FROM ${schema}.financial_entries
+          WHERE id = ${entryIdLiteral}
+          LIMIT 1
+        `),
+          )
+        ).rows[0];
+
+        if (row) {
+          payload.branchId = payload.branchId ?? String(row.branch_id);
+          payload.documentNumber = payload.documentNumber ?? (row.document_number ?? null);
+          payload.amount = payload.amount ?? String(row.amount ?? '0');
+          payload.createdBy = payload.createdBy ?? String(row.created_by ?? '');
+          payload.entryType = payload.entryType ?? String(row.type ?? 'PAYABLE');
+        }
+      }
+
+      await this.queueService.add(
+        'financial.notifications',
+        'entry-overdue',
+        {
+          tenantId: payload.tenantId,
+          branchId: payload.branchId,
+          entryId: payload.entryId,
+          entryType: payload.entryType,
+          documentNumber: payload.documentNumber ?? null,
+          amount: payload.amount ?? null,
+          createdBy: payload.createdBy ?? null,
+          jobType: 'entry.overdue',
+        },
+        { jobId: `notif.overdue.${payload.entryId}.${new Date().toISOString().slice(0,10)}` },
+      );
+    } catch (error) {
+      this.logger.error(
+        `Falha ao enfileirar notificação overdue para entry ${payload.entryId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  @OnEvent('entry.due_soon')
+  async onEntryDueSoon(payload: DueSoonPayload): Promise<void> {
+    try {
+      const schema = resolveTenantSchema(payload as Record<string, unknown>);
+      if (!payload.documentNumber || !payload.branchId || !payload.amount || !payload.createdBy || !payload.entryType) {
+        const entryIdLiteral = quoteLiteral(payload.entryId);
+        const row: any = (
+          await this.drizzleService.getClient().execute(
+            sql.raw(`
+          SELECT branch_id, document_number, amount::text AS amount, created_by, type
+          FROM ${schema}.financial_entries
+          WHERE id = ${entryIdLiteral}
+          LIMIT 1
+        `),
+          )
+        ).rows[0];
+
+        if (row) {
+          payload.branchId = payload.branchId ?? String(row.branch_id);
+          payload.documentNumber = payload.documentNumber ?? (row.document_number ?? null);
+          payload.amount = payload.amount ?? String(row.amount ?? '0');
+          payload.createdBy = payload.createdBy ?? String(row.created_by ?? '');
+          payload.entryType = payload.entryType ?? String(row.type ?? 'PAYABLE');
+        }
+      }
+
+      await this.queueService.add(
+        'financial.notifications',
+        'entry-due-soon',
+        {
+          tenantId: payload.tenantId,
+          branchId: payload.branchId,
+          entryId: payload.entryId,
+          entryType: payload.entryType,
+          documentNumber: payload.documentNumber ?? null,
+          amount: payload.amount ?? null,
+          createdBy: payload.createdBy ?? null,
+          daysUntilDue: payload.daysUntilDue ?? null,
+          jobType: 'entry.due_soon',
+        },
+        { jobId: `notif.due_soon.${payload.entryId}.${new Date().toISOString().slice(0,10)}` },
+      );
+    } catch (error) {
+      this.logger.error(
+        `Falha ao enfileirar notificação due_soon para entry ${payload.entryId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
+  }
+
+  @OnEvent('entry.pending_approval')
+  async onEntryPendingApproval(payload: PendingApprovalPayload): Promise<void> {
+    try {
+      // Determine approvers by permission and enqueue one job per approver
+      const schema = resolveTenantSchema(payload as Record<string, unknown>);
+      const rows: any = (
+        await this.drizzleService.getClient().execute(
+          sql.raw(`
+        SELECT DISTINCT ur.user_id
+        FROM ${schema}.user_roles ur
+        JOIN ${schema}.role_permissions rp ON rp.role_id = ur.role_id
+        WHERE rp.permission_code = 'financial.entries.approve'
+          AND ur.deleted_at IS NULL
+      `),
+        )
+      ).rows as Array<Record<string, unknown>>;
+
+      for (const r of rows) {
+        const approverId = String(r.user_id);
+        await this.queueService.add(
+          'financial.notifications',
+          'approval-pending',
+          {
+            tenantId: payload.tenantId,
+            branchId: payload.branchId ?? null,
+            entryId: payload.entryId,
+            entryType: payload.entryType ?? null,
+            documentNumber: payload.documentNumber ?? null,
+            amount: payload.amount ?? null,
+            createdBy: payload.createdBy ?? null,
+            approverId,
+            jobType: 'approval.pending',
+          },
+          { jobId: `notif.pending.${payload.entryId}.${approverId}` },
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `Falha ao enfileirar notificação pending approval para entry ${payload.entryId}`,
         error instanceof Error ? error.stack : String(error),
       );
     }
