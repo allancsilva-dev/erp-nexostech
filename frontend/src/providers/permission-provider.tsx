@@ -2,9 +2,10 @@
 
 import { createContext, useContext } from 'react';
 import { useAuthContext } from '@/providers/auth-provider';
+import type { PlanTier } from '@/lib/types/auth';
 
 interface PermissionContextValue {
-  user: (Record<string, unknown> & { plan?: string }) | null;
+  user: (Record<string, unknown> & { plan?: PlanTier }) | null;
   permissions: string[];
   isLoading: boolean;
   hasPermission: (code: string) => boolean;

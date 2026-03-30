@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 import { registerUnauthorizedHandler, httpFetch } from '@/lib/http-client';
+import type { PlanTier } from '@/lib/types/auth';
 
 export type AuthRole = {
   id: string;
@@ -22,6 +23,7 @@ export type AuthUserProfile = {
   tenantId: string;
   roles: AuthRole[];
   active: boolean;
+  plan?: PlanTier;
 };
 
 type AuthContextValue = {

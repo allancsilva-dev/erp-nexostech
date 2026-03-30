@@ -143,6 +143,7 @@ export class RolesService {
       tenantId: string;
       roles: Array<{ id: string; name: string; isSystem: boolean }>;
       active: true;
+      plan?: string | null;
     };
     permissions: string[];
     branches: Array<{ id: string; name: string }>;
@@ -157,6 +158,7 @@ export class RolesService {
           tenantId: '',
           roles: [{ id: 'superadmin', name: 'SUPERADMIN', isSystem: true }],
           active: true,
+          plan: user.plan ?? null,
         },
         permissions: ['*'],
         branches: [],
@@ -211,6 +213,7 @@ export class RolesService {
         tenantId: user.tenantId,
         roles: Array.from(rolesMap.values()),
         active: true,
+        plan: user.plan ?? null,
       },
       permissions: Array.from(permissionsSet.values()).sort(),
       branches: branchesRows.map((branch) => ({
