@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Bell, BellOff, BellRing } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNotificationCount } from '@/hooks/use-notification-count';
 import { useNotifications } from '@/hooks/use-notifications';
@@ -41,15 +40,14 @@ export function BellButton() {
 
   return (
     <div className="relative" ref={rootRef}>
-      <Button
-        variant="outline"
-        size="sm"
+      <button
+        type="button"
         onClick={() => setOpen((p) => !p)}
-        className="relative"
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 dark:hover:bg-slate-800 transition-colors relative"
         aria-label="Abrir notificações"
       >
-        {unreadCount > 0 ? <BellRing className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
-      </Button>
+        {unreadCount > 0 ? <BellRing className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+      </button>
 
       {unreadCount > 0 ? (
         <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-[11px] px-1" style={{ minWidth: 20 }}>
