@@ -2,6 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { fetchCashflowChart } from '@/lib/api/dashboard';
+import { normalizeCashflowData } from '@/lib/utils/normalize';
 import { queryKeys } from '@/lib/query-keys';
 import { useBranch } from '@/hooks/use-branch';
 
@@ -13,9 +15,11 @@ export interface DashboardSummary {
 }
 
 export interface CashflowPoint {
-  label: string;
-  incoming: string;
-  outgoing: string;
+  month: string;
+  forecastInflow: string;
+  forecastOutflow: string;
+  actualInflow: string;
+  actualOutflow: string;
 }
 
 export interface OverdueItem {
@@ -49,7 +53,10 @@ export function useDashboardCashflowChart() {
   const { activeBranchId } = useBranch();
   return useQuery({
     queryKey: [...queryKeys.dashboard.all(activeBranchId || 'default'), 'cashflow'],
-    queryFn: () => api.get<CashflowPoint[]>('/dashboard/cashflow-chart'),
+    queryFn: async () => {
+      const raw = await fetchCashflowChart(activeBranchId || 'default');
+      return normalizeCashflowData(raw as unknown[]);
+    },
     enabled: Boolean(activeBranchId),
   });
 }

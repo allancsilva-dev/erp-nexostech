@@ -2,18 +2,20 @@
 
 import { memo, useMemo } from 'react';
 import Decimal from 'decimal.js';
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from 'recharts';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/format';
-import type { CashflowPoint } from '@/features/dashboard/hooks/use-dashboard';
+import type { NormalizedCashflowPoint } from '@/lib/utils/normalize';
 
-function CashflowChartComponent({ data }: { data: CashflowPoint[] }) {
+function CashflowChartComponent({ data }: { data: NormalizedCashflowPoint[] }) {
   const limited = useMemo(
     () =>
       data.slice(0, 24).map((item) => ({
         ...item,
-        incomingValue: new Decimal(item.incoming).toNumber(),
-        outgoingValue: new Decimal(item.outgoing).toNumber(),
+        actualInflowValue: new Decimal(item.actualInflow ?? '0').toNumber(),
+        actualOutflowValue: new Decimal(item.actualOutflow ?? '0').toNumber(),
+        forecastInflowValue: new Decimal(item.forecastInflow ?? '0').toNumber(),
+        forecastOutflowValue: new Decimal(item.forecastOutflow ?? '0').toNumber(),
       })),
     [data],
   );
@@ -26,7 +28,7 @@ function CashflowChartComponent({ data }: { data: CashflowPoint[] }) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={limited}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="label" />
+              <XAxis dataKey="month" />
               <YAxis />
               <Tooltip
                 formatter={(value) => {
@@ -34,8 +36,11 @@ function CashflowChartComponent({ data }: { data: CashflowPoint[] }) {
                   return formatCurrency(numericValue);
                 }}
               />
-              <Line type="monotone" dataKey="incomingValue" stroke="var(--success)" strokeWidth={2} />
-              <Line type="monotone" dataKey="outgoingValue" stroke="var(--danger)" strokeWidth={2} />
+              <Legend />
+              <Line type="monotone" dataKey="actualInflowValue" stroke="var(--success)" strokeWidth={2} name="Recebido" />
+              <Line type="monotone" dataKey="actualOutflowValue" stroke="var(--danger)" strokeWidth={2} name="Pago" />
+              <Line type="monotone" dataKey="forecastInflowValue" stroke="var(--success)" strokeWidth={2} strokeDasharray="5 5" name="Previsto Entrada" />
+              <Line type="monotone" dataKey="forecastOutflowValue" stroke="var(--danger)" strokeWidth={2} strokeDasharray="5 5" name="Previsto Saída" />
             </LineChart>
           </ResponsiveContainer>
         </div>

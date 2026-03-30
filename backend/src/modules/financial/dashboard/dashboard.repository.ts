@@ -93,18 +93,24 @@ export class DashboardRepository {
                     AND type = 'RECEIVABLE'
                     AND due_date >= CURRENT_DATE
                     AND due_date <= CURRENT_DATE + INTERVAL '30 days'
-                    AND deleted_at IS NULL), 0)::text AS receivable_30d,
+                    AND deleted_at IS NULL
+                    AND status NOT IN ('DRAFT', 'CANCELLED')
+                  ), 0)::text AS receivable_30d,
         COALESCE((SELECT SUM(amount) FROM ${schema}.financial_entries
                   WHERE branch_id = ${branchLiteral}
                     AND type = 'PAYABLE'
                     AND due_date >= CURRENT_DATE
                     AND due_date <= CURRENT_DATE + INTERVAL '30 days'
-                    AND deleted_at IS NULL), 0)::text AS payable_30d,
+                    AND deleted_at IS NULL
+                    AND status NOT IN ('DRAFT', 'CANCELLED')
+                  ), 0)::text AS payable_30d,
         COALESCE((SELECT SUM(CASE WHEN type = 'RECEIVABLE' THEN amount ELSE -amount END)
                   FROM ${schema}.financial_entries
                   WHERE branch_id = ${branchLiteral}
                     AND DATE_TRUNC('month', due_date) = DATE_TRUNC('month', CURRENT_DATE)
-                    AND deleted_at IS NULL), 0)::text AS month_result
+                    AND deleted_at IS NULL
+                    AND status NOT IN ('DRAFT', 'CANCELLED')
+                  ), 0)::text AS month_result
     `),
     );
 
@@ -145,7 +151,7 @@ export class DashboardRepository {
   async getCashflowChart(
     branchId: string,
     period: string,
-  ): Promise<Array<{ month: string; inflow: string; outflow: string }>> {
+  ): Promise<Array<{ month: string; forecast_inflow: string; forecast_outflow: string; actual_inflow: string; actual_outflow: string }>> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
     const monthsBack = period === '6m' ? 6 : period === '3m' ? 3 : 12;
@@ -153,22 +159,56 @@ export class DashboardRepository {
     const result = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
-        TO_CHAR(DATE_TRUNC('month', due_date), 'YYYY-MM') AS month,
-        COALESCE(SUM(CASE WHEN type = 'RECEIVABLE' THEN amount ELSE 0 END), 0)::text AS inflow,
-        COALESCE(SUM(CASE WHEN type = 'PAYABLE' THEN amount ELSE 0 END), 0)::text AS outflow
-      FROM ${schema}.financial_entries
-      WHERE branch_id = ${branchLiteral}
-        AND due_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '${monthsBack - 1} months'
-        AND deleted_at IS NULL
-      GROUP BY DATE_TRUNC('month', due_date)
-      ORDER BY DATE_TRUNC('month', due_date) ASC
+        months.month,
+        COALESCE(forecast.inflow, 0)::text AS forecast_inflow,
+        COALESCE(forecast.outflow, 0)::text AS forecast_outflow,
+        COALESCE(actual.inflow, 0)::text AS actual_inflow,
+        COALESCE(actual.outflow, 0)::text AS actual_outflow
+      FROM (
+        SELECT TO_CHAR(d, 'YYYY-MM') AS month
+        FROM generate_series(
+          DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '${monthsBack - 1} months',
+          DATE_TRUNC('month', CURRENT_DATE),
+          '1 month'
+        ) d
+      ) months
+      LEFT JOIN (
+        -- PREVISTO: entries por due_date (exclui DRAFT e CANCELLED)
+        SELECT
+          TO_CHAR(DATE_TRUNC('month', due_date), 'YYYY-MM') AS month,
+          SUM(CASE WHEN type = 'RECEIVABLE' THEN amount ELSE 0 END) AS inflow,
+          SUM(CASE WHEN type = 'PAYABLE' THEN amount ELSE 0 END) AS outflow
+        FROM ${schema}.financial_entries
+        WHERE branch_id = ${branchLiteral}
+          AND due_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '${monthsBack - 1} months'
+          AND deleted_at IS NULL
+          AND status NOT IN ('DRAFT', 'CANCELLED')
+        GROUP BY DATE_TRUNC('month', due_date)
+      ) forecast ON forecast.month = months.month
+      LEFT JOIN (
+        -- REALIZADO: payments por payment_date
+        SELECT
+          TO_CHAR(DATE_TRUNC('month', fep.payment_date), 'YYYY-MM') AS month,
+          SUM(CASE WHEN fe.type = 'RECEIVABLE' THEN fep.amount ELSE 0 END) AS inflow,
+          SUM(CASE WHEN fe.type = 'PAYABLE' THEN fep.amount ELSE 0 END) AS outflow
+        FROM ${schema}.financial_entry_payments fep
+        JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
+        WHERE fe.branch_id = ${branchLiteral}
+          AND fep.payment_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '${monthsBack - 1} months'
+          AND fe.deleted_at IS NULL
+          AND fe.status = 'PAID'
+        GROUP BY DATE_TRUNC('month', fep.payment_date)
+      ) actual ON actual.month = months.month
+      ORDER BY months.month ASC
     `),
     );
 
     return result.rows.map((row) => ({
       month: this.toText(row.month),
-      inflow: this.toText(row.inflow),
-      outflow: this.toText(row.outflow),
+      forecast_inflow: this.toText(row.forecast_inflow),
+      forecast_outflow: this.toText(row.forecast_outflow),
+      actual_inflow: this.toText(row.actual_inflow),
+      actual_outflow: this.toText(row.actual_outflow),
     }));
   }
 }

@@ -1,8 +1,9 @@
 export interface NormalizedCashflowPoint {
   month: string;
-  income: number;
-  expense: number;
-  balance: number;
+  actualInflow: number;
+  actualOutflow: number;
+  forecastInflow: number;
+  forecastOutflow: number;
 }
 
 export function normalizeCashflowData(raw: unknown[]): NormalizedCashflowPoint[] {
@@ -14,12 +15,15 @@ export function normalizeCashflowData(raw: unknown[]): NormalizedCashflowPoint[]
     const safePoint = (point ?? {}) as Record<string, unknown>;
 
     return {
-      month: String(safePoint.month ?? safePoint.date ?? ''),
-      income: toNumber(safePoint.income as string | number | null | undefined)
-        || toNumber(safePoint.totalIn as string | number | null | undefined),
-      expense: toNumber(safePoint.expense as string | number | null | undefined)
-        || toNumber(safePoint.totalOut as string | number | null | undefined),
-      balance: toNumber(safePoint.balance as string | number | null | undefined),
+      month: String(safePoint.month ?? safePoint.label ?? ''),
+      actualInflow: toNumber(safePoint.actualInflow as string | number | null | undefined)
+        || toNumber(safePoint.actual_inflow as string | number | null | undefined),
+      actualOutflow: toNumber(safePoint.actualOutflow as string | number | null | undefined)
+        || toNumber(safePoint.actual_outflow as string | number | null | undefined),
+      forecastInflow: toNumber(safePoint.forecastInflow as string | number | null | undefined)
+        || toNumber(safePoint.forecast_inflow as string | number | null | undefined),
+      forecastOutflow: toNumber(safePoint.forecastOutflow as string | number | null | undefined)
+        || toNumber(safePoint.forecast_outflow as string | number | null | undefined),
     };
   });
 }

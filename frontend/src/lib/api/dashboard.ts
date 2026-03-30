@@ -21,6 +21,15 @@ export interface DashboardCashflowRawPoint {
   expense?: string | number;
   totalOut?: string | number;
   balance?: string | number;
+  // New backend fields (forecast vs actual)
+  forecastInflow?: string | number;
+  forecastOutflow?: string | number;
+  forecast_inflow?: string | number;
+  forecast_outflow?: string | number;
+  actualInflow?: string | number;
+  actualOutflow?: string | number;
+  actual_inflow?: string | number;
+  actual_outflow?: string | number;
 }
 
 export interface OverdueEntry {

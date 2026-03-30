@@ -4,22 +4,8 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
 import { useReconciliation } from '@/features/reconciliation/hooks/use-reconciliation';
+import { StatusBadge } from '@/components/shared/status-badge';
 
-function getStatusClass(status: string): string {
-  if (status === 'RECONCILED') {
-    return 'text-[var(--success)]';
-  }
-
-  if (status === 'SUGGESTED') {
-    return 'text-[var(--warning)]';
-  }
-
-  if (status === 'DIVERGENT') {
-    return 'text-[var(--danger)]';
-  }
-
-  return 'text-[var(--text-muted)]';
-}
 
 export function SplitView() {
   const reconciliation = useReconciliation();
@@ -70,7 +56,7 @@ export function SplitView() {
                       <td className="px-3 py-2">{item.paymentDate}</td>
                       <td className="px-3 py-2 font-semibold">{item.amount}</td>
                       <td className="px-3 py-2">{item.entryId || '-'}</td>
-                      <td className={`px-3 py-2 font-semibold ${getStatusClass(item.status)}`}>{item.status}</td>
+                      <td className="px-3 py-2 font-semibold"><StatusBadge status={item.status} /></td>
                     </tr>
                   );
                 })}
@@ -113,7 +99,7 @@ export function SplitView() {
                       <td className="px-3 py-2">{entry.description}</td>
                       <td className="px-3 py-2 font-semibold">{entry.amount}</td>
                       <td className="px-3 py-2">{entry.dueDate}</td>
-                      <td className="px-3 py-2">{entry.status}</td>
+                      <td className="px-3 py-2"><StatusBadge status={entry.status} /></td>
                     </tr>
                   );
                 })}

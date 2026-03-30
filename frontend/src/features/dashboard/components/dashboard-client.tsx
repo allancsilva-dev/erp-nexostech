@@ -47,7 +47,7 @@ export function DashboardClient() {
         subtitle="Visão consolidada de saldos, vencimentos e fluxo"
       />
       <SummaryCards data={summary.data.data} />
-      <CashflowChart data={cashflow.data?.data ?? []} />
+      <CashflowChart data={cashflow.data ?? []} />
       <OverdueList items={overdue.data?.data ?? []} />
     </div>
   );

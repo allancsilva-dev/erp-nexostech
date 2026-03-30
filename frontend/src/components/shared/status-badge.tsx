@@ -8,6 +8,11 @@ const STATUS_MAP: Record<string, { label: string; bg: string; text: string }> = 
   PAID: { label: 'Pago', bg: 'var(--success-muted)', text: 'var(--success)' },
   OVERDUE: { label: 'Vencido', bg: 'var(--danger-muted)', text: 'var(--danger)' },
   CANCELLED: { label: 'Cancelado', bg: 'var(--bg-surface-raised)', text: 'var(--text-muted)' },
+  // Reconciliation statuses
+  UNMATCHED: { label: 'Não conciliado', bg: 'var(--warning-muted)', text: 'var(--warning)' },
+  SUGGESTED: { label: 'Sugerido', bg: 'var(--info-muted)', text: 'var(--info)' },
+  RECONCILED: { label: 'Conciliado', bg: 'var(--success-muted)', text: 'var(--success)' },
+  DIVERGENT: { label: 'Divergente', bg: 'var(--danger-muted)', text: 'var(--danger)' },
 };
 
 interface StatusBadgeProps {

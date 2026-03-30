@@ -25,6 +25,13 @@ export class DashboardService {
   @CacheResult({ keyPrefix: 'dashboard:cashflow', ttlSeconds: 60 })
   async getCashflowChart(tenantId: string, branchId: string, period: string) {
     void tenantId;
-    return this.dashboardRepository.getCashflowChart(branchId, period);
+    const rows = await this.dashboardRepository.getCashflowChart(branchId, period);
+    return rows.map((r) => ({
+      month: r.month,
+      forecastInflow: r.forecast_inflow,
+      forecastOutflow: r.forecast_outflow,
+      actualInflow: r.actual_inflow,
+      actualOutflow: r.actual_outflow,
+    }));
   }
 }
