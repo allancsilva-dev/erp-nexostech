@@ -60,7 +60,11 @@ export const CashflowChart = React.memo(function CashflowChart({
     );
   }
 
-  if (data.length === 0) {
+  const hasData = data.some(
+    (d) => d.actualInflow > 0 || d.actualOutflow > 0 || d.forecastInflow > 0 || d.forecastOutflow > 0,
+  );
+
+  if (!hasData) {
     return (
       <div className="surface-card flex flex-col items-center justify-center p-8 text-center">
         <BarChart3 size={32} style={{ color: 'var(--text-muted)' }} strokeWidth={1.2} />
@@ -104,9 +108,10 @@ export const CashflowChart = React.memo(function CashflowChart({
             }}
           />
           <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: 'var(--text-muted)' }} />
-          <Bar dataKey="income" name="Entradas" fill="var(--success)" opacity={0.85} radius={[3, 3, 0, 0]} barSize={12} />
-          <Bar dataKey="expense" name="Saídas" fill="var(--danger)" opacity={0.85} radius={[3, 3, 0, 0]} barSize={12} />
-          <Line dataKey="balance" name="Saldo" stroke="var(--accent-text)" strokeWidth={2} dot={false} />
+          <Bar dataKey="actualInflow" name="Recebido" fill="var(--success)" opacity={0.85} radius={[3, 3, 0, 0]} barSize={12} />
+          <Bar dataKey="actualOutflow" name="Pago" fill="var(--danger)" opacity={0.85} radius={[3, 3, 0, 0]} barSize={12} />
+          <Line dataKey="forecastInflow" name="Previsto Entrada" stroke="var(--success)" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+          <Line dataKey="forecastOutflow" name="Previsto Saída" stroke="var(--danger)" strokeWidth={2} strokeDasharray="5 5" dot={false} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>

@@ -54,15 +54,16 @@ function unwrapData<T>(payload: unknown): T {
 
 export async function fetchDashboardSummary(branchId: string): Promise<DashboardSummary> {
   void branchId;
-  const response = await api.get<DashboardSummary>('/dashboard/summary');
-  const data = unwrapData<DashboardSummary>(response);
+  const response = await api.get<any>('/dashboard/summary');
+  const raw = unwrapData<any>(response);
 
   return {
-    ...data,
-    totalBalance: toNumber(data.totalBalance),
-    receivable30d: toNumber(data.receivable30d),
-    payable30d: toNumber(data.payable30d),
-    monthResult: toNumber(data.monthResult),
+    // backend returns `currentBalance`, map to our `totalBalance`
+    totalBalance: toNumber(raw.currentBalance),
+    receivable30d: toNumber(raw.totalReceivable30d ?? raw.receivable30d),
+    payable30d: toNumber(raw.totalPayable30d ?? raw.payable30d),
+    monthResult: toNumber(raw.monthResult ?? raw.month_result),
+    variations: raw.variations ?? undefined,
   };
 }
 
