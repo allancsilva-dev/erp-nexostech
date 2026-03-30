@@ -54,16 +54,24 @@ function unwrapData<T>(payload: unknown): T {
 
 export async function fetchDashboardSummary(branchId: string): Promise<DashboardSummary> {
   void branchId;
-  const response = await api.get<any>('/dashboard/summary');
-  const raw = unwrapData<any>(response);
+  const response = await api.get<unknown>('/dashboard/summary');
+  const raw = unwrapData<unknown>(response) as Record<string, unknown>;
+
+  const getVal = (keys: string[]) => {
+    for (const k of keys) {
+      const v = raw[k];
+      if (v !== undefined && v !== null) return v as string | number;
+    }
+    return undefined as string | number | undefined;
+  };
 
   return {
     // backend returns `currentBalance`, map to our `totalBalance`
-    totalBalance: toNumber(raw.currentBalance),
-    receivable30d: toNumber(raw.totalReceivable30d ?? raw.receivable30d),
-    payable30d: toNumber(raw.totalPayable30d ?? raw.payable30d),
-    monthResult: toNumber(raw.monthResult ?? raw.month_result),
-    variations: raw.variations ?? undefined,
+    totalBalance: toNumber(getVal(['currentBalance', 'totalBalance'])),
+    receivable30d: toNumber(getVal(['totalReceivable30d', 'receivable30d'])),
+    payable30d: toNumber(getVal(['totalPayable30d', 'payable30d'])),
+    monthResult: toNumber(getVal(['monthResult', 'month_result'])),
+    variations: (raw['variations'] as unknown) ?? undefined,
   };
 }
 
