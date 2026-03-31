@@ -627,7 +627,7 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
        ON ${schema}.notifications (
          user_id,
          type,
-         (metadata->>'entry_id')::uuid,
+         (metadata->>'entry_id'),
          date_trunc('day', created_at)
        )
        WHERE metadata->>'entry_id' IS NOT NULL`,
