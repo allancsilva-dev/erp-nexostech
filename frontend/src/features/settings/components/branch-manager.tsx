@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { MaskedInput } from '@/components/ui/masked-input';
+import { DocumentInput } from '@/components/shared/document-input';
 import { usePermissions } from '@/hooks/use-permissions';
 import { api } from '@/lib/api-client';
 
@@ -311,7 +312,7 @@ export function BranchManager() {
             <thead>
               <tr className="border-b text-left bg-[var(--bg-surface-raised)]">
                 <th className="px-3 py-2 font-medium">Nome</th>
-                <th className="px-3 py-2 font-medium">CNPJ</th>
+                <th className="px-3 py-2 font-medium">CPF / CNPJ</th>
                 <th className="px-3 py-2 font-medium">Cidade/UF</th>
                 <th className="px-3 py-2 font-medium">Matriz</th>
                 <th className="px-3 py-2 font-medium">Status</th>
@@ -433,11 +434,10 @@ export function BranchManager() {
               placeholder="Razao social"
               disabled={isMutating}
             />
-            <MaskedInput
-              maskType="cnpj"
-              value={form.document}
-              onChange={(rawValue) => setForm((current) => ({ ...current, document: rawValue }))}
-              placeholder="CNPJ (00.000.000/0000-00)"
+            <DocumentInput
+              value={(form.document ?? '').replace(/\D/g, '')}
+              onChange={(value) => setForm((current) => ({ ...current, document: value }))}
+              placeholder="Digite CPF ou CNPJ"
               disabled={isMutating}
             />
             <MaskedInput
