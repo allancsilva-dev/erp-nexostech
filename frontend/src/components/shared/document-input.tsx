@@ -6,6 +6,7 @@ interface DocumentInputProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  placeholder?: string;
 }
 
 function formatDocument(digits: string): string {
@@ -26,7 +27,7 @@ function formatDocument(digits: string): string {
     .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
 }
 
-export function DocumentInput({ value, onChange, disabled }: DocumentInputProps) {
+export function DocumentInput({ value, onChange, disabled, placeholder }: DocumentInputProps) {
   const [display, setDisplay] = useState('');
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export function DocumentInput({ value, onChange, disabled }: DocumentInputProps)
       onChange={handleChange}
       onBlur={handleBlur}
       disabled={disabled}
-      placeholder="CPF ou CNPJ"
+      placeholder={placeholder ?? "CPF ou CNPJ"}
       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     />
   );
