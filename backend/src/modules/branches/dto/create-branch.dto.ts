@@ -8,6 +8,7 @@ import {
 } from 'class-validator';
 import { IsCep } from '../../../common/validators/is-cep.decorator';
 import { IsPhone } from '../../../common/validators/is-phone.decorator';
+import { IsValidDocument } from '../../../common/validators/is-valid-document.validator';
 
 export class CreateBranchDto {
   @IsString()
@@ -21,7 +22,7 @@ export class CreateBranchDto {
   legalName?: string;
 
   @IsOptional()
-  @Matches(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/)
+  @IsValidDocument()
   document?: string;
 
   @IsOptional()

@@ -85,7 +85,8 @@ export class BranchesRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const name = quoteLiteral(dto.name);
     const legalName = quoteLiteral(dto.legalName ?? null);
-    const document = quoteLiteral(dto.document ?? null);
+    const doc = dto.document?.replace(/\D/g, '') ?? null;
+    const document = quoteLiteral(doc ?? null);
     const phone = quoteLiteral(dto.phone ?? null);
     const email = quoteLiteral(dto.email ?? null);
     const addressCity = quoteLiteral(dto.addressCity ?? null);
@@ -136,12 +137,13 @@ export class BranchesRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const idLiteral = quoteLiteral(id);
     const sets: string[] = [];
+    const doc = dto.document?.replace(/\D/g, '') ?? null;
 
     if (dto.name !== undefined) sets.push(`name = ${quoteLiteral(dto.name)}`);
     if (dto.legalName !== undefined)
       sets.push(`legal_name = ${quoteLiteral(dto.legalName)}`);
     if (dto.document !== undefined)
-      sets.push(`document = ${quoteLiteral(dto.document)}`);
+      sets.push(`document = ${quoteLiteral(doc)}`);
     if (dto.phone !== undefined)
       sets.push(`phone = ${quoteLiteral(dto.phone)}`);
     if (dto.email !== undefined)
