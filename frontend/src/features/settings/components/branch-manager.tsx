@@ -67,17 +67,15 @@ function normalizeState(value: string): string {
   return value.toUpperCase().slice(0, 2);
 }
 
-function toPayload(form: BranchForm): Record<string, string> {
-  const payload: Record<string, string> = {
+function toPayload(form: BranchForm): Record<string, string | null> {
+  const payload: Record<string, string | null> = {
     name: form.name.trim(),
   };
 
   if (form.legalName.trim()) {
     payload.legalName = form.legalName.trim();
   }
-  if (form.document.trim()) {
-    payload.document = form.document.replace(/\D/g, '');
-  }
+  payload.document = form.document.trim() ? form.document.replace(/\D/g, '') : null;
   if (form.phone.trim()) {
     payload.phone = form.phone.replace(/\D/g, '');
   }
