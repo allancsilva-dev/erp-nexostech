@@ -87,11 +87,13 @@ export class BranchesRepository {
     const legalName = quoteLiteral(dto.legalName ?? null);
     const doc = dto.document?.replace(/\D/g, '') ?? null;
     const document = quoteLiteral(doc ?? null);
-    const phone = quoteLiteral(dto.phone ?? null);
+    const phone = dto.phone?.replace(/\D/g, '') ?? null;
+    const phoneLiteral = quoteLiteral(phone ?? null);
     const email = quoteLiteral(dto.email ?? null);
     const addressCity = quoteLiteral(dto.addressCity ?? null);
     const addressState = quoteLiteral(dto.addressState ?? null);
-    const addressZip = quoteLiteral(dto.addressZip ?? null);
+    const zip = dto.addressZip?.replace(/\D/g, '') ?? null;
+    const addressZip = quoteLiteral(zip ?? null);
 
     const result = await this.drizzleService.getClient().execute(
       sql.raw(`
@@ -138,6 +140,8 @@ export class BranchesRepository {
     const idLiteral = quoteLiteral(id);
     const sets: string[] = [];
     const doc = dto.document?.replace(/\D/g, '') ?? null;
+    const phone = dto.phone?.replace(/\D/g, '') ?? null;
+    const phoneLiteral = quoteLiteral(phone ?? null);
 
     if (dto.name !== undefined) sets.push(`name = ${quoteLiteral(dto.name)}`);
     if (dto.legalName !== undefined)
@@ -145,7 +149,7 @@ export class BranchesRepository {
     if (dto.document !== undefined)
       sets.push(`document = ${quoteLiteral(doc)}`);
     if (dto.phone !== undefined)
-      sets.push(`phone = ${quoteLiteral(dto.phone)}`);
+      sets.push(`phone = ${phoneLiteral}`);
     if (dto.email !== undefined)
       sets.push(`email = ${quoteLiteral(dto.email)}`);
     if (dto.addressCity !== undefined)
@@ -153,7 +157,7 @@ export class BranchesRepository {
     if (dto.addressState !== undefined)
       sets.push(`address_state = ${quoteLiteral(dto.addressState)}`);
     if (dto.addressZip !== undefined)
-      sets.push(`address_zip = ${quoteLiteral(dto.addressZip)}`);
+      sets.push(`address_zip = ${quoteLiteral(dto.addressZip?.replace(/\D/g, '') ?? null)}`);
 
     if (sets.length > 0) {
       await this.drizzleService.getClient().execute(
