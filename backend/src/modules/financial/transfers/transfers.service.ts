@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import Decimal from 'decimal.js';
@@ -83,9 +83,14 @@ export class TransfersService {
     }
 
     if (operationDate <= lockedUntil) {
-      throw new UnprocessableEntityException(
-        `Data bloqueada pelo fechamento contabil de ${this.formatDateBr(lockedUntil)} para branch ${branchId}.`,
-      );
+      throw new BusinessException('ENTRY_LOCKED_PERIOD', 422, {
+        branchId,
+        lockedUntil: lockedUntil.toISOString().slice(0, 10),
+        operationDate:
+          dateToCheck instanceof Date
+            ? dateToCheck.toISOString().slice(0, 10)
+            : dateToCheck,
+      });
     }
   }
 
@@ -97,21 +102,13 @@ export class TransfersService {
     await this.checkLockPeriod(branchId, dto.transferDate);
 
     if (dto.fromAccountId === dto.toAccountId) {
-      throw new BusinessException(
-        'VALIDATION_ERROR',
-        'Conta origem e destino devem ser diferentes',
-        undefined,
-        400,
-      );
+      throw new BusinessException('TRANSFER_SAME_ACCOUNT', 400);
     }
 
     if (new Decimal(dto.amount).lte(0)) {
-      throw new BusinessException(
-        'VALIDATION_ERROR',
-        'Valor da transferencia deve ser positivo',
-        undefined,
-        400,
-      );
+      throw new BusinessException('VALIDATION_AMOUNT', 400, {
+        field: 'amount',
+      });
     }
 
     const created = await this.txHelper.run(async (tx) => {
@@ -127,14 +124,13 @@ export class TransfersService {
 
       if (available.lt(requested)) {
         throw new BusinessException(
-          'INSUFFICIENT_BALANCE',
-          `Saldo insuficiente na conta de origem. Saldo disponivel: R$ ${available.toFixed(2)}. Valor solicitado: R$ ${requested.toFixed(2)}.`,
+          'PAYMENT_INSUFFICIENT_BALANCE',
+          422,
           {
             accountId: dto.fromAccountId,
             available: available.toFixed(2),
             requested: requested.toFixed(2),
           },
-          422,
         );
       }
 
@@ -161,9 +157,8 @@ export class TransfersService {
     if (!existing) {
       throw new BusinessException(
         'TRANSFER_NOT_FOUND',
-        'Transferencia nao encontrada para a filial informada',
-        { transferId, branchId },
         HttpStatus.NOT_FOUND,
+        { transferId, branchId },
       );
     }
 

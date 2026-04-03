@@ -41,9 +41,8 @@ export class RolesService {
     if (!existing) {
       throw new BusinessException(
         'ROLE_NOT_FOUND',
-        'Role nao encontrada',
-        { id },
         HttpStatus.NOT_FOUND,
+        { id },
       );
     }
 
@@ -54,9 +53,8 @@ export class RolesService {
     if (existing.isSystem) {
       throw new BusinessException(
         'ROLE_SYSTEM_LOCKED',
-        'Role de sistema nao pode ser editada',
-        { id },
         HttpStatus.FORBIDDEN,
+        { id },
       );
     }
 
@@ -75,18 +73,16 @@ export class RolesService {
     if (!existing) {
       throw new BusinessException(
         'ROLE_NOT_FOUND',
-        'Role nao encontrada',
-        { id },
         HttpStatus.NOT_FOUND,
+        { id },
       );
     }
 
     if (existing.isSystem) {
       throw new BusinessException(
         'ROLE_SYSTEM_LOCKED',
-        'Role de sistema nao pode ser excluida',
-        { id },
         HttpStatus.FORBIDDEN,
+        { id },
       );
     }
 
@@ -172,8 +168,6 @@ export class RolesService {
     if (rows.length === 0) {
       throw new BusinessException(
         'USER_NOT_PROVISIONED',
-        'Usuario nao configurado neste tenant. Contate o administrador.',
-        undefined,
         HttpStatus.FORBIDDEN,
       );
     }
@@ -228,9 +222,8 @@ export class RolesService {
     if (!authUser) {
       throw new BusinessException(
         'AUTH_USER_NOT_FOUND',
-        'Usuario nao cadastrado no ZonaDev Auth. O usuario precisa ser cadastrado primeiro.',
-        { email: dto.email },
         HttpStatus.UNPROCESSABLE_ENTITY,
+        { email: dto.email },
       );
     }
 
@@ -240,9 +233,8 @@ export class RolesService {
     if (alreadyLinked) {
       throw new BusinessException(
         'USER_ALREADY_LINKED',
-        'Usuario ja vinculado a este tenant',
-        { userId: authUser.id },
         HttpStatus.CONFLICT,
+        { userId: authUser.id },
       );
     }
 
@@ -329,9 +321,8 @@ export class RolesService {
     if (!exists) {
       throw new BusinessException(
         'USER_NOT_FOUND',
-        'Usuario nao encontrado neste tenant',
-        { userId },
         HttpStatus.NOT_FOUND,
+        { userId },
       );
     }
 
@@ -349,9 +340,8 @@ export class RolesService {
     if (!existing) {
       throw new BusinessException(
         'ROLE_NOT_FOUND',
-        'Role nao encontrada',
-        { roleId },
         HttpStatus.NOT_FOUND,
+        { roleId },
       );
     }
 
@@ -370,10 +360,9 @@ export class RolesService {
 
     if (invalid.length > 0) {
       throw new BusinessException(
-        'INVALID_PERMISSIONS',
-        `Permissoes invalidas: ${invalid.join(', ')}`,
-        { invalid },
+        'RBAC_FORBIDDEN',
         HttpStatus.BAD_REQUEST,
+        { invalid },
       );
     }
   }

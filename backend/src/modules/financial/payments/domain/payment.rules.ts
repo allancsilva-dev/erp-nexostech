@@ -8,17 +8,18 @@ export class PaymentRules {
 
     if (amount.lte(0)) {
       throw new BusinessException(
-        'VALIDATION_ERROR',
-        'Valor de pagamento deve ser positivo',
-        undefined,
+        'VALIDATION_AMOUNT',
         400,
+        {
+          field: 'amount',
+        },
       );
     }
 
     if (amount.gt(remaining)) {
       throw new BusinessException(
-        'PAYMENT_EXCEEDS_BALANCE',
-        'Valor do pagamento excede o saldo restante do lancamento',
+        'PAYMENT_AMOUNT_EXCEEDS',
+        undefined,
         { remainingBalance, amountToPay },
       );
     }
@@ -33,8 +34,9 @@ export class PaymentRules {
 
     if (elapsedDays > maxRefundDays) {
       throw new BusinessException(
-        'REFUND_PERIOD_EXPIRED',
-        'Prazo de estorno expirado',
+        'PAYMENT_REFUND_PERIOD_EXPIRED',
+        undefined,
+        { lastPaymentDate, maxRefundDays, elapsedDays },
       );
     }
   }

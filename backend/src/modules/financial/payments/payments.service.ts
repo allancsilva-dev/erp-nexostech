@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
 import {
   PaymentCreatedEvent,
@@ -47,9 +47,8 @@ export class PaymentsService {
       if (!entry) {
         throw new BusinessException(
           'ENTRY_NOT_FOUND',
-          'Lancamento nao encontrado para pagamento',
-          { entryId, branchId },
           HttpStatus.NOT_FOUND,
+          { entryId, branchId },
         );
       }
 
@@ -57,10 +56,11 @@ export class PaymentsService {
       const allowedStatuses = ['PENDING', 'PARTIAL', 'OVERDUE'];
       const entryStatus = (entry.status ?? '').toUpperCase();
       if (!allowedStatuses.includes(entryStatus)) {
-        throw new BadRequestException(
-          'Não é possível registrar pagamento para lançamento com status ' +
-            entryStatus,
-        );
+        throw new BusinessException('INVALID_STATUS_TRANSITION', 400, {
+          operation: 'REGISTER_PAYMENT',
+          currentStatus: entryStatus,
+          allowedStatuses,
+        });
       }
 
       // 2. Valida com saldo REAL (dentro do lock) — evita aceitar pagamento acima do saldo
@@ -110,9 +110,8 @@ export class PaymentsService {
     if (!entry) {
       throw new BusinessException(
         'ENTRY_NOT_FOUND',
-        'Lancamento nao encontrado para consulta de pagamentos',
-        { entryId, branchId },
         HttpStatus.NOT_FOUND,
+        { entryId, branchId },
       );
     }
 
@@ -142,7 +141,10 @@ export class PaymentsService {
   ) {
     // Validate reason length
     if (!dto?.reason || dto.reason.trim().length < 10) {
-      throw new BadRequestException('Motivo deve ter no mínimo 10 caracteres');
+      throw new BusinessException('VALIDATION_ERROR', 400, {
+        field: 'reason',
+        minLength: 10,
+      });
     }
     // Estorno também usa SELECT FOR UPDATE para evitar estorno duplo simultâneo
     const removedPayment = await this.txHelper.run(async (tx) => {
@@ -156,9 +158,8 @@ export class PaymentsService {
       if (!entry) {
         throw new BusinessException(
           'ENTRY_NOT_FOUND',
-          'Lancamento nao encontrado para estorno',
-          { entryId, branchId },
           HttpStatus.NOT_FOUND,
+          { entryId, branchId },
         );
       }
 

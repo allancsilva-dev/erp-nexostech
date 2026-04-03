@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import CircuitBreaker from 'opossum';
 import { BusinessException } from '../../../common/exceptions/business.exception';
@@ -50,17 +50,11 @@ export class BoletosGatewayClient {
     }, options);
 
     this.generateBreaker.fallback(() => {
-      throw new BusinessException(
-        'GATEWAY_UNAVAILABLE',
-        'Servico de boletos indisponivel. Tente novamente em instantes.',
-      );
+      throw new BusinessException('GATEWAY_UNAVAILABLE');
     });
 
     this.cancelBreaker.fallback(() => {
-      throw new BusinessException(
-        'GATEWAY_UNAVAILABLE',
-        'Servico de boletos indisponivel. Tente novamente em instantes.',
-      );
+      throw new BusinessException('GATEWAY_UNAVAILABLE');
     });
   }
 
@@ -95,10 +89,7 @@ export class BoletosGatewayClient {
   private getBaseUrl(): string {
     const baseUrl = this.gatewayUrl.trim();
     if (!baseUrl) {
-      throw new BusinessException(
-        'GATEWAY_NOT_CONFIGURED',
-        'Servico de boletos nao configurado.',
-      );
+      throw new BusinessException('GATEWAY_NOT_CONFIGURED');
     }
 
     return baseUrl.replace(/\/+$/, '');
@@ -127,7 +118,10 @@ export class BoletosGatewayClient {
       this.toNullableText(body?.error) ??
       fallback;
 
-    throw new BusinessException('GATEWAY_ERROR', message);
+    throw new BusinessException('INTERNAL_GATEWAY_ERROR', HttpStatus.BAD_GATEWAY, {
+      gatewayMessage: message,
+      gatewayStatus: response.status,
+    });
   }
 
   private async generateOnGateway(
@@ -150,10 +144,7 @@ export class BoletosGatewayClient {
     const pdfUrl = this.toNullableText(body.pdfUrl ?? body.pdf_url) ?? '';
 
     if (!boletoId || !pdfUrl) {
-      throw new BusinessException(
-        'GATEWAY_INVALID_RESPONSE',
-        'Gateway de boletos retornou payload invalido.',
-      );
+      throw new BusinessException('GATEWAY_INVALID_RESPONSE');
     }
 
     return {

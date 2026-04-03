@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  UnprocessableEntityException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { BusinessException } from '../../../common/exceptions/business.exception';
@@ -99,9 +95,14 @@ export class EntriesService {
     }
 
     if (operationDate <= lockedUntil) {
-      throw new UnprocessableEntityException(
-        `Data bloqueada pelo fechamento contabil de ${this.formatDateBr(lockedUntil)} para branch ${branchId}.`,
-      );
+      throw new BusinessException('ENTRY_LOCKED_PERIOD', 422, {
+        branchId,
+        lockedUntil: lockedUntil.toISOString().slice(0, 10),
+        operationDate:
+          dateToCheck instanceof Date
+            ? dateToCheck.toISOString().slice(0, 10)
+            : dateToCheck,
+      });
     }
   }
 
@@ -118,9 +119,8 @@ export class EntriesService {
     if (!entry) {
       throw new BusinessException(
         'ENTRY_NOT_FOUND',
-        'Lancamento nao encontrado para a filial informada',
-        { entryId, branchId },
         HttpStatus.NOT_FOUND,
+        { entryId, branchId },
       );
     }
 
@@ -145,9 +145,10 @@ export class EntriesService {
         branchId,
       );
       if (!category) {
-        throw new BadRequestException(
-          'Categoria nao encontrada para a filial informada',
-        );
+        throw new BusinessException('CATEGORY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+          categoryId: dto.categoryId,
+          branchId,
+        });
       }
       const expectedCategoryType = dto.type === 'PAYABLE' ? 'PAYABLE' : 'RECEIVABLE';
       const categoryTypeLabels: Record<string, string> = {
@@ -157,9 +158,13 @@ export class EntriesService {
       if (category.type !== expectedCategoryType) {
         const categoryLabel = categoryTypeLabels[category.type] || category.type;
         const entryLabel = dto.type === 'PAYABLE' ? 'a pagar' : 'a receber';
-        throw new BadRequestException(
-          `Categoria do tipo "${categoryLabel}" não é compatível com lançamento ${entryLabel}`,
-        );
+        throw new BusinessException('ENTRY_CATEGORY_INCOMPATIBLE', 422, {
+          categoryId: dto.categoryId,
+          categoryType: category.type,
+          categoryLabel,
+          entryType: dto.type,
+          entryLabel,
+        });
       }
     }
 
@@ -367,9 +372,8 @@ export class EntriesService {
     if (!deleted) {
       throw new BusinessException(
         'ENTRY_NOT_FOUND',
-        'Lancamento excluido nao encontrado para restauracao',
-        { entryId, branchId },
         HttpStatus.NOT_FOUND,
+        { entryId, branchId },
       );
     }
 
@@ -394,8 +398,8 @@ export class EntriesService {
   assertNotPendingApproval(entry: { id: string; status: string }): void {
     if (entry.status === 'PENDING_APPROVAL') {
       throw new BusinessException(
-        'APPROVAL_REQUIRED',
-        'Este lancamento esta aguardando aprovacao e nao pode ser operado diretamente',
+        'ENTRY_APPROVAL_REQUIRED',
+        undefined,
         { entryId: entry.id, status: entry.status },
       );
     }
@@ -416,7 +420,10 @@ export class EntriesService {
       reason.trim().length > 0 &&
       reason.trim().length < 10
     ) {
-      throw new BadRequestException('Motivo deve ter no mínimo 10 caracteres');
+      throw new BusinessException('VALIDATION_ERROR', 400, {
+        field: 'reason',
+        minLength: 10,
+      });
     }
 
     if (entry.status === 'CANCELLED') {

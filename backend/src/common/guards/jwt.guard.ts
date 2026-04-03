@@ -38,7 +38,7 @@ export class JwtGuard implements CanActivate {
     const token = this.extractToken(request);
     if (!token) {
       throw new UnauthorizedException({
-        error: { code: 'UNAUTHORIZED', message: 'JWT ausente ou inválido' },
+        error: { code: 'AUTH_UNAUTHORIZED', message: 'JWT ausente ou inválido' },
       });
     }
 
@@ -85,7 +85,7 @@ export class JwtGuard implements CanActivate {
       });
 
       throw new UnauthorizedException({
-        error: { code: 'UNAUTHORIZED', message: 'Token inválido ou expirado' },
+        error: { code: 'AUTH_UNAUTHORIZED', message: 'Token inválido ou expirado' },
       });
     }
   }

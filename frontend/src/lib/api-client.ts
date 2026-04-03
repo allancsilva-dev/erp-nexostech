@@ -1,4 +1,5 @@
-﻿import { ApiError, type ApiResponse, type PaginatedResponse } from '@/lib/api-types';
+﻿import { type ApiResponse, type PaginatedResponse } from '@/lib/api-types';
+import { ApiError } from './api-error';
 import { httpFetch } from '@/lib/http-client';
 
 const API_BASE = '/api/v1';
@@ -90,15 +91,38 @@ class ApiClient {
     }
 
     if (response.status === 401) {
-      throw new ApiError('UNAUTHORIZED', 'Sessao expirada', undefined, 401);
+      throw new ApiError('AUTH_UNAUTHORIZED', 'Sessao expirada', undefined, 401);
     }
 
     if (!response.ok) {
-      const body = await response.json().catch(() => null);
+      let errorData: any;
+
+      try {
+        errorData = await response.json();
+      } catch {
+        throw new ApiError(
+          'INTERNAL_ERROR',
+          'Erro interno do sistema. Nossa equipe foi notificada',
+          undefined,
+          undefined,
+          response.status,
+        );
+      }
+
+      if (errorData?.error?.code) {
+        throw new ApiError(
+          errorData.error.code,
+          errorData.error.message,
+          errorData.error.details,
+          errorData.error.requestId,
+          response.status,
+        );
+      }
+
       throw new ApiError(
-        body?.error?.code ?? body?.code ?? 'UNKNOWN',
-        body?.error?.message ?? body?.message ?? 'Erro na API',
-        body?.error?.details ?? body?.details,
+        'INTERNAL_ERROR',
+        'Erro inesperado. Tente novamente ou contate o suporte',
+        { raw: errorData },
         response.status,
       );
     }
