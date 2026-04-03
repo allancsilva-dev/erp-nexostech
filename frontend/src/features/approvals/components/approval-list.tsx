@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage } from '@/components/ui/error-toast';
 import { PermissionGate } from '@/components/shared/permission-gate';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,11 +25,11 @@ export function ApprovalList() {
   }
 
   if (pending.isError) {
-    return <ErrorBanner message={pending.error.message} onRetry={() => pending.refetch()} />;
+    return <ErrorBanner message={getErrorMessage(pending.error, 'Erro inesperado. Tente novamente.')} onRetry={() => pending.refetch()} />;
   }
 
   if (history.isError) {
-    return <ErrorBanner message={history.error.message} onRetry={() => history.refetch()} />;
+    return <ErrorBanner message={getErrorMessage(history.error, 'Erro inesperado. Tente novamente.')} onRetry={() => history.refetch()} />;
   }
 
   const items = pending.data?.data ?? [];

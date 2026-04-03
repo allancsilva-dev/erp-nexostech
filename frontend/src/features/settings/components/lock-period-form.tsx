@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage as getUiErrorMessage, showUnknownError } from '@/components/ui/error-toast';
 import { useBranch } from '@/hooks/use-branch';
 import { usePermissions } from '@/hooks/use-permissions';
 import { api } from '@/lib/api-client';
@@ -22,11 +23,7 @@ interface LockPeriod {
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
+  return getUiErrorMessage(error, fallback);
 }
 
 function formatDate(value: string): string {
@@ -63,8 +60,7 @@ export function LockPeriodForm() {
       void queryClient.invalidateQueries({ queryKey: ['lock-periods', activeBranchId] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[lock-periods:create]', error);
     },
   });
@@ -76,8 +72,7 @@ export function LockPeriodForm() {
       void queryClient.invalidateQueries({ queryKey: ['lock-periods', activeBranchId] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[lock-periods:remove]', error);
     },
   });

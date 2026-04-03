@@ -6,31 +6,29 @@ export class EntryRules {
   validateCreate(dto: CreateEntryDto, lockedUntil: Date | null): void {
     if (new Decimal(dto.amount).lessThanOrEqualTo(0)) {
       throw new BusinessException(
-        'VALIDATION_ERROR',
-        'Valor deve ser positivo',
+        'VALIDATION_AMOUNT',
+        400,
         {
           field: 'amount',
         },
-        400,
       );
     }
 
     if (dto.dueDate < dto.issueDate) {
       throw new BusinessException(
-        'VALIDATION_ERROR',
-        'Vencimento deve ser >= emissao',
+        'VALIDATION_DATE_ORDER',
+        400,
         {
           dueDate: dto.dueDate,
           issueDate: dto.issueDate,
         },
-        400,
       );
     }
 
     if (lockedUntil && new Date(dto.issueDate) <= lockedUntil) {
       throw new BusinessException(
         'ENTRY_LOCKED_PERIOD',
-        'Este lancamento esta em um periodo contabil bloqueado',
+        undefined,
         {
           lockedUntil: lockedUntil.toISOString().slice(0, 10),
           entryDate: dto.issueDate,

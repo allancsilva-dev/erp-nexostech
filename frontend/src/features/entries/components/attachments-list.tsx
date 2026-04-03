@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage as getUiErrorMessage, showUnknownError } from '@/components/ui/error-toast';
 import { useBranch } from '@/hooks/use-branch';
 import { usePermissions } from '@/hooks/use-permissions';
 import { api } from '@/lib/api-client';
@@ -19,11 +20,7 @@ interface Attachment {
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
+  return getUiErrorMessage(error, fallback);
 }
 
 function toAttachmentList(value: unknown): Attachment[] {
@@ -94,8 +91,7 @@ export function AttachmentsList({ entryId }: { entryId: string }) {
       void queryClient.invalidateQueries({ queryKey: ['entries', activeBranchId, 'detail', entryId] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[attachments:remove]', error);
     },
   });

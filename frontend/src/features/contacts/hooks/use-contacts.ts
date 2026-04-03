@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { showUnknownError } from '@/components/ui/error-toast';
 import { api } from '@/lib/api-client';
 import type { Contact } from '@/features/contacts/types/contact.types';
 import { queryKeys } from '@/lib/query-keys';
@@ -30,8 +31,8 @@ export function useDeleteContact() {
       queryClient.invalidateQueries({ queryKey: queryKeys.contacts.list({}) });
       toast.success('Contato excluído');
     },
-    onError: (error: Error) => {
-      toast.error(error.message ?? 'Falha ao excluir contato');
+    onError: (error: unknown) => {
+      showUnknownError(error);
     },
   });
 }

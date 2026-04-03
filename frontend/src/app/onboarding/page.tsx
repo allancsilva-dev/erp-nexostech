@@ -4,8 +4,8 @@ import { FormEvent, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { Loader2, TriangleAlert } from 'lucide-react';
+import { getErrorMessage } from '@/components/ui/error-toast';
 import { api } from '@/lib/api-client';
-import { ApiError } from '@/lib/api-types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,11 +40,12 @@ export default function OnboardingPage() {
       router.replace('/dashboard');
     },
     onError: (error: unknown) => {
-      const message = error instanceof ApiError
-        ? error.message
-        : 'Erro inesperado ao finalizar onboarding. Tente novamente.';
-
-      setErrorMessage(message);
+      setErrorMessage(
+        getErrorMessage(
+          error,
+          'Erro inesperado ao finalizar onboarding. Tente novamente.',
+        ),
+      );
       console.error('[onboarding.createTenant]', error);
     },
   });

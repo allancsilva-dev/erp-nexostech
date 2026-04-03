@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage } from '@/components/ui/error-toast';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '@/hooks/use-permissions';
 import { ACTION_LABELS, ENTITY_LABELS } from '../audit-labels';
@@ -45,7 +46,7 @@ export function AuditLogTable() {
   }
 
   if (logs.isError) {
-    return <ErrorBanner message={logs.error.message} onRetry={() => logs.refetch()} />;
+    return <ErrorBanner message={getErrorMessage(logs.error, 'Erro inesperado. Tente novamente.')} onRetry={() => logs.refetch()} />;
   }
 
   const list = toAuditList(logs.data?.data);

@@ -7,6 +7,14 @@ import { Select } from '@/components/ui/select';
 import { useContacts } from '@/features/contacts/hooks/use-contacts';
 import type { CreateEntryInput } from '@/features/entries/types/entry.schemas';
 
+function getFieldErrorText(error: unknown): string {
+  if (!error || typeof error !== 'object') {
+    return '';
+  }
+
+  return String((error as { ['message']?: unknown })['message'] ?? '');
+}
+
 export function BasicInfo({ form }: { form: UseFormReturn<CreateEntryInput> }) {
   const entryType = form.watch('type');
   const contactType = entryType === 'PAYABLE' ? 'FORNECEDOR' : 'CLIENTE';
@@ -29,7 +37,7 @@ export function BasicInfo({ form }: { form: UseFormReturn<CreateEntryInput> }) {
                 className={fieldState.error ? 'border-red-500' : ''}
               />
               {fieldState.error && (
-                <p className="text-xs text-red-600 mt-1">{String(fieldState.error.message)}</p>
+                <p className="text-xs text-red-600 mt-1">{getFieldErrorText(fieldState.error)}</p>
               )}
             </>
           )}

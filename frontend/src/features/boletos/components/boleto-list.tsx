@@ -3,6 +3,7 @@
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage } from '@/components/ui/error-toast';
 import { BoletoActions } from '@/features/boletos/components/boleto-actions';
 import { useBoletos, type BoletoFilters } from '@/features/boletos/hooks/use-boletos';
 
@@ -36,7 +37,7 @@ export function BoletoList({ filters }: { filters?: BoletoFilters }) {
   }
 
   if (boletos.isError) {
-    return <ErrorBanner message={boletos.error.message} onRetry={() => boletos.refetch()} />;
+    return <ErrorBanner message={getErrorMessage(boletos.error, 'Erro inesperado. Tente novamente.')} onRetry={() => boletos.refetch()} />;
   }
 
   const list = toBoletoList(boletos.data?.data);

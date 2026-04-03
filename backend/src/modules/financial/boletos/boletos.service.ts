@@ -27,7 +27,7 @@ export class BoletosService {
     if (existing && existing.status === 'ACTIVE') {
       throw new BusinessException(
         'BOLETO_ALREADY_GENERATED',
-        'Ja existe um boleto ativo para este lancamento',
+        undefined,
         { entryId, boletoId: existing.id },
       );
     }

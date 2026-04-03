@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Upload } from 'lucide-react';
 import { api } from '@/lib/api-client';
+import { getErrorMessage } from '@/components/ui/error-toast';
 import { Button } from '@/components/ui/button';
 import { useBranch } from '@/hooks/use-branch';
 
@@ -121,9 +122,7 @@ export function FileUpload({
       setStep('done');
       onChange(file, presign.data.storageKey);
     } catch (uploadError) {
-      const message = uploadError instanceof Error
-        ? uploadError.message
-        : 'Erro no upload';
+      const message = getErrorMessage(uploadError, 'Erro no upload');
 
       if (step === 'registering') {
         setError(`Arquivo enviado para storage, mas nao foi registrado no banco: ${message}`);

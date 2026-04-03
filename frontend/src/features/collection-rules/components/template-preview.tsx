@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { showUnknownError } from '@/components/ui/error-toast';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api-client';
 
@@ -23,8 +23,7 @@ export function TemplatePreview({ templateId }: { templateId: string }) {
       setPreview(response.data);
       setIsOpen(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao gerar preview do template.';
-      toast.error(message);
+      showUnknownError(error);
     } finally {
       setIsLoading(false);
     }

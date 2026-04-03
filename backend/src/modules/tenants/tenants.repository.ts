@@ -405,7 +405,7 @@ export class TenantsRepository {
       }
       throw new BusinessException(
         'ONBOARDING_FAILED',
-        'Falha ao configurar empresa. Tente novamente.',
+        undefined,
         {
           tenantId,
           cause: error instanceof Error ? error.message : String(error),

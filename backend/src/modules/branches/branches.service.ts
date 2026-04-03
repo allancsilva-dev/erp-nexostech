@@ -31,9 +31,8 @@ export class BranchesService {
     if (!existing) {
       throw new BusinessException(
         'BRANCH_NOT_FOUND',
-        'Filial nao encontrada',
-        { id },
         HttpStatus.NOT_FOUND,
+        { id },
       );
     }
 
@@ -45,9 +44,8 @@ export class BranchesService {
     if (!existing) {
       throw new BusinessException(
         'BRANCH_NOT_FOUND',
-        'Filial nao encontrada',
-        { id },
         HttpStatus.NOT_FOUND,
+        { id },
       );
     }
 

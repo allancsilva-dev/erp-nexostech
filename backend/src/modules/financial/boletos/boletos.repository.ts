@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import {
   quoteIdent,
@@ -126,7 +127,12 @@ export class BoletosRepository {
 
     const current = await this.findByEntryId(entryId, branchId);
     if (!current) {
-      throw new Error('Generated boleto could not be loaded');
+      // TODO: mover esta regra de negocio para a camada de service (refactor futuro)
+      throw new BusinessException(
+        'INTERNAL_ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { entryId, branchId, operation: 'RELOAD_GENERATED_BOLETO' },
+      );
     }
 
     return current;

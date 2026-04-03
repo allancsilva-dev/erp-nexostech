@@ -3,6 +3,7 @@
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { getErrorMessage as getUiErrorMessage, showUnknownError } from '@/components/ui/error-toast';
 import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
 import { queryKeys } from '@/lib/query-keys';
@@ -47,11 +48,7 @@ interface ImportedBatch {
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
+  return getUiErrorMessage(error, fallback);
 }
 
 interface ReconciliationUiState {
@@ -179,8 +176,7 @@ export function useReconciliation() {
       toast.success('Extrato importado com sucesso');
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[reconciliation:import]', error);
     },
   });

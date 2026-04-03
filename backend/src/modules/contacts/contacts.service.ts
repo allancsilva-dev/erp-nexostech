@@ -22,9 +22,8 @@ export class ContactsService {
     if (!existing) {
       throw new BusinessException(
         'CONTACT_NOT_FOUND',
-        'Contato nao encontrado',
-        { id },
         HttpStatus.NOT_FOUND,
+        { id },
       );
     }
 

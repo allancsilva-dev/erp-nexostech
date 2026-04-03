@@ -24,9 +24,8 @@ export class ApprovalRulesService {
     if (!existing) {
       throw new BusinessException(
         'APPROVAL_RULE_NOT_FOUND',
-        'Regra de aprovacao nao encontrada para a filial informada',
-        { id, branchId },
         HttpStatus.NOT_FOUND,
+        { id, branchId },
       );
     }
 
@@ -38,9 +37,8 @@ export class ApprovalRulesService {
     if (!existing) {
       throw new BusinessException(
         'APPROVAL_RULE_NOT_FOUND',
-        'Regra de aprovacao nao encontrada para a filial informada',
-        { id, branchId },
         HttpStatus.NOT_FOUND,
+        { id, branchId },
       );
     }
 

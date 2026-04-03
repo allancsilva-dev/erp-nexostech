@@ -6,6 +6,15 @@ const API_BASE = '/api/v1';
 let rateLimitRemaining: number | null = null;
 let throttleUntil = 0;
 
+type ApiErrorPayload = {
+  error?: {
+    code?: string;
+    message?: string;
+    details?: Record<string, unknown>;
+    requestId?: string;
+  };
+};
+
 const TENANT_LEVEL_ENDPOINTS = ['/contacts', '/branches', '/roles', '/users', '/tenants', '/notifications'];
 
 function isTenantLevelEndpoint(endpoint: string): boolean {
@@ -95,7 +104,7 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      let errorData: any;
+      let errorData: ApiErrorPayload | null;
 
       try {
         errorData = await response.json();
@@ -112,7 +121,7 @@ class ApiClient {
       if (errorData?.error?.code) {
         throw new ApiError(
           errorData.error.code,
-          errorData.error.message,
+          errorData.error.message ?? 'Erro inesperado. Tente novamente ou contate o suporte',
           errorData.error.details,
           errorData.error.requestId,
           response.status,

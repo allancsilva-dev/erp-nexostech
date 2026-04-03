@@ -26,9 +26,8 @@ export class CategoriesService {
     if (!existing) {
       throw new BusinessException(
         'CATEGORY_NOT_FOUND',
-        'Categoria nao encontrada para a filial informada',
-        { id, branchId },
         HttpStatus.NOT_FOUND,
+        { id, branchId },
       );
     }
 
@@ -40,9 +39,8 @@ export class CategoriesService {
     if (!existing) {
       throw new BusinessException(
         'CATEGORY_NOT_FOUND',
-        'Categoria nao encontrada para a filial informada',
-        { id, branchId },
         HttpStatus.NOT_FOUND,
+        { id, branchId },
       );
     }
 

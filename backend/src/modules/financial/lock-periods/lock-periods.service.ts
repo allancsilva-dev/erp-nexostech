@@ -32,7 +32,7 @@ export class LockPeriodsService {
     if (overlap) {
       throw new BusinessException(
         'INVALID_PERIOD_OVERLAP',
-        'Ja existe um periodo de bloqueio que se sobrep0e com as datas informadas',
+        undefined,
         {
           conflictingPeriodId: overlap.id,
           conflictingLockedUntil: overlap.lockedUntil,

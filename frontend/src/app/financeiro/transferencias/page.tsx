@@ -9,6 +9,7 @@ import { TransferActions } from '@/features/transfers/components/transfer-action
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { EmptyState } from '@/components/shared/empty-state';
+import { getErrorMessage } from '@/components/ui/error-toast';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useBranch } from '@/hooks/use-branch';
@@ -69,7 +70,7 @@ export default function TransferenciasPage() {
 
       <div className="surface-card p-5">
         {transfers.isLoading ? <TableSkeleton rows={8} cols={6} /> : null}
-        {transfers.isError ? <ErrorBanner message={transfers.error.message} onRetry={() => transfers.refetch()} /> : null}
+        {transfers.isError ? <ErrorBanner message={getErrorMessage(transfers.error, 'Erro inesperado. Tente novamente.')} onRetry={() => transfers.refetch()} /> : null}
 
         {!transfers.isLoading && !transfers.isError && transferList.length === 0 ? (
           <EmptyState title="Nenhuma transferência encontrada" description="Não há transferências para os filtros aplicados." />

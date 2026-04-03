@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { v4 as uuid } from 'uuid';
 import { toast } from 'sonner';
+import { showUnknownError } from '@/components/ui/error-toast';
 import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
 
@@ -49,8 +50,7 @@ export function useGenerateBoleto() {
       queryClient.invalidateQueries({ queryKey: ['entries', activeBranchId || 'default'] });
     },
     onError: (error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Erro inesperado. Tente novamente.';
-      toast.error(message);
+      showUnknownError(error);
       console.error('[boletos:generate]', error);
     },
   });

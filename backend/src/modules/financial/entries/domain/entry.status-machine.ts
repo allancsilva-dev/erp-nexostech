@@ -28,7 +28,7 @@ export class EntryStatusMachine {
     if (!this.canTransition(from, to)) {
       throw new BusinessException(
         'INVALID_STATUS_TRANSITION',
-        `Nao e possivel mudar de ${from} para ${to}`,
+        undefined,
         { currentStatus: from, targetStatus: to },
       );
     }

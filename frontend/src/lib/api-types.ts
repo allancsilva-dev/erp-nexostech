@@ -14,16 +14,4 @@ export interface PaginatedResponse<T> {
   meta: PaginatedMeta;
 }
 
-export class ApiError extends Error {
-  public code: string;
-  public details?: Record<string, unknown>;
-  public status?: number;
-
-  constructor(code: string, message: string, details?: Record<string, unknown>, status?: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.code = code;
-    this.details = details;
-    this.status = status;
-  }
-}
+export { ApiError } from './api-error';

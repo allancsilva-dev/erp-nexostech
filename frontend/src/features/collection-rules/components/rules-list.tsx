@@ -3,6 +3,7 @@
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage, showUnknownError } from '@/components/ui/error-toast';
 import { Button } from '@/components/ui/button';
 import { useCollectionRules } from '@/features/collection-rules/hooks/use-collection-rules';
 import { api } from '@/lib/api-client';
@@ -38,7 +39,7 @@ export function RulesList() {
   }
 
   if (rules.isError) {
-    return <ErrorBanner message={rules.error.message} onRetry={() => rules.refetch()} />;
+    return <ErrorBanner message={getErrorMessage(rules.error, 'Erro inesperado. Tente novamente.')} onRetry={() => rules.refetch()} />;
   }
 
   const list = toRulesList(rules.data?.data);
@@ -55,8 +56,7 @@ export function RulesList() {
       await rules.refetch();
       toast.success('Regra removida.');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao remover regra.';
-      toast.error(message);
+      showUnknownError(error);
     } finally {
       setDeletingId(null);
     }

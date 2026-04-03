@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { FormSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage as getUiErrorMessage, showUnknownError } from '@/components/ui/error-toast';
 import { useBranch } from '@/hooks/use-branch';
 import { usePermissions } from '@/hooks/use-permissions';
 import { api } from '@/lib/api-client';
@@ -41,11 +42,7 @@ const DEFAULT_FORM: FinancialSettingsForm = {
 };
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
+  return getUiErrorMessage(error, fallback);
 }
 
 export function FinancialSettings() {
@@ -85,8 +82,7 @@ export function FinancialSettings() {
       void queryClient.invalidateQueries({ queryKey: ['settings', activeBranchId] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[settings:update]', error);
     },
   });

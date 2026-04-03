@@ -3,6 +3,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { v4 as uuid } from 'uuid';
+import { showUnknownError } from '@/components/ui/error-toast';
 import type { ApiResponse, PaginatedResponse } from '@/lib/api-types';
 import { api } from '@/lib/api-client';
 import { queryKeys } from '@/lib/query-keys';
@@ -52,21 +53,7 @@ export function useCreateEntry() {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(activeBranchId || 'default') });
     },
     onError: (error: unknown) => {
-      let message = 'Falha ao salvar lançamento.';
-      if (error instanceof Error) {
-        const raw = String(error.message || '');
-        const low = raw.toLowerCase();
-        if (raw.includes('segurança') || raw.includes('Idempotency') || raw.includes('Idempotency-Key')) {
-          message = 'Erro interno. Tente novamente.';
-        } else if (low.includes('bloqueado') || low.includes('locked')) {
-          message = 'Período contábil bloqueado. Não é possível criar lançamento nesta data.';
-        } else if (low.includes('já foi processada') || low.includes('ja foi processada') || low.includes('já foi processado')) {
-          message = 'Esta operação já foi processada. Atualize a página.';
-        } else {
-          message = raw || message;
-        }
-      }
-      toast.error(message);
+      showUnknownError(error);
     },
   });
 }
@@ -104,11 +91,11 @@ export function usePayEntry() {
     onSuccess: () => {
       toast.success('Pagamento registrado');
     },
-    onError: (error: Error, _variables, context) => {
+    onError: (error: unknown, _variables, context) => {
       if (context?.previousDetail && context.entryId) {
         queryClient.setQueryData(queryKeys.entries.detail(branchId, context.entryId), context.previousDetail);
       }
-      toast.error(error.message);
+      showUnknownError(error);
     },
     onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.entries.detail(branchId, variables.entryId) });
@@ -132,8 +119,8 @@ export function useUpdateEntry() {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(branchId) });
       toast.success('Lançamento atualizado com sucesso');
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
+    onError: (error: unknown) => {
+      showUnknownError(error);
     },
   });
 }
@@ -152,8 +139,8 @@ export function useCancelEntry() {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(branchId) });
       toast.success('Lançamento cancelado');
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
+    onError: (error: unknown) => {
+      showUnknownError(error);
     },
   });
 }
@@ -173,8 +160,8 @@ export function useRefundPayment() {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(branchId) });
       toast.success('Pagamento estornado');
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
+    onError: (error: unknown) => {
+      showUnknownError(error);
     },
   });
 }

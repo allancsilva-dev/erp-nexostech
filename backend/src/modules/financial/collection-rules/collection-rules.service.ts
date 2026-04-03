@@ -28,9 +28,8 @@ export class CollectionRulesService {
     if (!existing) {
       throw new BusinessException(
         'COLLECTION_RULE_NOT_FOUND',
-        'Regra de cobranca nao encontrada para a filial informada',
-        { id, branchId },
         HttpStatus.NOT_FOUND,
+        { id, branchId },
       );
     }
 
@@ -45,9 +44,8 @@ export class CollectionRulesService {
     if (!existing) {
       throw new BusinessException(
         'COLLECTION_RULE_NOT_FOUND',
-        'Regra de cobranca nao encontrada para a filial informada',
-        { id, branchId },
         HttpStatus.NOT_FOUND,
+        { id, branchId },
       );
     }
 
@@ -66,9 +64,8 @@ export class CollectionRulesService {
     if (!template) {
       throw new BusinessException(
         'EMAIL_TEMPLATE_NOT_FOUND',
-        'Template de e-mail nao encontrado para a filial informada',
-        { id: templateId, branchId },
         HttpStatus.NOT_FOUND,
+        { id: templateId, branchId },
       );
     }
 
@@ -99,9 +96,8 @@ export class CollectionRulesService {
     if (!updated) {
       throw new BusinessException(
         'EMAIL_TEMPLATE_NOT_FOUND',
-        'Template de e-mail nao encontrado para a filial informada',
-        { id, branchId },
         HttpStatus.NOT_FOUND,
+        { id, branchId },
       );
     }
 

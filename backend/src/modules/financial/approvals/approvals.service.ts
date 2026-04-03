@@ -24,7 +24,7 @@ export class ApprovalsService {
     if (entry && entry.createdBy === user.sub) {
       throw new BusinessException(
         'APPROVAL_SELF_FORBIDDEN',
-        'O criador do lancamento nao pode aprovar a propria solicitacao',
+        undefined,
         { entryId, approverId: user.sub },
       );
     }

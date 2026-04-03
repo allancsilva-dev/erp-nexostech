@@ -1,14 +1,13 @@
 import {
-  BadRequestException,
-  HttpException,
+  HttpStatus,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 import {
   quoteIdent,
   quoteLiteral,
@@ -114,13 +113,16 @@ export class AttachmentsService {
     userPlan: string,
   ): Promise<{ uploadUrl: string; storageKey: string }> {
     if (!ALLOWED_MIME_TYPES.has(dto.mimeType)) {
-      throw new BadRequestException(
-        'Tipo de arquivo nao permitido. Aceitos: PDF, JPG, PNG',
-      );
+      throw new BusinessException('VALIDATION_FILE', HttpStatus.BAD_REQUEST, {
+        mimeType: dto.mimeType,
+      });
     }
 
     if (dto.sizeBytes > 10_485_760) {
-      throw new BadRequestException('Arquivo excede o limite de 10MB');
+      throw new BusinessException('VALIDATION_FILE', HttpStatus.BAD_REQUEST, {
+        sizeBytes: dto.sizeBytes,
+        maxSizeBytes: 10_485_760,
+      });
     }
 
     await this.assertEntryExists(dto.entryId, branchId);
@@ -130,14 +132,11 @@ export class AttachmentsService {
     const limit = PLAN_LIMITS[normalizedPlan] ?? PLAN_LIMITS.STARTER;
 
     if (usedBytes + dto.sizeBytes > limit) {
-      throw new HttpException(
-        {
-          message: 'Limite de storage atingido',
-          used: usedBytes,
-          limit,
-        },
-        413,
-      );
+      throw new BusinessException('STORAGE_LIMIT_EXCEEDED', 413, {
+        usedBytes,
+        limit,
+        requestedBytes: dto.sizeBytes,
+      });
     }
 
     const ext = this.getExtensionByMimeType(dto.mimeType);
@@ -194,7 +193,15 @@ export class AttachmentsService {
 
       const row = getRows(insertResult)[0];
       if (!row) {
-        throw new Error('Attachment register failed');
+        throw new BusinessException(
+          'INTERNAL_ERROR',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          {
+            entryId: dto.entryId,
+            storageKey: dto.storageKey,
+            operation: 'REGISTER_ATTACHMENT',
+          },
+        );
       }
 
       await tx.execute(
@@ -257,11 +264,16 @@ export class AttachmentsService {
 
     const existing = getRows(selectResult)[0];
     if (!existing) {
-      throw new NotFoundException('Attachment nao encontrado');
+      throw new BusinessException('NOT_FOUND', HttpStatus.NOT_FOUND, {
+        attachmentId: id,
+      });
     }
 
     if (existing.deleted_at) {
-      throw new BadRequestException('Attachment ja removido');
+      throw new BusinessException('VALIDATION_ERROR', HttpStatus.BAD_REQUEST, {
+        attachmentId: id,
+        reason: 'ALREADY_REMOVED',
+      });
     }
 
     const sizeBytes = Number.parseInt(toText(existing.size_bytes, '0'), 10);
@@ -330,7 +342,10 @@ export class AttachmentsService {
     );
 
     if (getRows(result).length === 0) {
-      throw new NotFoundException('Lancamento nao encontrado para anexo');
+      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        entryId,
+        branchId,
+      });
     }
   }
 

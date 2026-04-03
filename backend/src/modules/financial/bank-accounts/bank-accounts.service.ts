@@ -24,9 +24,8 @@ export class BankAccountsService {
     if (!existing) {
       throw new BusinessException(
         'BANK_ACCOUNT_NOT_FOUND',
-        'Conta bancaria nao encontrada para a filial informada',
-        { id, branchId },
         HttpStatus.NOT_FOUND,
+        { id, branchId },
       );
     }
 
@@ -38,9 +37,8 @@ export class BankAccountsService {
     if (!existing) {
       throw new BusinessException(
         'BANK_ACCOUNT_NOT_FOUND',
-        'Conta bancaria nao encontrada para a filial informada',
-        { id, branchId },
         HttpStatus.NOT_FOUND,
+        { id, branchId },
       );
     }
 

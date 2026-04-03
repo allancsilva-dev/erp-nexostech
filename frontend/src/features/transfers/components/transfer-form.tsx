@@ -11,6 +11,7 @@ import { TableSkeleton } from '@/components/shared/loading-skeleton';
 import { useLockPeriodCheck } from '@/components/shared/lock-period-guard';
 import { useBankAccounts } from '@/features/settings/hooks/use-bank-accounts';
 import { useCreateTransfer } from '@/features/transfers/hooks/use-transfers';
+import { getErrorMessage } from '@/components/ui/error-toast';
 import { toast } from 'sonner';
 
 interface BankAccountOption {
@@ -49,7 +50,7 @@ export function TransferForm() {
   }
 
   if (bankAccounts.isError) {
-    return <ErrorBanner message={bankAccounts.error.message} onRetry={() => bankAccounts.refetch()} />;
+    return <ErrorBanner message={getErrorMessage(bankAccounts.error, 'Erro inesperado. Tente novamente.')} onRetry={() => bankAccounts.refetch()} />;
   }
 
   const isDisabled =

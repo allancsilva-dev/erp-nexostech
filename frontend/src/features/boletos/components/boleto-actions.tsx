@@ -7,6 +7,7 @@ import { useBranch } from '@/hooks/use-branch';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { showUnknownError } from '@/components/ui/error-toast';
 import { useGenerateBoleto } from '@/features/boletos/hooks/use-boletos';
 
 const HAS_RESEND_ENDPOINT = false;
@@ -60,8 +61,7 @@ export function BoletoActions({
       await queryClient.invalidateQueries({ queryKey: ['boletos', activeBranchId || 'default'] });
       toast.success('Boleto cancelado com sucesso.');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao cancelar boleto.';
-      toast.error(message);
+      showUnknownError(error);
     } finally {
       setIsCancelling(false);
     }
@@ -81,8 +81,7 @@ export function BoletoActions({
       window.open(url, '_blank', 'noopener,noreferrer');
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao abrir PDF do boleto.';
-      toast.error(message);
+      showUnknownError(error);
     } finally {
       setIsOpeningPdf(false);
     }

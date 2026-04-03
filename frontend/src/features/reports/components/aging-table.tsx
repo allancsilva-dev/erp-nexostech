@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage } from '@/components/ui/error-toast';
 import { useAgingReport, useExportReport } from '@/features/reports/hooks/use-reports';
 import { formatCurrency } from '@/lib/utils/currency';
 import type { ExportFormat, ReportExportResponse } from '@/features/reports/types/report.types';
@@ -80,8 +81,7 @@ export function AgingTable() {
       });
       saveExportFile(file);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao exportar vencimentos.';
-      setExportError(message);
+      setExportError(getErrorMessage(error, 'Falha ao exportar vencimentos.'));
     }
   }
 
@@ -113,7 +113,7 @@ export function AgingTable() {
       </div>
 
       {aging.isLoading ? <TableSkeleton rows={6} cols={3} /> : null}
-      {aging.isError ? <ErrorBanner message={aging.error.message} onRetry={() => void aging.refetch()} /> : null}
+      {aging.isError ? <ErrorBanner message={getErrorMessage(aging.error, 'Erro inesperado. Tente novamente.')} onRetry={() => void aging.refetch()} /> : null}
       {exportError ? <ErrorBanner message={exportError} /> : null}
 
       {!aging.isLoading && !aging.isError && ranges.length === 0 ? (

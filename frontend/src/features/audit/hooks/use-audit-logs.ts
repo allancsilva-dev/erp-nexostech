@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { showUnknownError } from '@/components/ui/error-toast';
 import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
 import { queryKeys } from '@/lib/query-keys';
@@ -23,14 +24,6 @@ interface AuditListItem {
 interface ExportPayload {
   filename: string;
   content: string;
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
 }
 
 export function useAuditLogs() {
@@ -71,8 +64,7 @@ export function useExportAuditLogs() {
       toast.success('Exportação concluída com sucesso');
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[audit-logs:export]', error);
     },
   });

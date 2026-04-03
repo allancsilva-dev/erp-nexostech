@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage } from '@/components/ui/error-toast';
 import { useDreReport, useExportReport } from '@/features/reports/hooks/use-reports';
 import { formatCurrency } from '@/lib/utils/currency';
 import type { ExportFormat, ReportExportResponse } from '@/features/reports/types/report.types';
@@ -80,8 +81,7 @@ export function DreTable() {
       });
       saveExportFile(file);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao exportar DRE.';
-      setExportError(message);
+      setExportError(getErrorMessage(error, 'Falha ao exportar DRE.'));
     }
   }
 
@@ -113,7 +113,7 @@ export function DreTable() {
       </div>
 
       {dre.isLoading ? <TableSkeleton rows={4} cols={3} /> : null}
-      {dre.isError ? <ErrorBanner message={dre.error.message} onRetry={() => void dre.refetch()} /> : null}
+      {dre.isError ? <ErrorBanner message={getErrorMessage(dre.error, 'Erro inesperado. Tente novamente.')} onRetry={() => void dre.refetch()} /> : null}
       {exportError ? <ErrorBanner message={exportError} /> : null}
 
       {!dre.isLoading && !dre.isError && !report ? (

@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import {
   quoteIdent,
@@ -97,7 +98,18 @@ export class ReconciliationRepository {
 
     const row = getRows(result)[0];
     if (!row) {
-      throw new Error('Batch creation failed');
+      // TODO: mover esta regra de negocio para a camada de service (refactor futuro)
+      throw new BusinessException(
+        'INTERNAL_ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          branchId,
+          bankAccountId,
+          startDate,
+          endDate,
+          operation: 'CREATE_RECONCILIATION_BATCH',
+        },
+      );
     }
 
     return {
@@ -227,7 +239,12 @@ export class ReconciliationRepository {
 
     const row = getRows(result)[0];
     if (!row) {
-      throw new Error('Match update failed');
+      // TODO: mover esta regra de negocio para a camada de service (refactor futuro)
+      throw new BusinessException(
+        'INTERNAL_ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { itemId, entryId, branchId, operation: 'MATCH_RECONCILIATION_ITEM' },
+      );
     }
 
     return {

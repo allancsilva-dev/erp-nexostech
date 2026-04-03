@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage } from '@/components/ui/error-toast';
 import { useBalanceSheetReport, useExportReport } from '@/features/reports/hooks/use-reports';
 import { formatCurrency } from '@/lib/utils/currency';
 import type { ExportFormat, ReportExportResponse } from '@/features/reports/types/report.types';
@@ -80,8 +81,7 @@ export function BalanceSheetTable() {
       });
       saveExportFile(file);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao exportar balancete.';
-      setExportError(message);
+      setExportError(getErrorMessage(error, 'Falha ao exportar balancete.'));
     }
   }
 
@@ -114,7 +114,7 @@ export function BalanceSheetTable() {
       </div>
 
       {balanceSheet.isLoading ? <TableSkeleton rows={8} cols={4} /> : null}
-      {balanceSheet.isError ? <ErrorBanner message={balanceSheet.error.message} onRetry={() => void balanceSheet.refetch()} /> : null}
+      {balanceSheet.isError ? <ErrorBanner message={getErrorMessage(balanceSheet.error, 'Erro inesperado. Tente novamente.')} onRetry={() => void balanceSheet.refetch()} /> : null}
       {exportError ? <ErrorBanner message={exportError} /> : null}
 
       {!balanceSheet.isLoading && !balanceSheet.isError && rows.length === 0 ? (

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { showUnknownError } from '@/components/ui/error-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api-client';
@@ -58,8 +59,7 @@ export function TemplateEditor() {
       await queryClient.invalidateQueries({ queryKey: ['email-templates', activeBranchId || 'default'] });
       toast.success('Template salvo com sucesso.');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao salvar template.';
-      toast.error(message);
+      showUnknownError(error);
     } finally {
       setIsSaving(false);
     }

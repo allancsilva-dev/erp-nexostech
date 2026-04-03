@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { BusinessException } from '../../../common/exceptions/business.exception';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
@@ -141,7 +141,17 @@ export class TransfersRepository {
 
     const row = getRows(result)[0];
     if (!row) {
-      throw new Error('Transfer creation failed');
+      // TODO: mover esta regra de negocio para a camada de service (refactor futuro)
+      throw new BusinessException(
+        'INTERNAL_ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        {
+          branchId,
+          fromAccountId: dto.fromAccountId,
+          toAccountId: dto.toAccountId,
+          operation: 'CREATE_TRANSFER',
+        },
+      );
     }
 
     return this.mapRow(row);
@@ -207,12 +217,11 @@ export class TransfersRepository {
 
     const rows = getRows(result);
     if (!rows[0]) {
-      throw new BusinessException(
-        'NOT_FOUND',
-        'Conta bancaria de origem nao encontrada',
-        { accountId, branchId },
-        404,
-      );
+        throw new BusinessException(
+          'BANK_ACCOUNT_NOT_FOUND',
+          404,
+          { accountId, branchId },
+        );
     }
 
     return toText(rows[0].balance, '0.00');

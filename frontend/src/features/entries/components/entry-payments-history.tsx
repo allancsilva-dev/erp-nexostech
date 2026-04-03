@@ -3,6 +3,7 @@
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage } from '@/components/ui/error-toast';
 import { MoneyDisplay } from '@/components/shared/money-display';
 import { useEntryPayments } from '@/features/entries/hooks/use-entries';
 import { formatDateTime } from '@/lib/format';
@@ -15,7 +16,7 @@ export function EntryPaymentsHistory({ entryId }: { entryId: string }) {
   }
 
   if (payments.isError) {
-    return <ErrorBanner message={payments.error.message} onRetry={() => payments.refetch()} />;
+    return <ErrorBanner message={getErrorMessage(payments.error, 'Erro inesperado. Tente novamente.')} onRetry={() => payments.refetch()} />;
   }
 
   const list = payments.data?.data ?? [];

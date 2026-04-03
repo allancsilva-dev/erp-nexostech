@@ -36,18 +36,16 @@ export class AuthApiService {
     if (response.status === 403) {
       throw new BusinessException(
         'AUTH_FORBIDDEN',
-        'Usuario nao tem acesso ao ERP no Auth.',
-        { email },
         HttpStatus.FORBIDDEN,
+        { email },
       );
     }
 
     if (!response.ok) {
       throw new BusinessException(
         'AUTH_API_ERROR',
-        'Falha ao consultar usuario no Auth.',
-        { status: response.status, email },
         HttpStatus.BAD_GATEWAY,
+        { status: response.status, email },
       );
     }
 

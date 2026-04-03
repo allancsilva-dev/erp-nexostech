@@ -21,7 +21,7 @@ export class MatchRules {
     if (item.reconciled) {
       throw new BusinessException(
         'RECONCILIATION_ITEM_ALREADY_MATCHED',
-        'Este item do extrato ja foi conciliado',
+        undefined,
         { itemId: item.id },
       );
     }
@@ -36,7 +36,7 @@ export class MatchRules {
     if (ineligibleStatuses.includes(entry.status)) {
       throw new BusinessException(
         'ENTRY_NOT_ELIGIBLE_FOR_RECONCILIATION',
-        `Lancamento em status ${entry.status} nao pode ser conciliado`,
+        undefined,
         { entryId: entry.id, status: entry.status },
       );
     }
@@ -58,7 +58,7 @@ export class MatchRules {
     if (diff.greaterThan(new Decimal(toleranceCents))) {
       throw new BusinessException(
         'RECONCILIATION_AMOUNT_DIVERGENCE',
-        'Valor do extrato diverge do valor do lancamento acima da tolerancia',
+        undefined,
         {
           itemAmount,
           entryAmount,

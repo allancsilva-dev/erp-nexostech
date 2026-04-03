@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage as getUiErrorMessage, showUnknownError } from '@/components/ui/error-toast';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -56,11 +57,7 @@ const DEFAULT_FORM: BranchForm = {
 };
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
+  return getUiErrorMessage(error, fallback);
 }
 
 function normalizeState(value: string): string {
@@ -129,8 +126,7 @@ export function BranchManager() {
       void queryClient.invalidateQueries({ queryKey: ['branches'] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[branches:create]', error);
     },
   });
@@ -146,8 +142,7 @@ export function BranchManager() {
       void queryClient.invalidateQueries({ queryKey: ['branches'] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[branches:update]', error);
     },
   });
@@ -159,8 +154,7 @@ export function BranchManager() {
       void queryClient.invalidateQueries({ queryKey: ['branches'] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[branches:deactivate]', error);
     },
   });
@@ -174,8 +168,7 @@ export function BranchManager() {
       void queryClient.invalidateQueries({ queryKey: ['branches', expandedBranchId, 'users'] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[branches:link-user]', error);
     },
   });
@@ -188,8 +181,7 @@ export function BranchManager() {
       void queryClient.invalidateQueries({ queryKey: ['branches', expandedBranchId, 'users'] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[branches:unlink-user]', error);
     },
   });

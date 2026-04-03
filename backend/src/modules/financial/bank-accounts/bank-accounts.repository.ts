@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import {
   quoteIdent,
@@ -153,7 +154,12 @@ export class BankAccountsRepository {
 
     const updated = await this.findById(id, branchId);
     if (!updated) {
-      throw new Error('Updated bank account could not be reloaded');
+      // TODO: mover esta regra de negocio para a camada de service (refactor futuro)
+      throw new BusinessException(
+        'INTERNAL_ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { id, branchId, operation: 'RELOAD_BANK_ACCOUNT' },
+      );
     }
 
     return updated;

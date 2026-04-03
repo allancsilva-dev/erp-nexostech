@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { showUnknownError } from '@/components/ui/error-toast';
 import { Button } from '@/components/ui/button';
 import { useCollectionRules, useEmailTemplates } from '@/features/collection-rules/hooks/use-collection-rules';
 
@@ -50,8 +51,7 @@ export function RuleForm() {
       setActive(true);
       setSortOrder('0');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao salvar regra.';
-      toast.error(message);
+      showUnknownError(error);
     } finally {
       setIsSubmitting(false);
     }

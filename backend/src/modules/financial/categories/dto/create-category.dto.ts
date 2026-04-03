@@ -15,24 +15,24 @@ export enum CategoryType {
 }
 
 export class CreateCategoryDto {
-  @IsString()
-  @MinLength(2)
-  @MaxLength(100)
+  @IsString({ message: 'Nome deve ser um texto valido' })
+  @MinLength(2, { message: 'Nome deve ter no minimo 2 caracteres' })
+  @MaxLength(100, { message: 'Nome deve ter no maximo 100 caracteres' })
   name!: string;
 
-  @IsString()
+  @IsString({ message: 'Tipo deve ser um texto valido' })
   type!: CategoryType;
 
   @IsOptional()
-  @IsUUID()
+  @IsUUID('4', { message: 'Categoria pai invalida' })
   parentId?: string;
 
   @IsOptional()
-  @IsHexColor()
+  @IsHexColor({ message: 'Cor invalida. Use o formato hexadecimal' })
   color?: string;
 
   @IsOptional()
-  @IsInt()
-  @Min(0)
+  @IsInt({ message: 'Ordem deve ser um numero inteiro' })
+  @Min(0, { message: 'Ordem deve ser maior ou igual a zero' })
   sortOrder?: number;
 }

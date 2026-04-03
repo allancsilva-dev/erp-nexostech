@@ -7,6 +7,14 @@ import { Select } from '@/components/ui/select';
 import { useCategories } from '@/features/categories/hooks/use-categories';
 import type { CreateEntryInput } from '@/features/entries/types/entry.schemas';
 
+function getFieldErrorText(error: unknown): string {
+  if (!error || typeof error !== 'object') {
+    return '';
+  }
+
+  return String((error as { ['message']?: unknown })['message'] ?? '');
+}
+
 export function FinancialInfo({ form }: { form: UseFormReturn<CreateEntryInput> }) {
   const entryType = form.watch('type');
   const categoryType = entryType === 'PAYABLE' ? 'PAYABLE' : 'RECEIVABLE';
@@ -27,7 +35,7 @@ export function FinancialInfo({ form }: { form: UseFormReturn<CreateEntryInput> 
                 className={fieldState.error ? 'border-red-500' : ''}
               />
               {fieldState.error && (
-                <p className="text-xs text-red-600 mt-1">{String(fieldState.error.message)}</p>
+                <p className="text-xs text-red-600 mt-1">{getFieldErrorText(fieldState.error)}</p>
               )}
             </>
           )}
@@ -54,7 +62,7 @@ export function FinancialInfo({ form }: { form: UseFormReturn<CreateEntryInput> 
                 ))}
               </Select>
               {fieldState.error && (
-                <p className="text-xs text-red-600 mt-1">{String(fieldState.error.message)}</p>
+                <p className="text-xs text-red-600 mt-1">{getFieldErrorText(fieldState.error)}</p>
               )}
             </>
           )}

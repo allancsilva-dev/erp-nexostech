@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import {
   quoteIdent,
@@ -348,7 +349,12 @@ export class EntriesRepository {
 
     const row = getRows(result)[0];
     if (!row) {
-      throw new Error('Created entry could not be reloaded');
+      // TODO: mover esta regra de negocio para a camada de service (refactor futuro)
+      throw new BusinessException(
+        'INTERNAL_ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { branchId: data.branchId, operation: 'RELOAD_CREATED_ENTRY' },
+      );
     }
 
     return {
@@ -412,7 +418,12 @@ export class EntriesRepository {
 
     const updated = await this.findById(entryId, branchId);
     if (!updated) {
-      throw new Error('Updated entry could not be reloaded');
+      // TODO: mover esta regra de negocio para a camada de service (refactor futuro)
+      throw new BusinessException(
+        'INTERNAL_ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { entryId, branchId, operation: 'RELOAD_UPDATED_ENTRY' },
+      );
     }
 
     return updated;
@@ -451,7 +462,12 @@ export class EntriesRepository {
 
     const restored = await this.findById(entryId, branchId);
     if (!restored) {
-      throw new Error('Restored entry could not be reloaded');
+      // TODO: mover esta regra de negocio para a camada de service (refactor futuro)
+      throw new BusinessException(
+        'INTERNAL_ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { entryId, branchId, operation: 'RELOAD_RESTORED_ENTRY' },
+      );
     }
 
     return restored;
@@ -474,7 +490,12 @@ export class EntriesRepository {
 
     const cancelled = await this.findById(entryId, branchId);
     if (!cancelled) {
-      throw new Error('Cancelled entry could not be reloaded');
+      // TODO: mover esta regra de negocio para a camada de service (refactor futuro)
+      throw new BusinessException(
+        'INTERNAL_ERROR',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { entryId, branchId, operation: 'RELOAD_CANCELLED_ENTRY' },
+      );
     }
 
     return cancelled;

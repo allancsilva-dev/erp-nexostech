@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { showUnknownError } from '@/components/ui/error-toast';
 import { usePermissions } from '@/hooks/use-permissions';
 import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
@@ -43,8 +44,7 @@ export function TransferActions({
       await queryClient.invalidateQueries({ queryKey: ['transfers', activeBranchId || 'default'] });
       toast.success('Transferencia estornada com sucesso.');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao estornar transferencia.';
-      toast.error(message);
+      showUnknownError(error);
     } finally {
       setIsDeleting(false);
     }

@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { showUnknownError } from '@/components/ui/error-toast';
 import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
 import { queryKeys } from '@/lib/query-keys';
@@ -23,14 +24,6 @@ interface ApprovalHistoryItem {
   action: string;
   notes: string | null;
   createdAt: string;
-}
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
 }
 
 export function useApprovals(options?: { enabled?: boolean }) {
@@ -58,7 +51,7 @@ export function useApprovals(options?: { enabled?: boolean }) {
       void queryClient.invalidateQueries({ queryKey: ['approvals', 'history', activeBranchId] });
     },
     onError: (error: unknown) => {
-      toast.error(getErrorMessage(error, 'Erro inesperado. Tente novamente.'));
+      showUnknownError(error);
       console.error('[approvals:approve]', error);
     },
   });
@@ -72,7 +65,7 @@ export function useApprovals(options?: { enabled?: boolean }) {
       void queryClient.invalidateQueries({ queryKey: ['approvals', 'history', activeBranchId] });
     },
     onError: (error: unknown) => {
-      toast.error(getErrorMessage(error, 'Erro inesperado. Tente novamente.'));
+      showUnknownError(error);
       console.error('[approvals:reject]', error);
     },
   });
@@ -85,7 +78,7 @@ export function useApprovals(options?: { enabled?: boolean }) {
       queryClient.invalidateQueries({ queryKey: ['approvals', 'history', activeBranchId] });
     },
     onError: (error: unknown) => {
-      toast.error(getErrorMessage(error, 'Erro inesperado. Tente novamente.'));
+      showUnknownError(error);
       console.error('[approvals:batch-approve]', error);
     },
   });

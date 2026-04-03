@@ -2,6 +2,7 @@ import {
   quoteIdent,
   quoteLiteral,
 } from '../../../infrastructure/database/sql-builder.util';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 
 export function resolveTenantSchema(payload: Record<string, unknown>): string {
   if (
@@ -15,7 +16,9 @@ export function resolveTenantSchema(payload: Record<string, unknown>): string {
     return quoteIdent(`tenant_${payload.tenantId}`);
   }
 
-  throw new Error('Payload do job deve conter tenantSchema ou tenantId');
+  throw new BusinessException('INTERNAL_ERROR', 500, {
+    reason: 'JOB_PAYLOAD_MISSING_TENANT_CONTEXT',
+  });
 }
 
 export function optionalBranchClause(

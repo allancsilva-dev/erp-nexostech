@@ -9,6 +9,7 @@ import { CurrencyInput } from '@/components/shared/currency-input';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorBanner } from '@/components/shared/error-banner';
 import { TableSkeleton } from '@/components/shared/loading-skeleton';
+import { getErrorMessage as getUiErrorMessage, showUnknownError } from '@/components/ui/error-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -50,11 +51,7 @@ const DEFAULT_FORM: BankAccountForm = {
 };
 
 function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
+  return getUiErrorMessage(error, fallback);
 }
 
 export function BankAccountsCrud() {
@@ -90,8 +87,7 @@ export function BankAccountsCrud() {
       void queryClient.invalidateQueries({ queryKey: ['bank-accounts', activeBranchId] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[bank-accounts:create]', error);
     },
   });
@@ -106,8 +102,7 @@ export function BankAccountsCrud() {
       void queryClient.invalidateQueries({ queryKey: ['bank-accounts', activeBranchId] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[bank-accounts:update]', error);
     },
   });
@@ -119,8 +114,7 @@ export function BankAccountsCrud() {
       void queryClient.invalidateQueries({ queryKey: ['bank-accounts', activeBranchId] });
     },
     onError: (error: unknown) => {
-      const message = getErrorMessage(error, 'Erro inesperado. Tente novamente.');
-      toast.error(message);
+      showUnknownError(error);
       console.error('[bank-accounts:deactivate]', error);
     },
   });

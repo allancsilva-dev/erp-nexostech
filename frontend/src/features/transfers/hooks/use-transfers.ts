@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { v4 as uuid } from 'uuid';
+import { showUnknownError } from '@/components/ui/error-toast';
 import { api } from '@/lib/api-client';
 import { useBranch } from '@/hooks/use-branch';
 import { queryKeys } from '@/lib/query-keys';
@@ -46,8 +47,8 @@ export function useCreateTransfer() {
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(activeBranchId || 'default') });
       toast.success('Transferencia registrada com sucesso');
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
+    onError: (error: unknown) => {
+      showUnknownError(error);
     },
   });
 }

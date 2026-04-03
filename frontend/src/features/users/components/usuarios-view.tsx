@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 import { v4 as uuid } from 'uuid';
+import { getErrorMessage, showUnknownError } from '@/components/ui/error-toast';
 import { api } from '@/lib/api-client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,7 +66,11 @@ export function UsuariosView({ showHeader = true }: { showHeader?: boolean }) {
   const branches = branchesQuery.data?.data ?? [];
   const isLoading = usersQuery.isLoading || rolesQuery.isLoading || branchesQuery.isLoading;
   const isError = usersQuery.isError || rolesQuery.isError || branchesQuery.isError;
-  const errorMessage = usersQuery.error?.message || rolesQuery.error?.message || branchesQuery.error?.message || 'Erro desconhecido';
+  const errorMessage =
+    getErrorMessage(usersQuery.error, '') ||
+    getErrorMessage(rolesQuery.error, '') ||
+    getErrorMessage(branchesQuery.error, '') ||
+    'Erro desconhecido';
 
   const createUser = useMutation({
     mutationFn: () =>
@@ -85,8 +90,8 @@ export function UsuariosView({ showHeader = true }: { showHeader?: boolean }) {
       setNewBranchIds([]);
       queryClient.invalidateQueries({ queryKey: ['configuracoes', 'usuarios'] });
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
+    onError: (error: unknown) => {
+      showUnknownError(error);
     },
   });
 
@@ -97,8 +102,8 @@ export function UsuariosView({ showHeader = true }: { showHeader?: boolean }) {
       toast.success('Filiais atualizadas');
       queryClient.invalidateQueries({ queryKey: ['configuracoes', 'usuarios'] });
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
+    onError: (error: unknown) => {
+      showUnknownError(error);
     },
   });
 
@@ -111,8 +116,8 @@ export function UsuariosView({ showHeader = true }: { showHeader?: boolean }) {
       toast.success('Role atualizada');
       queryClient.invalidateQueries({ queryKey: ['configuracoes', 'usuarios'] });
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
+    onError: (error: unknown) => {
+      showUnknownError(error);
     },
   });
 
