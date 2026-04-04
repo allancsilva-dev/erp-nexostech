@@ -29,6 +29,13 @@ type AttachmentRecord = {
   createdAt: string;
 };
 
+type AttachmentWithEntryRecord = {
+  id: string;
+  sizeBytes: string;
+  deletedAt: string | null;
+  entryBranchId: string;
+};
+
 const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
   'image/jpeg',
@@ -253,30 +260,19 @@ export class AttachmentsService {
     const idLiteral = quoteLiteral(id);
     const branchLiteral = quoteLiteral(branchId);
 
-    const selectResult = await this.drizzleService.getClient().execute(
-      sql.raw(`
-      SELECT id, size_bytes, deleted_at
-      FROM ${schema}.attachments
-      WHERE id = ${idLiteral}
-      LIMIT 1
-    `),
-    );
-
-    const existing = getRows(selectResult)[0];
-    if (!existing) {
-      throw new BusinessException('NOT_FOUND', HttpStatus.NOT_FOUND, {
-        attachmentId: id,
-      });
+    const existing = await this.findAttachmentWithEntry(id);
+    if (!existing || existing.entryBranchId !== branchId) {
+      throw new BusinessException('ATTACHMENT_NOT_FOUND', HttpStatus.NOT_FOUND);
     }
 
-    if (existing.deleted_at) {
+    if (existing.deletedAt) {
       throw new BusinessException('VALIDATION_ERROR', HttpStatus.BAD_REQUEST, {
         attachmentId: id,
         reason: 'ALREADY_REMOVED',
       });
     }
 
-    const sizeBytes = Number.parseInt(toText(existing.size_bytes, '0'), 10);
+    const sizeBytes = Number.parseInt(existing.sizeBytes, 10);
     const safeSize = Number.isNaN(sizeBytes) ? 0 : sizeBytes;
 
     await this.drizzleService.transaction(async (tx) => {
@@ -347,6 +343,34 @@ export class AttachmentsService {
         branchId,
       });
     }
+  }
+
+  private async findAttachmentWithEntry(
+    attachmentId: string,
+  ): Promise<AttachmentWithEntryRecord | null> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT a.id, a.size_bytes, a.deleted_at, e.branch_id AS entry_branch_id
+      FROM ${schema}.attachments a
+      INNER JOIN ${schema}.financial_entries e ON e.id = a.entry_id
+      WHERE a.id = ${quoteLiteral(attachmentId)}
+        AND e.deleted_at IS NULL
+      LIMIT 1
+    `),
+    );
+
+    const row = getRows(result)[0];
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: toText(row.id),
+      sizeBytes: toText(row.size_bytes),
+      deletedAt: toNullableText(row.deleted_at),
+      entryBranchId: toText(row.entry_branch_id),
+    };
   }
 
   private async getTenantStorageUsage(tenantId: string): Promise<number> {

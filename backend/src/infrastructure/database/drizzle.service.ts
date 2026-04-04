@@ -21,7 +21,15 @@ export class DrizzleService implements OnModuleDestroy {
       connectionString: this.configService.getOrThrow<string>('DATABASE_URL'),
       statement_timeout: this.configService.get<number>(
         'DATABASE_STATEMENT_TIMEOUT_MS',
-        5000,
+        30000,
+      ),
+      lock_timeout: this.configService.get<number>(
+        'DATABASE_LOCK_TIMEOUT_MS',
+        10000,
+      ),
+      idle_in_transaction_session_timeout: this.configService.get<number>(
+        'DATABASE_IDLE_IN_TRANSACTION_TIMEOUT_MS',
+        30000,
       ),
       max: this.configService.get<number>('DATABASE_POOL_MAX', 20),
       idleTimeoutMillis: this.configService.get<number>(
@@ -30,7 +38,7 @@ export class DrizzleService implements OnModuleDestroy {
       ),
       connectionTimeoutMillis: this.configService.get<number>(
         'DATABASE_POOL_CONNECTION_TIMEOUT_MS',
-        10000,
+        5000,
       ),
     });
 

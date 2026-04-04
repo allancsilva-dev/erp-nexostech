@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -23,6 +24,13 @@ async function bootstrap() {
     origin: ['https://erp.zonadev.tech'],
     credentials: true,
   });
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({

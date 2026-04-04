@@ -5,12 +5,12 @@ import { AuditRepository } from './audit.repository';
 export class AuditService {
   constructor(private readonly auditRepository: AuditRepository) {}
 
-  async list(page: number, pageSize: number) {
-    return this.auditRepository.list(page, pageSize);
+  async list(page: number, pageSize: number, branchId: string) {
+    return this.auditRepository.list(page, pageSize, branchId);
   }
 
-  async exportCsv(page: number, pageSize: number) {
-    const { items } = await this.auditRepository.list(page, pageSize);
+  async exportCsv(page: number, pageSize: number, branchId: string) {
+    const { items } = await this.auditRepository.list(page, pageSize, branchId);
     const header =
       'id,branchId,userId,action,entity,entityId,requestId,createdAt';
     const rows = items
@@ -34,7 +34,7 @@ export class AuditService {
     };
   }
 
-  async getById(id: string) {
-    return this.auditRepository.getById(id);
+  async getById(id: string, branchId: string) {
+    return this.auditRepository.getById(id, branchId);
   }
 }

@@ -227,6 +227,30 @@ export class TransfersRepository {
     return toText(rows[0].balance, '0.00');
   }
 
+  async findActiveBankAccount(accountId: string): Promise<{ branchId: string } | null> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const accountLiteral = quoteLiteral(accountId);
+
+    const result: unknown = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT branch_id
+      FROM ${schema}.bank_accounts
+      WHERE id = ${accountLiteral}
+        AND deleted_at IS NULL
+      LIMIT 1
+    `),
+    );
+
+    const row = getRows(result)[0];
+    if (!row) {
+      return null;
+    }
+
+    return {
+      branchId: toText(row.branch_id),
+    };
+  }
+
   async softDelete(id: string, branchId: string): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const idLiteral = quoteLiteral(id);

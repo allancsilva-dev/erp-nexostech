@@ -111,6 +111,16 @@ export class TransfersService {
       });
     }
 
+    const destinationAccount = await this.transfersRepository.findActiveBankAccount(
+      dto.toAccountId,
+    );
+    if (!destinationAccount || destinationAccount.branchId !== branchId) {
+      throw new BusinessException(
+        'TRANSFER_INVALID_ACCOUNT',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
     const created = await this.txHelper.run(async (tx) => {
       const currentBalance =
         await this.transfersRepository.getAccountBalanceForUpdate(

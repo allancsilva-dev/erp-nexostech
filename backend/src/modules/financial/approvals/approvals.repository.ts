@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
+import { BusinessException } from '../../../common/exceptions/business.exception';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import {
   quoteIdent,
@@ -119,7 +120,6 @@ export class ApprovalsRepository {
             AND branch_id = ${branchLiteral}
             AND deleted_at IS NULL
           LIMIT 1
-          FOR UPDATE
         `),
         );
         const entryType = entryRow.rows[0]?.type ?? 'RECEIVABLE';
@@ -168,25 +168,43 @@ export class ApprovalsRepository {
 
         const documentNumber = `${prefix}-${year}-${String(nextSeq).padStart(5, '0')}`;
 
-        await tx.execute(
+        const updateEntryResult = await tx.execute(
           sql.raw(`
           UPDATE ${schema}.financial_entries
-          SET status = 'PENDING', document_number = ${quoteLiteral(documentNumber)}
+          SET status = 'PENDING', document_number = ${quoteLiteral(documentNumber)}, updated_at = NOW()
           WHERE id = ${entryLiteral}
             AND branch_id = ${branchLiteral}
+            AND status = 'PENDING_APPROVAL'
             AND deleted_at IS NULL
+          RETURNING id
         `),
         );
+
+        if (updateEntryResult.rows.length === 0) {
+          throw new BusinessException(
+            'APPROVAL_ALREADY_PROCESSED',
+            HttpStatus.CONFLICT,
+          );
+        }
       } else {
-        await tx.execute(
+        const updateEntryResult = await tx.execute(
           sql.raw(`
           UPDATE ${schema}.financial_entries
-          SET status = 'CANCELLED'
+          SET status = 'CANCELLED', updated_at = NOW()
           WHERE id = ${entryLiteral}
             AND branch_id = ${branchLiteral}
+            AND status = 'PENDING_APPROVAL'
             AND deleted_at IS NULL
+          RETURNING id
         `),
         );
+
+        if (updateEntryResult.rows.length === 0) {
+          throw new BusinessException(
+            'APPROVAL_ALREADY_PROCESSED',
+            HttpStatus.CONFLICT,
+          );
+        }
       }
 
       return insertRes;

@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -33,6 +34,7 @@ export class PaymentsController {
 
   @Post(':id/pay')
   @Idempotent()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @RequirePermission('financial.entries.pay')
   async register(
     @Param('id') entryId: string,

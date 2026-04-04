@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
@@ -36,6 +37,7 @@ export class TransfersController {
 
   @Post()
   @Idempotent()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @RequirePermission('financial.entries.create')
   async create(
     @BranchId() branchId: string,

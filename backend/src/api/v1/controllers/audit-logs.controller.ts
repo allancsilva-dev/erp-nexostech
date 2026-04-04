@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
 import { PaginationDto } from '../../../common/dtos/pagination.dto';
+import { BranchId } from '../../../common/decorators/branch-id.decorator';
 import { RequirePermission } from '../../../common/decorators/require-permission.decorator';
 import { BranchGuard } from '../../../common/guards/branch.guard';
 import { JwtGuard } from '../../../common/guards/jwt.guard';
@@ -14,10 +15,14 @@ export class AuditLogsController {
 
   @Get()
   @RequirePermission('financial.audit.view')
-  async list(@Query() query: PaginationDto): Promise<ApiResponse<unknown[]>> {
+  async list(
+    @Query() query: PaginationDto,
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<unknown[]>> {
     const { items, total } = await this.auditService.list(
       query.page,
       query.pageSize,
+      branchId,
     );
     return ApiResponse.paginated(items, {
       page: query.page,
@@ -31,14 +36,22 @@ export class AuditLogsController {
   @RequirePermission('financial.audit.view')
   async export(
     @Query() query: PaginationDto,
+    @BranchId() branchId: string,
   ): Promise<ApiResponse<{ filename: string; content: string }>> {
-    const data = await this.auditService.exportCsv(query.page, query.pageSize);
+    const data = await this.auditService.exportCsv(
+      query.page,
+      query.pageSize,
+      branchId,
+    );
     return ApiResponse.ok(data);
   }
 
   @Get(':id')
   @RequirePermission('financial.audit.view')
-  async detail(@Param('id') id: string): Promise<ApiResponse<unknown>> {
-    return ApiResponse.ok(await this.auditService.getById(id));
+  async detail(
+    @Param('id') id: string,
+    @BranchId() branchId: string,
+  ): Promise<ApiResponse<unknown>> {
+    return ApiResponse.ok(await this.auditService.getById(id, branchId));
   }
 }

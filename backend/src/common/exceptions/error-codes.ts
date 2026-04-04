@@ -49,6 +49,7 @@ export const ErrorCodes = {
   // Transferencias
   TRANSFER_SAME_ACCOUNT:
     'Conta de origem e conta de destino nao podem ser a mesma',
+  TRANSFER_INVALID_ACCOUNT: 'Conta de destino nao pertence a esta filial',
   TRANSFER_DIFFERENT_BRANCH:
     'As contas bancarias devem pertencer a mesma filial',
   TRANSFER_ACCOUNT_INACTIVE:
@@ -94,6 +95,8 @@ export const ErrorCodes = {
     'Este lancamento esta aguardando aprovacao e nao pode ser operado diretamente',
   APPROVAL_RULE_NOT_FOUND:
     'Regra de aprovacao nao encontrada para a filial informada',
+  APPROVAL_ALREADY_PROCESSED:
+    'Este lancamento ja foi processado por outro aprovador',
   APPROVAL_SELF_FORBIDDEN:
     'O criador do lancamento nao pode aprovar a propria solicitacao',
   AUTH_API_ERROR: 'Falha ao consultar usuario no servico de autenticacao',
@@ -103,6 +106,7 @@ export const ErrorCodes = {
     'Usuario nao cadastrado no servico de autenticacao. Cadastre o usuario antes de continuar',
   BANK_ACCOUNT_NOT_FOUND:
     'Conta bancaria nao encontrada para a filial informada',
+  ATTACHMENT_NOT_FOUND: 'Anexo nao encontrado',
   BOLETO_ALREADY_GENERATED:
     'Ja existe um boleto ativo para este lancamento',
   BRANCH_NOT_FOUND: 'Filial nao encontrada',

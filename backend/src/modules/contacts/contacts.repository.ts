@@ -167,4 +167,18 @@ export class ContactsRepository {
 
     return updated;
   }
+
+  async softDelete(id: string): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const idLiteral = quoteLiteral(id);
+
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
+      UPDATE ${schema}.contacts
+      SET deleted_at = NOW()
+      WHERE id = ${idLiteral}
+        AND deleted_at IS NULL
+    `),
+    );
+  }
 }

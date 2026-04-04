@@ -42,6 +42,13 @@ export class IdempotencyInterceptor implements NestInterceptor {
       body: unknown;
       method: string;
       originalUrl: string;
+      path: string;
+      route?: { path?: string };
+      user?: {
+        tenantId?: string;
+        sub?: string;
+        userId?: string;
+      };
     }>();
 
     const idempotencyKey = request.headers['idempotency-key'];
@@ -64,7 +71,10 @@ export class IdempotencyInterceptor implements NestInterceptor {
       )
       .digest('hex');
 
-    const cacheKey = `idempotency:${idempotencyKey}`;
+    const tenantId = request.user?.tenantId;
+    const userId = request.user?.sub ?? request.user?.userId;
+    const routePath = request.route?.path || request.path;
+    const cacheKey = `idempotency:${tenantId}:${userId}:${request.method}:${routePath}:${idempotencyKey}`;
 
     return from(this.cacheService.get<CachedIdempotentResponse>(cacheKey)).pipe(
       switchMap((cached) => {

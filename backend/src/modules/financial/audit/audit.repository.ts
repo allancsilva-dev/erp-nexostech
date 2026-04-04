@@ -43,6 +43,7 @@ export class AuditRepository {
   async list(
     page: number,
     pageSize: number,
+    branchId: string,
   ): Promise<{ items: AuditLogEntity[]; total: number }> {
     const safePage = Math.max(page, 1);
     const safePageSize = Math.max(pageSize, 1);
@@ -53,6 +54,7 @@ export class AuditRepository {
       sql.raw(`
       SELECT COUNT(*)::int AS total
       FROM ${schema}.audit_logs
+      WHERE (branch_id = ${quoteLiteral(branchId)} OR branch_id IS NULL)
     `),
     );
 
@@ -60,6 +62,7 @@ export class AuditRepository {
       sql.raw(`
       SELECT id, branch_id, user_id, user_email, action, entity, entity_id, request_id, ip_address, field_changes, created_at
       FROM ${schema}.audit_logs
+      WHERE (branch_id = ${quoteLiteral(branchId)} OR branch_id IS NULL)
       ORDER BY created_at DESC
       LIMIT ${safePageSize}
       OFFSET ${offset}
@@ -89,13 +92,14 @@ export class AuditRepository {
     };
   }
 
-  async getById(id: string): Promise<AuditLogEntity | null> {
+  async getById(id: string, branchId: string): Promise<AuditLogEntity | null> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const result = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT id, branch_id, user_id, user_email, action, entity, entity_id, request_id, ip_address, field_changes, created_at
       FROM ${schema}.audit_logs
       WHERE id = ${quoteLiteral(id)}
+        AND (branch_id = ${quoteLiteral(branchId)} OR branch_id IS NULL)
       LIMIT 1
     `),
     );

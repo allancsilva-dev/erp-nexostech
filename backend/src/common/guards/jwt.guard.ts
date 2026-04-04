@@ -26,7 +26,20 @@ function toText(value: unknown, fallback = ''): string {
 
 @Injectable()
 export class JwtGuard implements CanActivate {
-  constructor(private readonly configService: ConfigService) {}
+  private readonly jwks: ReturnType<typeof createRemoteJWKSet>;
+  private readonly audience: string;
+  private readonly issuer: string;
+
+  constructor(private readonly configService: ConfigService) {
+    const jwksUrl = this.configService.getOrThrow<string>('AUTH_JWKS_URL');
+    this.audience = this.configService.getOrThrow<string>('AUTH_JWT_AUDIENCE');
+    this.issuer = this.configService.getOrThrow<string>('AUTH_JWT_ISSUER');
+    this.jwks = createRemoteJWKSet(new URL(jwksUrl), {
+      cacheMaxAge: 300_000,
+      cooldownDuration: 30_000,
+      timeoutDuration: 5_000,
+    });
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<{
@@ -42,48 +55,16 @@ export class JwtGuard implements CanActivate {
       });
     }
 
-    const jwksUrl = this.configService.getOrThrow<string>('AUTH_JWKS_URL');
-    const audience =
-      this.configService.get<string>('AUTH_JWT_AUDIENCE') ??
-      this.configService.getOrThrow<string>('AUTH_AUDIENCE');
-    const issuer =
-      this.configService.get<string>('AUTH_JWT_ISSUER') ??
-      this.configService.getOrThrow<string>('AUTH_ISSUER');
-
-    const jwks = createRemoteJWKSet(new URL(jwksUrl), {
-      cacheMaxAge: 300_000,
-      cooldownDuration: 30_000,
-    });
-
-    // Temp diagnostic: confirm config values available inside guard
-    console.log('[JwtGuard] Config:', { jwksUrl, audience, issuer });
-
     try {
-      // Temp diagnostic: show token presence (do not log full token in prod)
-      console.log(
-        '[JwtGuard] Token preview:',
-        token ? `${token.substring(0, 20)}...` : 'empty',
-      );
-
-      const { payload } = await jwtVerify(token, jwks, {
-        audience,
-        issuer,
+      const { payload } = await jwtVerify(token, this.jwks, {
+        audience: this.audience,
+        issuer: this.issuer,
         algorithms: ['RS256'],
       });
 
       request.user = this.mapPayload(payload);
       return true;
-    } catch (err) {
-      // Log detalhado para diagnóstico — remover após resolver
-      console.error('[JwtGuard] JWT validation failed:', {
-        error: err instanceof Error ? err.message : String(err),
-        errorName: err instanceof Error ? err.name : 'unknown',
-        jwksUrl,
-        audience,
-        issuer,
-        tokenPreview: token ? `${token.substring(0, 20)}...` : 'empty',
-      });
-
+    } catch {
       throw new UnauthorizedException({
         error: { code: 'AUTH_UNAUTHORIZED', message: 'Token inválido ou expirado' },
       });
