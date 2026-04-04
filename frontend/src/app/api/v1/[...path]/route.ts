@@ -43,6 +43,12 @@ async function proxy(req: NextRequest, params: { path: string[] }) {
   const xBranchId = req.headers.get('x-branch-id');
   if (xBranchId) headers['x-branch-id'] = xBranchId;
 
+  const idempotencyKey = req.headers.get('idempotency-key');
+  if (idempotencyKey) headers['idempotency-key'] = idempotencyKey;
+
+  const xRequestId = req.headers.get('x-request-id');
+  if (xRequestId) headers['x-request-id'] = xRequestId;
+
   const body = req.method !== 'GET' && req.method !== 'DELETE'
     ? await req.text()
     : undefined;

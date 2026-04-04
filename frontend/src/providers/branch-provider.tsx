@@ -13,25 +13,11 @@ interface BranchContextValue {
   activeBranch: Branch | null;
   activeBranchId: string;
   branches: Branch[];
-  switchBranch: (branchId: string) => void;
+  switchBranch: (branchId: string) => Promise<void>;
   isLoading: boolean;
 }
 
 const BranchContext = createContext<BranchContextValue | null>(null);
-
-function queryKeyContainsBranchId(queryKey: readonly unknown[], branchId: string): boolean {
-  return queryKey.some((part) => {
-    if (part === branchId) {
-      return true;
-    }
-
-    if (Array.isArray(part)) {
-      return queryKeyContainsBranchId(part, branchId);
-    }
-
-    return false;
-  });
-}
 
 function getCookie(name: string): string {
   if (typeof document === 'undefined') {
@@ -73,37 +59,26 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
     return !isLoading && !isError && branches.length === 0;
   }, [branches.length, error, isError, isLoading]);
 
-  const switchBranch = useCallback((branchId: string) => {
+  const switchBranch = useCallback(async (branchId: string) => {
     if (!branchId || branchId === activeBranchId) {
       return;
     }
 
-    const previousBranchId = activeBranchId;
+    await queryClient.cancelQueries();
+
+    const cancelMutations = (
+      queryClient as typeof queryClient & {
+        cancelMutations?: () => Promise<void>;
+      }
+    ).cancelMutations;
+    if (typeof cancelMutations === 'function') {
+      await cancelMutations.call(queryClient);
+    }
+
+    queryClient.removeQueries();
 
     setCookie('branch_id', branchId);
     setActiveBranchId(branchId);
-
-    if (previousBranchId) {
-      const isPreviousBranchQuery = (queryKey: readonly unknown[]) => queryKeyContainsBranchId(queryKey, previousBranchId);
-
-      void queryClient.cancelQueries({
-        predicate: (query) => isPreviousBranchQuery(query.queryKey),
-      });
-
-      void queryClient.invalidateQueries({
-        predicate: (query) => isPreviousBranchQuery(query.queryKey),
-        refetchType: 'none',
-      });
-
-      queryClient.removeQueries({
-        predicate: (query) => isPreviousBranchQuery(query.queryKey),
-        type: 'inactive',
-      });
-    }
-
-    void queryClient.invalidateQueries({
-      predicate: (query) => queryKeyContainsBranchId(query.queryKey, branchId),
-    });
   }, [activeBranchId]);
 
   useEffect(() => {

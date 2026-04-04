@@ -41,7 +41,6 @@ export function useNotifications(
   // mark as read
   const markMutation = useMutation({
     mutationFn: (id: string) => markNotificationRead(id),
-    retry: 1,
     onMutate: async (id: string) => {
       await queryClient.cancelQueries({ queryKey: baseKey, exact: false });
 
@@ -77,7 +76,6 @@ export function useNotifications(
   // mark all as read
   const markAllMutation = useMutation({
     mutationFn: () => markAllNotificationsRead(),
-    retry: 1,
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: baseKey, exact: false });
       const previousData = queryClient.getQueryData<NotificationsResponse>(fullKey);
