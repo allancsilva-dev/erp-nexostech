@@ -10,19 +10,31 @@ export class DashboardService {
     private readonly dashboardRepository: DashboardRepository,
   ) {}
 
-  @CacheResult({ keyPrefix: 'dashboard:summary', ttlSeconds: 60 })
+  @CacheResult({
+    keyPrefix: 'dashboard:summary',
+    ttlSeconds: 60,
+    key: (tenantId, branchId) => `${tenantId}:${branchId}`,
+  })
   async getSummary(tenantId: string, branchId: string) {
     void tenantId;
     return this.dashboardRepository.getSummary(branchId);
   }
 
-  @CacheResult({ keyPrefix: 'dashboard:overdue', ttlSeconds: 60 })
+  @CacheResult({
+    keyPrefix: 'dashboard:overdue',
+    ttlSeconds: 60,
+    key: (tenantId, branchId) => `${tenantId}:${branchId}`,
+  })
   async getOverdue(tenantId: string, branchId: string) {
     void tenantId;
     return this.dashboardRepository.getOverdue(branchId);
   }
 
-  @CacheResult({ keyPrefix: 'dashboard:cashflow', ttlSeconds: 60 })
+  @CacheResult({
+    keyPrefix: 'dashboard:cashflow',
+    ttlSeconds: 60,
+    key: (tenantId, branchId, period) => `${tenantId}:${branchId}:${period}`,
+  })
   async getCashflowChart(tenantId: string, branchId: string, period: string) {
     void tenantId;
     const rows = await this.dashboardRepository.getCashflowChart(branchId, period);

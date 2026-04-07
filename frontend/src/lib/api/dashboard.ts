@@ -44,6 +44,22 @@ export interface OverdueEntry {
   type: 'PAYABLE' | 'RECEIVABLE';
 }
 
+type OverdueEntryPayload = {
+  id?: unknown;
+  documentNumber?: unknown;
+  document_number?: unknown;
+  description?: unknown;
+  contact?: unknown;
+  contactName?: unknown;
+  contact_name?: unknown;
+  amount?: unknown;
+  dueDate?: unknown;
+  due_date?: unknown;
+  daysOverdue?: unknown;
+  days_overdue?: unknown;
+  type?: unknown;
+};
+
 function unwrapData<T>(payload: unknown): T {
   if (payload && typeof payload === 'object' && 'data' in payload) {
     return (payload as { data: T }).data;
@@ -52,9 +68,11 @@ function unwrapData<T>(payload: unknown): T {
   return payload as T;
 }
 
-export async function fetchDashboardSummary(branchId: string): Promise<DashboardSummary> {
-  void branchId;
-  const response = await api.get<unknown>('/dashboard/summary');
+export async function fetchDashboardSummary(
+  branchId: string,
+  signal?: AbortSignal,
+): Promise<DashboardSummary> {
+  const response = await api.get<unknown>('/dashboard/summary', {}, { branchId, signal });
   const raw = unwrapData<unknown>(response) as Record<string, unknown>;
 
   const getVal = (keys: string[]) => {
@@ -75,14 +93,73 @@ export async function fetchDashboardSummary(branchId: string): Promise<Dashboard
   };
 }
 
-export async function fetchCashflowChart(branchId: string): Promise<DashboardCashflowRawPoint[]> {
-  void branchId;
-  const response = await api.get<DashboardCashflowRawPoint[]>('/dashboard/cashflow-chart');
+export async function fetchCashflowChart(
+  branchId: string,
+  period = '12m',
+  signal?: AbortSignal,
+): Promise<DashboardCashflowRawPoint[]> {
+  const response = await api.get<DashboardCashflowRawPoint[]>(
+    '/dashboard/cashflow-chart',
+    { period },
+    { branchId, signal },
+  );
   return unwrapData<DashboardCashflowRawPoint[]>(response);
 }
 
-export async function fetchOverdueEntries(branchId: string): Promise<OverdueEntry[]> {
-  void branchId;
-  const response = await api.get<OverdueEntry[]>('/dashboard/overdue');
-  return unwrapData<OverdueEntry[]>(response);
+export async function fetchOverdueEntries(
+  branchId: string,
+  signal?: AbortSignal,
+): Promise<OverdueEntry[]> {
+  const response = await api.get<OverdueEntryPayload[]>('/dashboard/overdue', {}, { branchId, signal });
+  const raw = unwrapData<OverdueEntryPayload[]>(response);
+
+  return raw.map((entry) => {
+    const dueDate = String(entry.dueDate ?? entry.due_date ?? '');
+    const explicitDays = entry.daysOverdue ?? entry.days_overdue;
+    const daysOverdue = explicitDays == null
+      ? computeDaysOverdue(dueDate)
+      : toNumber(explicitDays as string | number | null | undefined);
+
+    return {
+      id: String(entry.id ?? ''),
+      documentNumber: toNullableString(entry.documentNumber ?? entry.document_number),
+      description: String(entry.description ?? ''),
+      contact: toNullableString(entry.contact),
+      contactName: toNullableString(entry.contactName ?? entry.contact_name),
+      amount: toNumber(entry.amount as string | number | null | undefined),
+      dueDate,
+      daysOverdue,
+      type: normalizeEntryType(entry.type),
+    };
+  });
+}
+
+function toNullableString(value: unknown): string | null {
+  if (value == null) {
+    return null;
+  }
+
+  const text = String(value).trim();
+  return text.length > 0 ? text : null;
+}
+
+function normalizeEntryType(value: unknown): 'PAYABLE' | 'RECEIVABLE' {
+  return String(value).toUpperCase() === 'PAYABLE' ? 'PAYABLE' : 'RECEIVABLE';
+}
+
+function computeDaysOverdue(dueDate: string): number {
+  if (!dueDate) {
+    return 0;
+  }
+
+  const parsed = new Date(`${dueDate}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return 0;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffMs = today.getTime() - parsed.getTime();
+  return diffMs <= 0 ? 0 : Math.floor(diffMs / 86_400_000);
 }

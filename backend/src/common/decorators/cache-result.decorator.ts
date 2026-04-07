@@ -3,6 +3,7 @@ import { CacheService } from '../../infrastructure/cache/cache.service';
 type CacheResultOptions = {
   keyPrefix: string;
   ttlSeconds: number;
+  key?: (...args: unknown[]) => string;
 };
 
 const LOCK_TTL_MS = 5_000; // lock expira em 5s (evita deadlock)
@@ -37,7 +38,10 @@ export function CacheResult(options: CacheResultOptions) {
         return Promise.resolve(original.apply(this, args) as unknown);
       }
 
-      const cacheKey = `${options.keyPrefix}:${JSON.stringify(args)}`;
+      const keySuffix = options.key
+        ? options.key(...args)
+        : args.map(String).join(':');
+      const cacheKey = `${options.keyPrefix}:${keySuffix}`;
 
       // 1. Cache hit — caminho feliz
       const cached = await cache.get<unknown>(cacheKey);
@@ -69,7 +73,8 @@ export function CacheResult(options: CacheResultOptions) {
 
       // 3. Outro processo detém o lock — aguarda com retry
       for (let i = 0; i < MAX_RETRIES; i++) {
-        await sleep(RETRY_INTERVAL_MS);
+        const delay = Math.min(RETRY_INTERVAL_MS * (1 + i * 0.1), 200);
+        await sleep(delay);
         const waited = await cache.get<unknown>(cacheKey);
         if (waited !== undefined) {
           return waited;

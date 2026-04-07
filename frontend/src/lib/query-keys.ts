@@ -6,6 +6,7 @@ export const queryKeys = {
     all: (branchId: string) => ['dashboard', branchId] as const,
     summary: (branchId: string) => ['dashboard', branchId, 'summary'] as const,
     overdue: (branchId: string) => ['dashboard', branchId, 'overdue'] as const,
+    cashflow: (branchId: string, period: string) => ['dashboard', branchId, 'cashflow', period] as const,
   },
   entries: {
     all: (branchId: string) => ['entries', branchId] as const,
@@ -24,7 +25,9 @@ export const queryKeys = {
     detail: (id: string) => ['contacts', 'detail', id] as const,
   },
   approvals: {
-    pending: (branchId: string) => ['approvals', branchId, 'pending'] as const,
+  pending: (branchId: string) => ['approvals', branchId, 'pending'] as const,
+  history: (branchId: string) => ['approvals', branchId, 'history'] as const,
+  count:   (branchId: string) => ['approvals', branchId, 'count']   as const,
   },
   boletos: {
     list: (branchId: string) => ['boletos', branchId, 'list'] as const,

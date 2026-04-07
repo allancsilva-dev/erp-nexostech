@@ -123,17 +123,21 @@ export class DashboardRepository {
     };
   }
 
-  async getOverdue(
-    branchId: string,
-  ): Promise<Array<{ id: string; description: string; amount: string }>> {
+  async getOverdue(branchId: string): Promise<Array<{
+    id: string;
+    description: string;
+    amount: string;
+    dueDate: string;
+    type: string;
+  }>> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
     const result = await this.drizzleService.getClient().execute(
       sql.raw(`
-      SELECT id, description, amount
+      SELECT id, description, amount, due_date, type
       FROM ${schema}.financial_entries
       WHERE branch_id = ${branchLiteral}
-        AND due_date < CURRENT_DATE
+        AND due_date <= CURRENT_DATE
         AND status IN ('PENDING', 'PARTIAL', 'OVERDUE')
         AND deleted_at IS NULL
       ORDER BY due_date ASC
@@ -145,6 +149,8 @@ export class DashboardRepository {
       id: this.toText(row.id),
       description: this.toText(row.description),
       amount: this.toText(row.amount),
+      dueDate: this.toText(row.due_date),
+      type: this.toText(row.type),
     }));
   }
 
