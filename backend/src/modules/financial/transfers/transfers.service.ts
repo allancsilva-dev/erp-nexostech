@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import Decimal from 'decimal.js';
-import { TransferCreatedEvent } from '../../../common/events/financial.events';
 import { BusinessException } from '../../../common/exceptions/business.exception';
 import type { AuthUser } from '../../../common/types/auth-user.type';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
@@ -12,6 +11,7 @@ import {
 } from '../../../infrastructure/database/sql-builder.util';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
 import { EventBusService } from '../../../infrastructure/events/event-bus.service';
+import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { TransfersRepository } from './transfers.repository';
 
@@ -23,6 +23,7 @@ export class TransfersService {
     private readonly transfersRepository: TransfersRepository,
     private readonly txHelper: TransactionHelper,
     private readonly eventBus: EventBusService,
+    private readonly outboxService: OutboxService,
     private readonly drizzleService: DrizzleService,
   ) {}
 
@@ -195,13 +196,14 @@ export class TransfersService {
         },
       });
 
+      await this.outboxService.insert(tx, user.tenantId, 'transfer.created', {
+        branchId,
+        transferId: transfer.id,
+        amount: dto.amount,
+      });
+
       return transfer;
     });
-
-    this.eventBus.emit(
-      'transfer.created',
-      new TransferCreatedEvent(user.tenantId, branchId, created.id, dto.amount),
-    );
 
     return created;
   }
