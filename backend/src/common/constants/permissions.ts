@@ -46,6 +46,11 @@ export const SYSTEM_PERMISSIONS: PermissionDef[] = [
     description: 'Excluir lançamentos',
   },
   {
+    code: 'financial.entries.restore',
+    module: 'financial',
+    description: 'Restaurar lançamentos excluídos',
+  },
+  {
     code: 'financial.entries.approve',
     module: 'financial',
     description: 'Aprovar lançamentos',

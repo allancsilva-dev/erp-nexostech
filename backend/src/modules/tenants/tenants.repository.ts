@@ -35,6 +35,7 @@ const DEFAULT_ROLES: Array<{
       'financial.entries.pay',
       'financial.entries.cancel',
       'financial.entries.delete',
+      'financial.entries.restore',
       'financial.entries.approve',
       'financial.categories.view',
       'financial.categories.manage',

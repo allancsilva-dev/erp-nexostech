@@ -53,7 +53,7 @@ export class PaymentsController {
 
   @Post(':id/refund')
   @Idempotent()
-  @RequirePermission('financial.entries.cancel')
+  @RequirePermission('financial.entries.refund')
   async refund(
     @Param('id') entryId: string,
     @Body() dto: RefundPaymentDto,

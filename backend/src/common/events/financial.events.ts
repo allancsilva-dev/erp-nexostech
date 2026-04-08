@@ -12,6 +12,7 @@ export class PaymentRefundedEvent {
     public readonly tenantId: string,
     public readonly branchId: string,
     public readonly entryId: string,
+    public readonly paymentId: string,
     public readonly amount: string,
   ) {}
 }

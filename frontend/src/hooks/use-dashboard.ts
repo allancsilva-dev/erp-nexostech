@@ -20,7 +20,7 @@ export function useDashboardSummary() {
   const { activeBranchId } = useBranch();
 
   return useQuery({
-    queryKey: queryKeys.dashboard.summary(activeBranchId),
+    queryKey: queryKeys.dashboard.summary(activeBranchId as string),
     queryFn: ({ signal }) => fetchDashboardSummary(activeBranchId as string, signal),
     enabled: !!activeBranchId,
     staleTime: 60_000,
@@ -33,7 +33,7 @@ export function useCashflowData(options?: UseCashflowDataOptions) {
   const period = options?.period ?? '12m';
 
   return useQuery({
-    queryKey: queryKeys.dashboard.cashflow(activeBranchId, period),
+    queryKey: queryKeys.dashboard.cashflow(activeBranchId as string, period),
     queryFn: async ({ signal }) => {
       const raw = await fetchCashflowChart(activeBranchId as string, period, signal);
       return normalizeCashflowData(raw);
@@ -48,7 +48,7 @@ export function useOverdueEntries() {
   const { activeBranchId } = useBranch();
 
   return useQuery({
-    queryKey: queryKeys.dashboard.overdue(activeBranchId),
+    queryKey: queryKeys.dashboard.overdue(activeBranchId as string),
     queryFn: ({ signal }) => fetchOverdueEntries(activeBranchId as string, signal),
     enabled: !!activeBranchId,
     staleTime: 60_000,

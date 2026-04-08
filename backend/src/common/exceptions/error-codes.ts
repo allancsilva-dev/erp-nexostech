@@ -30,6 +30,8 @@ export const ErrorCodes = {
     'Lancamentos com este status nao podem ser editados',
   ENTRY_INVALID_STATUS_CANCEL:
     'Lancamentos pagos ou parcialmente pagos devem ser estornados antes de cancelar',
+  ENTRY_INVALID_STATUS_REFUND:
+    'Apenas lancamentos pagos ou parcialmente pagos podem ser estornados',
   ENTRY_INVALID_STATUS_APPROVE:
     'Este lancamento ja foi aprovado ou rejeitado',
   ENTRY_CATEGORY_INACTIVE:
@@ -45,6 +47,9 @@ export const ErrorCodes = {
   PAYMENT_REFUND_PERIOD_EXPIRED:
     'Prazo para estorno expirado. Estornos devem ser realizados dentro do prazo configurado',
   PAYMENT_ALREADY_REFUNDED: 'Este pagamento ja foi estornado',
+  PAYMENT_NOT_FOUND: 'Pagamento nao encontrado para a filial informada',
+  ENTRY_REFUND_DEADLINE_EXCEEDED:
+    'Prazo para estorno expirado para este lancamento conforme configuracao da filial',
 
   // Transferencias
   TRANSFER_SAME_ACCOUNT:

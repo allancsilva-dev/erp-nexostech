@@ -1,13 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
+import { sql } from 'drizzle-orm';
 import {
   PaymentCreatedEvent,
   PaymentRefundedEvent,
 } from '../../../common/events/financial.events';
 import { BusinessException } from '../../../common/exceptions/business.exception';
 import type { AuthUser } from '../../../common/types/auth-user.type';
+import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
 import { EventBusService } from '../../../infrastructure/events/event-bus.service';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 import { PaymentCalculator } from './domain/payment.calculator';
 import { PaymentRules } from './domain/payment.rules';
 import { RefundPaymentDto } from './dto/refund-payment.dto';
@@ -25,6 +31,7 @@ export class PaymentsService {
     private readonly paymentsRepository: PaymentsRepository,
     private readonly txHelper: TransactionHelper,
     private readonly eventBus: EventBusService,
+    private readonly drizzleService: DrizzleService,
   ) {}
 
   async registerPayment(
@@ -33,26 +40,17 @@ export class PaymentsService {
     user: AuthUser,
     branchId: string,
   ) {
-    // Toda a operação roda dentro da mesma transação com SELECT FOR UPDATE
-    // para evitar race condition quando dois usuários pagam a mesma entry simultaneamente.
     const payment = await this.txHelper.run(async (tx) => {
-      // 1. SELECT FOR UPDATE — trava a linha da entry para este request
       const entry: EntryStub | null =
-        await this.paymentsRepository.findEntryByIdForUpdate(
-          entryId,
-          branchId,
-          tx,
-        );
+        await this.paymentsRepository.findEntryByIdForUpdate(entryId, branchId, tx);
 
       if (!entry) {
-        throw new BusinessException(
-          'ENTRY_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
-          { entryId, branchId },
-        );
+        throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+          entryId,
+          branchId,
+        });
       }
 
-      // Validate entry status before inserting a payment
       const allowedStatuses = ['PENDING', 'PARTIAL', 'OVERDUE'];
       const entryStatus = (entry.status ?? '').toUpperCase();
       if (!allowedStatuses.includes(entryStatus)) {
@@ -63,37 +61,18 @@ export class PaymentsService {
         });
       }
 
-      // 2. Valida com saldo REAL (dentro do lock) — evita aceitar pagamento acima do saldo
-      this.paymentRules.validatePaymentAmount(
-        entry.remainingBalance,
-        dto.amount,
-      );
+      this.paymentRules.validatePaymentAmount(entry.remainingBalance, dto.amount);
 
-      // 3. Cria o pagamento dentro da transação
-      const created = await this.paymentsRepository.createPayment(
-        entryId,
-        dto,
-        user.sub,
-        tx,
-      );
+      const created = await this.paymentsRepository.createPayment(entryId, dto, user.sub, tx);
 
-      // 4. Calcula novo status com os pagamentos atualizados
-      const amounts = await this.paymentsRepository.listPaymentAmounts(
-        entryId,
-        tx,
-      );
-      const status = this.paymentCalculator.determineStatus(
-        entry.amount,
-        amounts,
-      );
+      const amounts = await this.paymentsRepository.listPaymentAmounts(entryId, tx);
+      const status = this.paymentCalculator.determineStatus(entry.amount, amounts);
 
-      // 5. Atualiza status e valor pago dentro da transação
       await this.paymentsRepository.updateEntryPaidStatus(entryId, status, tx);
 
       return created;
     });
 
-    // Eventos emitidos FORA da transação (após commit)
     this.eventBus.emit(
       'payment.created',
       new PaymentCreatedEvent(user.tenantId, branchId, entryId, dto.amount),
@@ -139,16 +118,14 @@ export class PaymentsService {
     user: AuthUser,
     branchId: string,
   ) {
-    // Validate reason length
     if (!dto?.reason || dto.reason.trim().length < 10) {
       throw new BusinessException('VALIDATION_ERROR', 400, {
         field: 'reason',
         minLength: 10,
       });
     }
-    // Estorno também usa SELECT FOR UPDATE para evitar estorno duplo simultâneo
+
     const removedPayment = await this.txHelper.run(async (tx) => {
-      // 1. SELECT FOR UPDATE — trava a entry para este request
       const entry = await this.paymentsRepository.findEntryByIdForUpdate(
         entryId,
         branchId,
@@ -156,33 +133,42 @@ export class PaymentsService {
       );
 
       if (!entry) {
-        throw new BusinessException(
-          'ENTRY_NOT_FOUND',
-          HttpStatus.NOT_FOUND,
-          { entryId, branchId },
-        );
+        throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+          entryId,
+          branchId,
+        });
       }
 
-      this.paymentRules.validateRefundPeriod(
-        entry.lastPaymentDate ?? new Date().toISOString(),
-        90,
-      );
+      if (entry.status !== 'PAID' && entry.status !== 'PARTIAL') {
+        throw new BusinessException('ENTRY_INVALID_STATUS_REFUND', 422, {
+          entryId,
+          status: entry.status,
+          allowed: ['PAID', 'PARTIAL'],
+        });
+      }
 
-      // 2. Remove último pagamento dentro da transação
-      const removed = await this.paymentsRepository.removeLastPayment(
-        entryId,
+      const payment = await this.paymentsRepository.findPaymentById(
+        dto.paymentId,
+        branchId,
         tx,
       );
 
-      // 3. Recalcula status com pagamentos restantes
-      const amounts = await this.paymentsRepository.listPaymentAmounts(
-        entryId,
-        tx,
-      );
-      const status = this.paymentCalculator.determineStatus(
-        entry.amount,
-        amounts,
-      );
+      if (!payment) return null;
+
+      if (payment.entryId !== entryId) {
+        throw new BusinessException('PAYMENT_NOT_FOUND', HttpStatus.NOT_FOUND, {
+          paymentId: dto.paymentId,
+          entryId,
+        });
+      }
+
+      await this.validateRefundDeadline(entry, payment.paymentDate, branchId);
+
+      const removed = await this.paymentsRepository.removePaymentById(dto.paymentId, tx);
+      if (!removed) return null;
+
+      const amounts = await this.paymentsRepository.listPaymentAmounts(entryId, tx);
+      const status = this.paymentCalculator.determineStatus(entry.amount, amounts);
       await this.paymentsRepository.updateEntryPaidStatus(entryId, status, tx);
 
       return removed;
@@ -195,11 +181,55 @@ export class PaymentsService {
           user.tenantId,
           branchId,
           entryId,
+          removedPayment.id,
           removedPayment.amount,
         ),
       );
     }
 
     return removedPayment;
+  }
+
+  private async validateRefundDeadline(
+    entry: EntryStub,
+    paymentDate: string,
+    branchId: string,
+  ): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
+        SELECT max_refund_days_payable, max_refund_days_receivable
+        FROM ${schema}.financial_settings
+        WHERE branch_id = ${quoteLiteral(branchId)}::uuid
+        LIMIT 1
+      `),
+    );
+
+    const row = result.rows[0] as
+      | {
+          max_refund_days_payable?: unknown;
+          max_refund_days_receivable?: unknown;
+        }
+      | undefined;
+
+    const maxDays =
+      entry.type === 'PAYABLE'
+        ? Number(row?.max_refund_days_payable ?? 90)
+        : Number(row?.max_refund_days_receivable ?? 180);
+
+    const reference = new Date(`${paymentDate}T00:00:00`);
+    const daysSince = Math.floor(
+      (Date.now() - reference.getTime()) / (1000 * 60 * 60 * 24),
+    );
+
+    if (daysSince > maxDays) {
+      throw new BusinessException('ENTRY_REFUND_DEADLINE_EXCEEDED', 422, {
+        entryId: entry.id,
+        paymentDate,
+        maxDays,
+        daysSince,
+      });
+    }
   }
 }

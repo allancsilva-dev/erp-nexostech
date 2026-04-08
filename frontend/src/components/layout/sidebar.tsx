@@ -189,7 +189,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
   const { hasPermission } = usePermissions();
   const { user, logout } = useAuthContext();
   const collectionRulesEnabled = useFeatureFlag('collection_rules_enabled');
-  const { pending } = useApprovals();
+  const { pending } = useApprovals({ enabled: { pending: true, history: false } });
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -202,8 +202,11 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
     localStorage.setItem('sidebar_collapsed', isCollapsed ? '1' : '0');
   }, [isCollapsed]);
 
-  const pendingList = pending.data?.data;
-  const pendingCount = Array.isArray(pendingList) ? pendingList.length : 0;
+  const pendingCount = pending.isLoading
+    ? null
+    : Array.isArray(pending.data?.data)
+      ? pending.data.data.length
+      : 0;
   const identity = getIdentityLabel(user);
   const roleLabel = user?.roles?.[0]?.name ?? 'Admin';
 
@@ -234,7 +237,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
   }, [filteredItems]);
 
   function renderItem(item: SidebarItem) {
-    const isActive = pathname === item.href || pathname.startsWith(item.href);
+    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
     const Icon = item.icon;
     const itemClassName = cn(
       isActive ? activeItem : normalItem,
@@ -282,7 +285,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
                 ) : null}
               </div>
             ) : null}
-        {!isCollapsed && item.badge === 'approvals' && pendingCount > 0 ? (
+        {!isCollapsed && item.badge === 'approvals' && pendingCount !== null && pendingCount > 0 ? (
           <span className="ml-auto min-w-[18px] rounded-full bg-[var(--danger)] px-1.5 py-0.5 text-center text-[10px] font-bold text-[var(--destructive-foreground)]">
             {pendingCount}
           </span>

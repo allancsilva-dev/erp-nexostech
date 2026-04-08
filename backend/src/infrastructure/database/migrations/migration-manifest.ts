@@ -633,4 +633,24 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
        WHERE metadata->>'entry_id' IS NOT NULL`,
     ],
   },
+  {
+    name: '018_add_financial_entries_listing_indexes',
+    run: (schema) => [
+      `CREATE INDEX IF NOT EXISTS idx_entries_branch_created_active
+       ON ${schema}.financial_entries (branch_id, created_at DESC, id DESC)
+       WHERE deleted_at IS NULL`,
+      `CREATE INDEX IF NOT EXISTS idx_entries_branch_due_active
+       ON ${schema}.financial_entries (branch_id, due_date DESC, id DESC)
+       WHERE deleted_at IS NULL`,
+      `CREATE INDEX IF NOT EXISTS idx_entries_branch_amount_active
+       ON ${schema}.financial_entries (branch_id, amount DESC, id DESC)
+       WHERE deleted_at IS NULL`,
+      `CREATE INDEX IF NOT EXISTS idx_entries_branch_status_due_active
+       ON ${schema}.financial_entries (branch_id, status, due_date DESC, id DESC)
+       WHERE deleted_at IS NULL`,
+      `CREATE INDEX IF NOT EXISTS idx_entries_branch_category_active
+       ON ${schema}.financial_entries (branch_id, category_id)
+       WHERE deleted_at IS NULL`,
+    ],
+  },
 ];

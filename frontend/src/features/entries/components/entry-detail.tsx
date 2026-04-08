@@ -52,7 +52,7 @@ export function EntryDetail({ id }: { id: string }) {
           </PermissionGate>
         ) : null}
         {entry.paidDate ? (
-          <PermissionGate permission="financial.entries.cancel">
+          <PermissionGate permission="financial.entries.refund">
             <LockPeriodGuard date={entry.paidDate}>
               <RefundModal entryId={entry.id} />
             </LockPeriodGuard>

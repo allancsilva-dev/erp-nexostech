@@ -23,6 +23,7 @@ import { CreateEntryDto } from '../../../modules/financial/entries/dto/create-en
 import { EntryResponse } from '../../../modules/financial/entries/dto/entry.response';
 import { UpdateEntryDto } from '../../../modules/financial/entries/dto/update-entry.dto';
 import { CancelEntryDto } from '../../../modules/financial/entries/dto/cancel-entry.dto';
+import { ListEntriesQueryDto } from '../../../modules/financial/entries/dto/list-entries-query.dto';
 
 @Controller('entries')
 @UseGuards(JwtGuard, BranchGuard, RbacGuard)
@@ -33,29 +34,23 @@ export class EntriesController {
   @RequirePermission('financial.entries.view')
   async list(
     @BranchId() branchId: string,
-    @Query('page') page?: string,
-    @Query('pageSize') pageSize?: string,
-    @Query('type') type?: string,
-    @Query('status') status?: string,
-    @Query('search') search?: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
+    @Query() query: ListEntriesQueryDto,
   ): Promise<ApiResponse<EntryResponse[]>> {
-    const parsedPage = page ? Number.parseInt(page, 10) : undefined;
-    const parsedPageSize = pageSize ? Number.parseInt(pageSize, 10) : undefined;
-
     const result = await this.entriesService.list(
       branchId,
       {
-        type,
-        status,
-        search,
-        startDate,
-        endDate,
+        type: query.type,
+        status: query.status,
+        search: query.search,
+        startDate: query.startDate,
+        endDate: query.endDate,
+        categoryId: query.categoryId,
       },
       {
-        page: Number.isFinite(parsedPage) ? parsedPage : undefined,
-        pageSize: Number.isFinite(parsedPageSize) ? parsedPageSize : undefined,
+        page: query.page ?? 1,
+        pageSize: query.pageSize ?? 10,
+        sortBy: query.sortBy,
+        sortOrder: query.sortOrder,
       },
     );
 
@@ -142,7 +137,7 @@ export class EntriesController {
 
   @Post(':entryId/restore')
   @Idempotent()
-  @RequirePermission('admin.users.manage')
+  @RequirePermission('financial.entries.restore')
   async restore(
     @Param('entryId') entryId: string,
     @CurrentUser() user: AuthUser,

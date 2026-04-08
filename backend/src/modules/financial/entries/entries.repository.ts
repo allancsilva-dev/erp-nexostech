@@ -7,6 +7,10 @@ import {
   quoteLiteral,
 } from '../../../infrastructure/database/sql-builder.util';
 
+type DrizzleTransaction = Parameters<
+  Parameters<DrizzleService['transaction']>[0]
+>[0];
+
 export type EntryRecord = {
   id: string;
   branchId: string;
@@ -33,11 +37,14 @@ export type EntriesListFilters = {
   search?: string;
   startDate?: string;
   endDate?: string;
+  categoryId?: string;
 };
 
 export type EntriesListOptions = {
   page?: number;
   pageSize?: number;
+  sortBy?: 'createdAt' | 'dueDate' | 'amount';
+  sortOrder?: 'asc' | 'desc';
 };
 
 export type EntriesListResult = {
@@ -110,6 +117,13 @@ export class EntriesRepository {
     const page = Math.max(1, options.page ?? 1);
     const pageSize = Math.min(200, Math.max(1, options.pageSize ?? 50));
     const offset = (page - 1) * pageSize;
+    const allowedSortColumns: Record<NonNullable<EntriesListOptions['sortBy']>, string> = {
+      createdAt: 'e.created_at',
+      dueDate: 'e.due_date',
+      amount: 'e.amount',
+    };
+    const sortColumn = options.sortBy ? allowedSortColumns[options.sortBy] : undefined;
+    const sortDirection = options.sortOrder === 'asc' ? 'ASC' : 'DESC';
 
     const whereClauses = [
       `e.deleted_at IS NULL`,
@@ -132,6 +146,10 @@ export class EntriesRepository {
       whereClauses.push(`e.due_date <= ${quoteLiteral(filters.endDate)}`);
     }
 
+    if (filters.categoryId) {
+      whereClauses.push(`e.category_id = ${quoteLiteral(filters.categoryId)}`);
+    }
+
     if (filters.search) {
       const search = quoteLiteral(`%${filters.search}%`);
       whereClauses.push(`(
@@ -142,11 +160,14 @@ export class EntriesRepository {
     }
 
     const whereClause = whereClauses.join('\n        AND ');
-    const orderClause = `ORDER BY e.created_at DESC, e.id DESC`;
+    const orderClause = sortColumn
+      ? `ORDER BY ${sortColumn} ${sortDirection}, e.id DESC`
+      : `ORDER BY e.created_at DESC, e.id DESC`;
 
     const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
       SELECT
+        COUNT(*) OVER()::int AS total_count,
         e.id,
         e.branch_id,
         e.document_number,
@@ -172,20 +193,11 @@ export class EntriesRepository {
       OFFSET ${offset}
     `),
     );
-
-    const countResult: unknown = await this.drizzleService.getClient().execute(
-      sql.raw(`
-      SELECT COUNT(*)::int AS total
-      FROM ${schema}.financial_entries e
-      LEFT JOIN ${schema}.contacts ct ON ct.id = e.contact_id
-      WHERE ${whereClause}
-    `),
-    );
-
-    const total = Number(toText(getRows(countResult)[0]?.total, '0'));
+    const rows = getRows(result);
+    const total = Number(toText(rows[0]?.total_count, '0'));
 
     return {
-      items: getRows(result).map((row) => this.mapRow(row)),
+      items: rows.map((row) => this.mapRow(row)),
       total,
       page,
       pageSize,
@@ -291,7 +303,7 @@ export class EntriesRepository {
       contactId?: string | null;
       documentNumber?: string | null;
     },
-    tx?: { execute: (q: unknown) => Promise<unknown> },
+    tx?: DrizzleTransaction,
   ): Promise<EntryRecord> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchId = quoteLiteral(data.branchId);

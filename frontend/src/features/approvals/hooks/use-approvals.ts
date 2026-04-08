@@ -26,29 +26,43 @@ interface ApprovalHistoryItem {
   createdAt: string;
 }
 
-export function useApprovals(options?: { enabled?: boolean }) {
+interface UseApprovalsOptions {
+  enabled?: {
+    pending?: boolean;
+    history?: boolean;
+  };
+}
+
+export function useApprovals(options?: UseApprovalsOptions) {
   const { activeBranchId } = useBranch();
   const queryClient = useQueryClient();
-  const isEnabled = options?.enabled ?? true;
+
+  const pendingEnabled = options?.enabled?.pending ?? true;
+  const historyEnabled = options?.enabled?.history ?? false;
 
   const pending = useQuery({
-    queryKey: queryKeys.approvals.pending(activeBranchId || 'default'),
-    queryFn: () => api.get<PendingApproval[]>('/approvals/pending'),
-    enabled: Boolean(activeBranchId) && isEnabled,
+    queryKey: queryKeys.approvals.pending(activeBranchId!),
+    queryFn: ({ signal }) =>
+      api.get<PendingApproval[]>('/approvals/pending', {}, { signal, branchId: activeBranchId! }),
+    enabled: !!activeBranchId && pendingEnabled,
+    staleTime: 30_000,
   });
 
   const history = useQuery({
-    queryKey: ['approvals', 'history', activeBranchId] as const,
-    queryFn: () => api.get<ApprovalHistoryItem[]>('/approvals/history'),
-    enabled: Boolean(activeBranchId) && isEnabled,
+    queryKey: queryKeys.approvals.history(activeBranchId!),
+    queryFn: ({ signal }) =>
+      api.get<ApprovalHistoryItem[]>('/approvals/history', {}, { signal, branchId: activeBranchId! }),
+    enabled: !!activeBranchId && historyEnabled,
+    staleTime: 60_000,
   });
 
   const approve = useMutation({
     mutationFn: (entryId: string) => api.post(`/approvals/${entryId}/approve`),
     onSuccess: () => {
       toast.success('Lançamento aprovado com sucesso');
-      void queryClient.invalidateQueries({ queryKey: queryKeys.approvals.pending(activeBranchId || 'default') });
-      void queryClient.invalidateQueries({ queryKey: ['approvals', 'history', activeBranchId] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.approvals.pending(activeBranchId!) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.approvals.history(activeBranchId!) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(activeBranchId!) });
     },
     onError: (error: unknown) => {
       showUnknownError(error);
@@ -60,9 +74,10 @@ export function useApprovals(options?: { enabled?: boolean }) {
     mutationFn: ({ entryId, reason }: { entryId: string; reason: string }) =>
       api.post(`/approvals/${entryId}/reject`, { reason }),
     onSuccess: () => {
-      toast.success('Lançamento rejeitado com sucesso');
-      void queryClient.invalidateQueries({ queryKey: queryKeys.approvals.pending(activeBranchId || 'default') });
-      void queryClient.invalidateQueries({ queryKey: ['approvals', 'history', activeBranchId] });
+      toast.success('Lançamento rejeitado');
+      void queryClient.invalidateQueries({ queryKey: queryKeys.approvals.pending(activeBranchId!) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.approvals.history(activeBranchId!) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(activeBranchId!) });
     },
     onError: (error: unknown) => {
       showUnknownError(error);
@@ -74,8 +89,9 @@ export function useApprovals(options?: { enabled?: boolean }) {
     mutationFn: (entryIds: string[]) => api.post('/approvals/batch-approve', { entryIds }),
     onSuccess: () => {
       toast.success('Lançamentos aprovados em lote');
-      queryClient.invalidateQueries({ queryKey: queryKeys.approvals.pending(activeBranchId || 'default') });
-      queryClient.invalidateQueries({ queryKey: ['approvals', 'history', activeBranchId] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.approvals.pending(activeBranchId!) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.approvals.history(activeBranchId!) });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.entries.all(activeBranchId!) });
     },
     onError: (error: unknown) => {
       showUnknownError(error);

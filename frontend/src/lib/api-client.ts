@@ -22,6 +22,14 @@ type RequestOptions = {
   idempotencyKey?: string;
 };
 
+function normalizeRequestOptions(options?: string | RequestOptions): RequestOptions | undefined {
+  if (typeof options === 'string') {
+    return { idempotencyKey: options };
+  }
+
+  return options;
+}
+
 const TENANT_LEVEL_ENDPOINTS = ['/contacts', '/branches', '/roles', '/users', '/tenants', '/notifications'];
 
 function isTenantLevelEndpoint(endpoint: string): boolean {
@@ -158,36 +166,42 @@ class ApiClient {
   public post<T>(
     endpoint: string,
     body?: unknown,
-    options?: RequestOptions,
+    options?: string | RequestOptions,
   ): Promise<ApiResponse<T>> {
+    const normalizedOptions = normalizeRequestOptions(options);
+
     return this.request<ApiResponse<T>>(endpoint, {
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
-      ...options,
+      ...normalizedOptions,
     });
   }
 
   public postForm<T>(
     endpoint: string,
     body: FormData,
-    options?: RequestOptions,
+    options?: string | RequestOptions,
   ): Promise<ApiResponse<T>> {
+    const normalizedOptions = normalizeRequestOptions(options);
+
     return this.request<ApiResponse<T>>(endpoint, {
       method: 'POST',
       body,
-      ...options,
+      ...normalizedOptions,
     });
   }
 
   public put<T>(
     endpoint: string,
     body: unknown,
-    options?: RequestOptions,
+    options?: string | RequestOptions,
   ): Promise<ApiResponse<T>> {
+    const normalizedOptions = normalizeRequestOptions(options);
+
     return this.request<ApiResponse<T>>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(body),
-      ...options,
+      ...normalizedOptions,
     });
   }
 

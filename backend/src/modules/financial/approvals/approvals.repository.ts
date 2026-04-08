@@ -2,10 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { BusinessException } from '../../../common/exceptions/business.exception';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import {
-  quoteIdent,
-  quoteLiteral,
-} from '../../../infrastructure/database/sql-builder.util';
+import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
 
 @Injectable()
 export class ApprovalsRepository {
@@ -13,17 +10,13 @@ export class ApprovalsRepository {
 
   private toText(value: unknown): string {
     if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'bigint') {
-      return String(value);
-    }
+    if (typeof value === 'number' || typeof value === 'bigint') return String(value);
     return '';
   }
 
   private toNullableText(value: unknown): string | null {
     if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'bigint') {
-      return String(value);
-    }
+    if (typeof value === 'number' || typeof value === 'bigint') return String(value);
     return null;
   }
 
@@ -33,28 +26,28 @@ export class ApprovalsRepository {
 
     const result = await this.drizzleService.getClient().execute(
       sql.raw(`
-      SELECT
-        e.id AS entry_id,
-        e.document_number,
-        e.description,
-        e.amount,
-        e.due_date,
-        e.status,
-        c.name AS category_name,
-        ct.name AS contact_name
-      FROM ${schema}.financial_entries e
-      LEFT JOIN ${schema}.categories c ON c.id = e.category_id
-      LEFT JOIN ${schema}.contacts ct ON ct.id = e.contact_id
-      WHERE e.branch_id = ${branchLiteral}
-        AND e.status = 'PENDING_APPROVAL'
-        AND e.deleted_at IS NULL
-      ORDER BY e.due_date ASC, e.created_at ASC
-    `),
+        SELECT
+          e.id AS entry_id,
+          e.document_number,
+          e.description,
+          e.amount,
+          e.due_date,
+          e.status,
+          c.name AS category_name,
+          ct.name AS contact_name
+        FROM ${schema}.financial_entries e
+        LEFT JOIN ${schema}.categories c ON c.id = e.category_id
+        LEFT JOIN ${schema}.contacts ct ON ct.id = e.contact_id
+        WHERE e.branch_id = ${branchLiteral}
+          AND e.status = 'PENDING_APPROVAL'
+          AND e.deleted_at IS NULL
+        ORDER BY e.due_date ASC, e.created_at ASC
+      `),
     );
 
     return result.rows.map((row) => ({
       entryId: this.toText(row.entry_id),
-      documentNumber: this.toText(row.document_number),
+      documentNumber: this.toNullableText(row.document_number),
       description: this.toText(row.description),
       amount: this.toText(row.amount),
       dueDate: this.toText(row.due_date),
@@ -64,23 +57,39 @@ export class ApprovalsRepository {
     }));
   }
 
-  async findEntryCreator(
+  async findEntryForApproval(
     entryId: string,
     branchId: string,
-  ): Promise<{ createdBy: string } | null> {
+  ): Promise<{
+    status: string;
+    createdBy: string;
+    documentNumber: string | null;
+    amount: string;
+    type: string;
+  } | null> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
+
     const result = await this.drizzleService.getClient().execute(
       sql.raw(`
-      SELECT created_by
-      FROM ${schema}.financial_entries
-      WHERE id = ${quoteLiteral(entryId)}
-        AND branch_id = ${quoteLiteral(branchId)}
-        AND deleted_at IS NULL
-      LIMIT 1
-    `),
+        SELECT status, created_by, document_number, amount::text AS amount, type
+        FROM ${schema}.financial_entries
+        WHERE id = ${quoteLiteral(entryId)}
+          AND branch_id = ${quoteLiteral(branchId)}
+          AND deleted_at IS NULL
+        LIMIT 1
+      `),
     );
+
     const row = result.rows[0] as Record<string, unknown> | undefined;
-    return row ? { createdBy: this.toText(row.created_by) } : null;
+    if (!row) return null;
+
+    return {
+      status: this.toText(row.status),
+      createdBy: this.toText(row.created_by),
+      documentNumber: this.toNullableText(row.document_number),
+      amount: this.toText(row.amount),
+      type: this.toText(row.type),
+    };
   }
 
   async createApprovalRecord(
@@ -89,128 +98,83 @@ export class ApprovalsRepository {
     userId: string,
     action: 'APPROVED' | 'REJECTED',
     notes?: string,
+    entryType?: string,
   ) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const entryLiteral = quoteLiteral(entryId);
     const branchLiteral = quoteLiteral(branchId);
-    const userLiteral = quoteLiteral(userId);
-    const actionLiteral = quoteLiteral(action);
-    const notesLiteral = quoteLiteral(notes ?? null);
-
-    // Run approval and potential document number generation in a single transaction
     const result = await this.drizzleService.transaction(async (tx) => {
       const insertRes = await tx.execute(
         sql.raw(`
-        INSERT INTO ${schema}.entry_approvals (
-          entry_id, branch_id, approved_by, action, notes
-        ) VALUES (
-          ${entryLiteral}, ${branchLiteral}, ${userLiteral}, ${actionLiteral}, ${notesLiteral}
-        )
-        RETURNING id, entry_id, approved_by, action, notes, created_at
-      `),
+          INSERT INTO ${schema}.entry_approvals (
+            entry_id, branch_id, approved_by, action, notes
+          ) VALUES (
+            ${entryLiteral}, ${branchLiteral},
+            ${quoteLiteral(userId)}, ${quoteLiteral(action)}, ${quoteLiteral(notes ?? null)}
+          )
+          RETURNING id, entry_id, approved_by, action, notes, created_at
+        `),
       );
 
       if (action === 'APPROVED') {
-        // fetch entry type to determine sequence prefix and lock sequence row
-        const entryRow = await tx.execute(
-          sql.raw(`
-          SELECT type
-          FROM ${schema}.financial_entries
-          WHERE id = ${entryLiteral}
-            AND branch_id = ${branchLiteral}
-            AND deleted_at IS NULL
-          LIMIT 1
-        `),
-        );
-        const entryType = entryRow.rows[0]?.type ?? 'RECEIVABLE';
-        const prefix = entryType === 'PAYABLE' ? 'PAY' : 'REC';
+        const prefix = (entryType ?? 'RECEIVABLE') === 'PAYABLE' ? 'PAY' : 'REC';
         const year = new Date().getFullYear();
 
-        // select sequence row FOR UPDATE
-        const seqRes = await tx.execute(
+        const seqRes: unknown = await tx.execute(
           sql.raw(`
-          SELECT last_sequence
-          FROM ${schema}.document_sequences
-          WHERE branch_id = ${branchLiteral}
-            AND type = ${quoteLiteral(prefix)}
-            AND year = ${quoteLiteral(String(year))}
-          FOR UPDATE
-        `),
+            INSERT INTO ${schema}.document_sequences (branch_id, type, year, last_sequence)
+            VALUES (${branchLiteral}, ${quoteLiteral(prefix)}, ${year}, 1)
+            ON CONFLICT (branch_id, type, year)
+            DO UPDATE SET
+              last_sequence = ${schema}.document_sequences.last_sequence + 1,
+              updated_at = NOW()
+            RETURNING last_sequence
+          `),
         );
 
-        let nextSeq = 1;
-        if (
-          seqRes &&
-          Array.isArray((seqRes as any).rows) &&
-          (seqRes as any).rows.length > 0
-        ) {
-          const row = (seqRes as any).rows[0];
-          const last = Number(row.last_sequence ?? 0) || 0;
-          nextSeq = last + 1;
-          await tx.execute(
-            sql.raw(`
-            UPDATE ${schema}.document_sequences
-            SET last_sequence = ${quoteLiteral(String(nextSeq))}, updated_at = NOW()
-            WHERE branch_id = ${branchLiteral}
-              AND type = ${quoteLiteral(prefix)}
-              AND year = ${quoteLiteral(String(year))}
-          `),
-          );
-        } else {
-          await tx.execute(
-            sql.raw(`
-            INSERT INTO ${schema}.document_sequences (branch_id, type, year, last_sequence)
-            VALUES (${branchLiteral}, ${quoteLiteral(prefix)}, ${quoteLiteral(String(year))}, 1)
-          `),
-          );
-          nextSeq = 1;
-        }
-
+        const seqRows = Array.isArray((seqRes as { rows?: unknown[] })?.rows)
+          ? ((seqRes as { rows: Array<Record<string, unknown>> }).rows)
+          : [];
+        const nextSeq = Number(seqRows[0]?.last_sequence ?? 1);
         const documentNumber = `${prefix}-${year}-${String(nextSeq).padStart(5, '0')}`;
 
-        const updateEntryResult = await tx.execute(
+        const updateResult = await tx.execute(
           sql.raw(`
-          UPDATE ${schema}.financial_entries
-          SET status = 'PENDING', document_number = ${quoteLiteral(documentNumber)}, updated_at = NOW()
-          WHERE id = ${entryLiteral}
-            AND branch_id = ${branchLiteral}
-            AND status = 'PENDING_APPROVAL'
-            AND deleted_at IS NULL
-          RETURNING id
-        `),
+            UPDATE ${schema}.financial_entries
+            SET status = 'PENDING', document_number = ${quoteLiteral(documentNumber)}, updated_at = NOW()
+            WHERE id = ${entryLiteral}
+              AND branch_id = ${branchLiteral}
+              AND status = 'PENDING_APPROVAL'
+              AND deleted_at IS NULL
+            RETURNING id
+          `),
         );
 
-        if (updateEntryResult.rows.length === 0) {
-          throw new BusinessException(
-            'APPROVAL_ALREADY_PROCESSED',
-            HttpStatus.CONFLICT,
-          );
+        if (updateResult.rows.length === 0) {
+          throw new BusinessException('APPROVAL_ALREADY_PROCESSED', HttpStatus.CONFLICT);
         }
       } else {
-        const updateEntryResult = await tx.execute(
+        const updateResult = await tx.execute(
           sql.raw(`
-          UPDATE ${schema}.financial_entries
-          SET status = 'CANCELLED', updated_at = NOW()
-          WHERE id = ${entryLiteral}
-            AND branch_id = ${branchLiteral}
-            AND status = 'PENDING_APPROVAL'
-            AND deleted_at IS NULL
-          RETURNING id
-        `),
+            UPDATE ${schema}.financial_entries
+            SET status = 'CANCELLED', updated_at = NOW()
+            WHERE id = ${entryLiteral}
+              AND branch_id = ${branchLiteral}
+              AND status = 'PENDING_APPROVAL'
+              AND deleted_at IS NULL
+            RETURNING id
+          `),
         );
 
-        if (updateEntryResult.rows.length === 0) {
-          throw new BusinessException(
-            'APPROVAL_ALREADY_PROCESSED',
-            HttpStatus.CONFLICT,
-          );
+        if (updateResult.rows.length === 0) {
+          throw new BusinessException('APPROVAL_ALREADY_PROCESSED', HttpStatus.CONFLICT);
         }
       }
 
       return insertRes;
     });
 
-    const row = result.rows[0];
+    const row = result.rows[0] as Record<string, unknown>;
     return {
       id: this.toText(row.id),
       entryId: this.toText(row.entry_id),
@@ -227,12 +191,12 @@ export class ApprovalsRepository {
 
     const result = await this.drizzleService.getClient().execute(
       sql.raw(`
-      SELECT id, entry_id, approved_by, action, notes, created_at
-      FROM ${schema}.entry_approvals
-      WHERE branch_id = ${branchLiteral}
-      ORDER BY created_at DESC
-      LIMIT 300
-    `),
+        SELECT id, entry_id, approved_by, action, notes, created_at
+        FROM ${schema}.entry_approvals
+        WHERE branch_id = ${branchLiteral}
+        ORDER BY created_at DESC
+        LIMIT 300
+      `),
     );
 
     return result.rows.map((row) => ({

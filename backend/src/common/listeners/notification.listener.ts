@@ -84,6 +84,9 @@ export class NotificationListener {
       // Enrich payload if necessary (single query)
       const schema = resolveTenantSchema(payload as Record<string, unknown>);
       if (!payload.documentNumber || !payload.branchId || !payload.amount || !payload.createdBy) {
+        this.logger.warn(
+          `[entry.approved] Payload incompleto para entry ${payload.entryId} - acionando fallback de enriquecimento`,
+        );
         const entryIdLiteral = quoteLiteral(payload.entryId);
         const row: any = (
           await this.drizzleService.getClient().execute(
@@ -132,6 +135,9 @@ export class NotificationListener {
     try {
       const schema = resolveTenantSchema(payload as Record<string, unknown>);
       if (!payload.documentNumber || !payload.branchId || !payload.amount || !payload.createdBy) {
+        this.logger.warn(
+          `[entry.rejected] Payload incompleto para entry ${payload.entryId} - acionando fallback de enriquecimento`,
+        );
         const entryIdLiteral = quoteLiteral(payload.entryId);
         const row: any = (
           await this.drizzleService.getClient().execute(
@@ -301,16 +307,25 @@ export class NotificationListener {
   @OnEvent('entry.pending_approval')
   async onEntryPendingApproval(payload: PendingApprovalPayload): Promise<void> {
     try {
-      // Determine approvers by permission and enqueue one job per approver
       const schema = resolveTenantSchema(payload as Record<string, unknown>);
+      if (!payload.branchId) {
+        this.logger.error(
+          `[entry.pending_approval] branchId ausente no payload para entry ${payload.entryId} - abortando notificação`,
+        );
+        return;
+      }
+
+      const branchLiteral = quoteLiteral(payload.branchId);
       const rows: any = (
         await this.drizzleService.getClient().execute(
           sql.raw(`
         SELECT DISTINCT ur.user_id
         FROM ${schema}.user_roles ur
         JOIN ${schema}.role_permissions rp ON rp.role_id = ur.role_id
+        JOIN ${schema}.user_branches ub ON ub.user_id = ur.user_id
         WHERE rp.permission_code = 'financial.entries.approve'
           AND ur.deleted_at IS NULL
+          AND ub.branch_id = ${branchLiteral}::uuid
       `),
         )
       ).rows as Array<Record<string, unknown>>;

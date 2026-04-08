@@ -1,26 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
+import Decimal from 'decimal.js'; // import estático — não mais dinâmico com any
 import { BusinessException } from '../../../common/exceptions/business.exception';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import { EventBusService } from '../../../infrastructure/events/event-bus.service';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
-import {
-  quoteIdent,
-  quoteLiteral,
-} from '../../../infrastructure/database/sql-builder.util';
+import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
 import { AuthUser } from '../../../common/types/auth-user.type';
 import { CreateEntryDto, EntryType } from './dto/create-entry.dto';
 import { UpdateEntryDto } from './dto/update-entry.dto';
 import { EntryCalculator } from './domain/entry.calculator';
 import { EntryRules } from './domain/entry.rules';
 import {
+  EntryRecord,
   EntriesListFilters,
   EntriesListOptions,
   EntriesRepository,
 } from './entries.repository';
 import { ApprovalRulesService } from '../approval-rules/approval-rules.service';
 import { CategoriesService } from '../categories/categories.service';
+
+type DrizzleTransaction = Parameters<Parameters<DrizzleService['transaction']>[0]>[0];
 
 @Injectable()
 export class EntriesService {
@@ -37,22 +38,9 @@ export class EntriesService {
   ) {}
 
   private toDate(date: string | Date): Date {
-    if (date instanceof Date) {
-      return new Date(date.getTime());
-    }
-
-    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return new Date(`${date}T00:00:00`);
-    }
-
+    if (date instanceof Date) return new Date(date.getTime());
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return new Date(`${date}T00:00:00`);
     return new Date(date);
-  }
-
-  private formatDateBr(date: Date): string {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
   }
 
   private async getLatestLockedUntil(branchId: string): Promise<string | null> {
@@ -61,13 +49,13 @@ export class EntriesService {
 
     const result = await this.drizzleService.getClient().execute(
       sql.raw(`
-      SELECT locked_until
-      FROM ${schema}.lock_periods
-      WHERE branch_id = ${branchLiteral}
-        AND deleted_at IS NULL
-      ORDER BY locked_until DESC
-      LIMIT 1
-    `),
+        SELECT locked_until
+        FROM ${schema}.lock_periods
+        WHERE branch_id = ${branchLiteral}
+          AND deleted_at IS NULL
+        ORDER BY locked_until DESC
+        LIMIT 1
+      `),
     );
 
     const row = result.rows[0] as { locked_until?: unknown } | undefined;
@@ -76,22 +64,21 @@ export class EntriesService {
     return String(row.locked_until as Date);
   }
 
-  private async checkLockPeriod(
-    branchId: string,
-    dateToCheck: string | Date,
-  ): Promise<void> {
+  private async checkLockPeriod(branchId: string, dateToCheck: string | Date): Promise<void> {
     const latestLockedUntil = await this.getLatestLockedUntil(branchId);
-
-    if (!latestLockedUntil) {
-      return;
-    }
+    if (!latestLockedUntil) return;
 
     const lockedUntil = this.toDate(latestLockedUntil);
     lockedUntil.setHours(23, 59, 59, 999);
 
     const operationDate = this.toDate(dateToCheck);
+
+    // Data inválida deve lançar erro, não passar silenciosamente
     if (Number.isNaN(operationDate.getTime())) {
-      return;
+      throw new BusinessException('VALIDATION_ERROR', 400, {
+        field: 'date',
+        message: 'Data inválida',
+      });
     }
 
     if (operationDate <= lockedUntil) {
@@ -106,24 +93,19 @@ export class EntriesService {
     }
   }
 
-  async list(
-    branchId: string,
-    filters: EntriesListFilters,
-    options: EntriesListOptions,
-  ) {
+  private getAuditUserEmail(user: AuthUser): string {
+    return user.email ?? 'system@local';
+  }
+
+  async list(branchId: string, filters: EntriesListFilters, options: EntriesListOptions) {
     return this.entriesRepository.list(branchId, filters, options);
   }
 
   async getById(entryId: string, branchId: string) {
     const entry = await this.entriesRepository.findById(entryId, branchId);
     if (!entry) {
-      throw new BusinessException(
-        'ENTRY_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { entryId, branchId },
-      );
+      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, { entryId, branchId });
     }
-
     return entry;
   }
 
@@ -131,92 +113,94 @@ export class EntriesService {
     this.entryRules.validateCreate(dto, null);
     await this.checkLockPeriod(branchId, dto.issueDate);
 
-    const installments = dto.installment
-      ? this.entryCalculator.calculateInstallments(
-          dto.amount,
-          dto.installmentCount ?? 1,
-        )
-      : [dto.amount];
-
-    // Server-side: validate category exists and matches entry type
-    if (dto.categoryId) {
-      const category = await this.categoriesService.findById(
-        dto.categoryId,
+    // Valida categoria antes de abrir transação
+    const category = await this.categoriesService.findById(dto.categoryId, branchId);
+    if (!category) {
+      throw new BusinessException('CATEGORY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        categoryId: dto.categoryId,
         branchId,
-      );
-      if (!category) {
-        throw new BusinessException('CATEGORY_NOT_FOUND', HttpStatus.NOT_FOUND, {
-          categoryId: dto.categoryId,
-          branchId,
-        });
-      }
-      const expectedCategoryType = dto.type === 'PAYABLE' ? 'PAYABLE' : 'RECEIVABLE';
-      const categoryTypeLabels: Record<string, string> = {
-        PAYABLE: 'Despesa',
-        RECEIVABLE: 'Receita',
-      };
-      if (category.type !== expectedCategoryType) {
-        const categoryLabel = categoryTypeLabels[category.type] || category.type;
-        const entryLabel = dto.type === 'PAYABLE' ? 'a pagar' : 'a receber';
-        throw new BusinessException('ENTRY_CATEGORY_INCOMPATIBLE', 422, {
-          categoryId: dto.categoryId,
-          categoryType: category.type,
-          categoryLabel,
-          entryType: dto.type,
-          entryLabel,
-        });
-      }
+      });
     }
 
+    const expectedCategoryType = dto.type === 'PAYABLE' ? 'PAYABLE' : 'RECEIVABLE';
+    if (category.type !== expectedCategoryType) {
+      throw new BusinessException('ENTRY_CATEGORY_INCOMPATIBLE', 422, {
+        categoryId: dto.categoryId,
+        categoryType: category.type,
+        entryType: dto.type,
+      });
+    }
+
+    // Verifica regras de aprovação — erros propagam, não são suprimidos
+    const needsApproval = dto.submit
+      ? await this.checkApprovalRules(branchId, dto.type, dto.amount)
+      : false;
+
+    const initialStatus = !dto.submit ? 'DRAFT' : needsApproval ? 'PENDING_APPROVAL' : 'PENDING';
+
+    // Calcula todas as parcelas — não só a primeira
+    const installmentAmounts = dto.installment
+      ? this.entryCalculator.calculateInstallments(dto.amount, dto.installmentCount ?? 1)
+      : [dto.amount];
+
+    const installmentTotal = dto.installment ? (dto.installmentCount ?? 1) : null;
+
     const created = await this.txHelper.run(async (tx) => {
-      const firstInstallmentAmount = installments[0] ?? dto.amount;
+      // Cria todas as parcelas dentro da mesma transação
+      const entries: EntryRecord[] = [];
+      for (let i = 0; i < installmentAmounts.length; i++) {
+        const amount = installmentAmounts[i] ?? dto.amount;
 
-      // Determine initial status based on submit flag and approval rules
-      let initialStatus = 'DRAFT';
-      if (dto.submit) {
-        const needsApproval = await this.checkApprovalRules(
-          branchId,
-          dto.type,
-          dto.amount,
-        );
-        initialStatus = needsApproval ? 'PENDING_APPROVAL' : 'PENDING';
-      }
+        // Parcelas seguintes têm vencimento calculado a partir da primeira
+        const dueDate = i === 0
+          ? dto.dueDate
+          : this.addMonths(dto.dueDate, i);
 
-      // Generate document number only for PENDING
-      let documentNumber: string | null = null;
-      if (initialStatus === 'PENDING') {
-        documentNumber = await this.generateDocumentNumber(
-          branchId,
-          dto.type,
+        // Cada parcela PENDING recebe seu próprio número; PENDING_APPROVAL permanece sem número.
+        const partialDocNumber =
+          initialStatus === 'PENDING'
+            ? await this.generateDocumentNumber(branchId, dto.type, tx)
+            : null;
+
+        const entry = await this.entriesRepository.create(
+          {
+            branchId,
+            documentNumber: partialDocNumber,
+            type: dto.type,
+            description: installmentTotal
+              ? `${dto.description} (${i + 1}/${installmentTotal})`
+              : dto.description,
+            amount,
+            issueDate: dto.issueDate,
+            dueDate,
+            status: initialStatus,
+            categoryName: category.name, // nome real da categoria
+            contactName: null,
+            paidAmount: null,
+            remainingBalance: amount,
+            installmentNumber: installmentTotal ? i + 1 : null,
+            installmentTotal,
+            categoryId: dto.categoryId,
+            contactId: dto.contactId ?? null,
+          },
           tx,
         );
+
+        entries.push(entry);
       }
 
-      const createdEntry = await this.entriesRepository.create(
-        {
-          branchId,
-          documentNumber,
-          type: dto.type,
-          description: dto.description,
-          amount: firstInstallmentAmount,
-          issueDate: dto.issueDate,
-          dueDate: dto.dueDate,
-          status: initialStatus,
-          categoryName: 'Categoria provisoria',
-          contactName: null,
-          paidAmount: null,
-          remainingBalance: firstInstallmentAmount,
-          installmentNumber: dto.installment ? 1 : null,
-          installmentTotal: dto.installment
-            ? (dto.installmentCount ?? null)
-            : null,
-          categoryId: dto.categoryId,
-          contactId: dto.contactId ?? null,
-        },
-        tx,
-      );
+      // audit_log dentro da transação — sem exceção
+      await this.insertAuditLog(tx, {
+        branchId,
+        userId: user.sub,
+        userEmail: this.getAuditUserEmail(user),
+        action: 'CREATE',
+        entity: 'financial_entries',
+        entityId: entries[0]!.id,
+        metadata: { installmentTotal, status: initialStatus },
+      });
 
-      return createdEntry;
+      return entries[0]!;
     });
 
     this.eventBus.emit('entry.created', {
@@ -226,7 +210,6 @@ export class EntriesService {
       type: created.type,
     });
 
-    // If entry requires approval, emit pending_approval so listeners can notify approvers
     if (created.status === 'PENDING_APPROVAL') {
       this.eventBus.emit('entry.pending_approval', {
         tenantId: user.tenantId,
@@ -242,97 +225,120 @@ export class EntriesService {
     return created;
   }
 
+  // Meses inteiros a partir de uma data ISO (YYYY-MM-DD)
+  private addMonths(dateStr: string, months: number): string {
+    const date = new Date(`${dateStr}T00:00:00`);
+    const originalDay = date.getDate();
+
+    date.setMonth(date.getMonth() + months);
+
+    if (date.getDate() !== originalDay) {
+      date.setDate(0);
+    }
+
+    return date.toISOString().slice(0, 10);
+  }
+
+  // Erros propagam — sem catch silencioso
   private async checkApprovalRules(
     branchId: string,
     entryType: string,
     amount: string,
   ): Promise<boolean> {
-    try {
-      const rules = await this.approvalRulesService.list(branchId);
-      if (!rules || rules.length === 0) return false;
-      const Decimal: any = (await import('decimal.js')).default;
-      const value = new Decimal(amount);
-      for (const r of rules) {
-        // r.entryType may be null/empty meaning applies to both
-        if (r.active) {
-          if (!r.entryType || r.entryType === entryType) {
-            const min = new Decimal(r.minAmount || '0');
-            if (value.greaterThanOrEqualTo(min)) return true;
-          }
-        }
-      }
-      return false;
-    } catch (e) {
-      // If anything fails, be permissive: don't require approval
-      return false;
+    const rules = await this.approvalRulesService.list(branchId);
+    if (!rules || rules.length === 0) return false;
+
+    const value = new Decimal(amount);
+    for (const rule of rules) {
+      if (!rule.active) continue;
+      if (rule.entryType && rule.entryType !== entryType) continue;
+      const min = new Decimal(rule.minAmount || '0');
+      if (value.greaterThanOrEqualTo(min)) return true;
     }
+    return false;
   }
 
   private async generateDocumentNumber(
     branchId: string,
     type: string,
-    tx: Parameters<Parameters<DrizzleService['transaction']>[0]>[0],
+    tx: DrizzleTransaction,
   ): Promise<string> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const branchLiteral = quoteLiteral(branchId);
     const year = new Date().getFullYear();
     const prefix = type === EntryType.PAYABLE ? 'PAY' : 'REC';
 
-    // Try to select the sequence row FOR UPDATE
-    const selectResult: unknown = await tx.execute(
+    const result: unknown = await tx.execute(
       sql.raw(`
-      SELECT last_sequence
-      FROM ${schema}.document_sequences
-      WHERE branch_id = ${branchLiteral}
-        AND type = ${quoteLiteral(prefix)}
-        AND year = ${quoteLiteral(String(year))}
-      FOR UPDATE
-    `),
+        INSERT INTO ${schema}.document_sequences (branch_id, type, year, last_sequence)
+        VALUES (${quoteLiteral(branchId)}, ${quoteLiteral(prefix)}, ${year}, 1)
+        ON CONFLICT (branch_id, type, year)
+        DO UPDATE SET
+          last_sequence = ${schema}.document_sequences.last_sequence + 1,
+          updated_at = NOW()
+        RETURNING last_sequence
+      `),
     );
 
-    let nextSeq = 1;
-    if (
-      selectResult &&
-      Array.isArray((selectResult as any).rows) &&
-      (selectResult as any).rows.length > 0
-    ) {
-      const row = (selectResult as any).rows[0];
-      const last = Number(row.last_sequence ?? 0) || 0;
-      nextSeq = last + 1;
-      await tx.execute(
-        sql.raw(`
-        UPDATE ${schema}.document_sequences
-        SET last_sequence = ${quoteLiteral(String(nextSeq))}, updated_at = NOW()
-        WHERE branch_id = ${branchLiteral}
-          AND type = ${quoteLiteral(prefix)}
-          AND year = ${quoteLiteral(String(year))}
-      `),
-      );
-    } else {
-      // insert initial sequence
-      await tx.execute(
-        sql.raw(`
-        INSERT INTO ${schema}.document_sequences (branch_id, type, year, last_sequence)
-        VALUES (${branchLiteral}, ${quoteLiteral(prefix)}, ${quoteLiteral(String(year))}, 1)
-      `),
-      );
-      nextSeq = 1;
-    }
+    const rows = Array.isArray((result as any)?.rows) ? (result as any).rows : [];
+    const nextSeq = Number(rows[0]?.last_sequence ?? 1);
 
     return `${prefix}-${year}-${String(nextSeq).padStart(5, '0')}`;
   }
 
-  async update(
-    entryId: string,
-    dto: UpdateEntryDto,
-    user: AuthUser,
-    branchId: string,
-  ) {
+  // audit_log dentro da transação — obrigatório em toda operação
+  private async insertAuditLog(
+    tx: DrizzleTransaction,
+    data: {
+      branchId: string;
+      userId: string;
+      userEmail: string;
+      action: string;
+      entity: string;
+      entityId: string;
+      fieldChanges?: Record<string, unknown>[];
+      metadata?: Record<string, unknown>;
+    },
+  ): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const fieldChangesJson = quoteLiteral(JSON.stringify(data.fieldChanges ?? []));
+    const metadataJson = quoteLiteral(JSON.stringify(data.metadata ?? {}));
+
+    await tx.execute(
+      sql.raw(`
+        INSERT INTO ${schema}.audit_logs (
+          branch_id, user_id, user_email, action, entity, entity_id, field_changes, metadata
+        ) VALUES (
+          ${quoteLiteral(data.branchId)},
+          ${quoteLiteral(data.userId)},
+          ${quoteLiteral(data.userEmail)},
+          ${quoteLiteral(data.action)},
+          ${quoteLiteral(data.entity)},
+          ${quoteLiteral(data.entityId)},
+          ${fieldChangesJson}::jsonb,
+          ${metadataJson}::jsonb
+        )
+      `),
+    );
+  }
+
+  async update(entryId: string, dto: UpdateEntryDto, user: AuthUser, branchId: string) {
     const existing = await this.getById(entryId, branchId);
     await this.checkLockPeriod(branchId, existing.issueDate);
 
-    const updated = await this.txHelper.run(async () => {
-      return this.entriesRepository.update(entryId, branchId, dto);
+    const updated = await this.txHelper.run(async (tx) => {
+      const result = await this.entriesRepository.update(entryId, branchId, dto);
+
+      await this.insertAuditLog(tx, {
+        branchId,
+        userId: user.sub,
+        userEmail: this.getAuditUserEmail(user),
+        action: 'UPDATE',
+        entity: 'financial_entries',
+        entityId: entryId,
+        metadata: { updatedFields: Object.keys(dto) },
+      });
+
+      return result;
     });
 
     this.eventBus.emit('entry.updated', {
@@ -345,15 +351,21 @@ export class EntriesService {
     return updated;
   }
 
-  async softDelete(
-    entryId: string,
-    user: AuthUser,
-    branchId: string,
-  ): Promise<void> {
-    await this.getById(entryId, branchId);
+  async softDelete(entryId: string, user: AuthUser, branchId: string): Promise<void> {
+    const entry = await this.getById(entryId, branchId);
+    await this.checkLockPeriod(branchId, entry.issueDate);
 
-    await this.txHelper.run(async () => {
+    await this.txHelper.run(async (tx) => {
       await this.entriesRepository.softDelete(entryId, branchId);
+
+      await this.insertAuditLog(tx, {
+        branchId,
+        userId: user.sub,
+        userEmail: this.getAuditUserEmail(user),
+        action: 'DELETE',
+        entity: 'financial_entries',
+        entityId: entryId,
+      });
     });
 
     this.eventBus.emit('entry.deleted', {
@@ -365,20 +377,26 @@ export class EntriesService {
   }
 
   async restore(entryId: string, user: AuthUser, branchId: string) {
-    const deleted = await this.entriesRepository.findDeletedById(
-      entryId,
-      branchId,
-    );
+    const deleted = await this.entriesRepository.findDeletedById(entryId, branchId);
     if (!deleted) {
-      throw new BusinessException(
-        'ENTRY_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { entryId, branchId },
-      );
+      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, { entryId, branchId });
     }
 
-    const restored = await this.txHelper.run(async () => {
-      return this.entriesRepository.restore(entryId, branchId);
+    await this.checkLockPeriod(branchId, deleted.issueDate);
+
+    const restored = await this.txHelper.run(async (tx) => {
+      const result = await this.entriesRepository.restore(entryId, branchId);
+
+      await this.insertAuditLog(tx, {
+        branchId,
+        userId: user.sub,
+        userEmail: this.getAuditUserEmail(user),
+        action: 'RESTORE',
+        entity: 'financial_entries',
+        entityId: entryId,
+      });
+
+      return result;
     });
 
     this.eventBus.emit('entry.restored', {
@@ -391,47 +409,51 @@ export class EntriesService {
     return restored;
   }
 
-  /**
-   * Valida que a entry não está em status PENDING_APPROVAL.
-   * Deve ser chamado antes de qualquer operação que exija status ativo.
-   */
   assertNotPendingApproval(entry: { id: string; status: string }): void {
     if (entry.status === 'PENDING_APPROVAL') {
-      throw new BusinessException(
-        'ENTRY_APPROVAL_REQUIRED',
-        undefined,
-        { entryId: entry.id, status: entry.status },
-      );
+      throw new BusinessException('ENTRY_APPROVAL_REQUIRED', undefined, {
+        entryId: entry.id,
+        status: entry.status,
+      });
     }
   }
 
-  async cancel(
-    entryId: string,
-    reason: string | undefined,
-    user: AuthUser,
-    branchId: string,
-  ) {
+  async cancel(entryId: string, reason: string | undefined, user: AuthUser, branchId: string) {
     const entry = await this.getById(entryId, branchId);
     await this.checkLockPeriod(branchId, entry.issueDate);
 
-    // Validate reason length if provided
-    if (
-      typeof reason === 'string' &&
-      reason.trim().length > 0 &&
-      reason.trim().length < 10
-    ) {
+    // reason obrigatório — undefined não é aceitável
+    if (!reason || reason.trim().length < 10) {
       throw new BusinessException('VALIDATION_ERROR', 400, {
         field: 'reason',
         minLength: 10,
       });
     }
 
-    if (entry.status === 'CANCELLED') {
-      return entry;
+    if (entry.status === 'CANCELLED') return entry;
+
+    // PAID e PARTIAL não podem ser cancelados — devem ser estornados
+    if (entry.status === 'PAID' || entry.status === 'PARTIAL') {
+      throw new BusinessException('ENTRY_INVALID_STATUS_CANCEL', 422, {
+        entryId,
+        status: entry.status,
+      });
     }
 
-    const cancelled = await this.txHelper.run(async () => {
-      return this.entriesRepository.cancel(entryId, branchId);
+    const cancelled = await this.txHelper.run(async (tx) => {
+      const result = await this.entriesRepository.cancel(entryId, branchId);
+
+      await this.insertAuditLog(tx, {
+        branchId,
+        userId: user.sub,
+        userEmail: this.getAuditUserEmail(user),
+        action: 'CANCEL',
+        entity: 'financial_entries',
+        entityId: entryId,
+        metadata: { reason },
+      });
+
+      return result;
     });
 
     this.eventBus.emit('entry.cancelled', {
@@ -439,7 +461,7 @@ export class EntriesService {
       branchId,
       entryId,
       cancelledBy: user.sub,
-      reason: reason ?? null,
+      reason,
     });
 
     return cancelled;

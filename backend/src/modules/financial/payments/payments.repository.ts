@@ -13,12 +13,12 @@ export type EntryStub = {
   id: string;
   amount: string;
   status: string;
+  type: string;
   branchId: string;
   remainingBalance: string;
   lastPaymentDate: string | null;
 };
 
-/** Executor mínimo compatível com NodePgDatabase e com tx do drizzle.transaction() */
 type SqlExecutor = {
   execute(query: any): Promise<{ rows: unknown[] }>;
 };
@@ -43,23 +43,13 @@ export class PaymentsRepository {
     return null;
   }
 
-  /** Leitura simples (fora de transação) — usado apenas para listagem */
   async findEntryById(
     entryId: string,
     branchId: string,
   ): Promise<EntryStub | null> {
-    return this._findEntry(
-      entryId,
-      branchId,
-      this.drizzleService.getClient(),
-      false,
-    );
+    return this._findEntry(entryId, branchId, this.drizzleService.getClient(), false);
   }
 
-  /**
-   * SELECT … FOR UPDATE — trava a linha para a transação atual.
-   * Deve ser chamado DENTRO de txHelper.run() para garantir isolamento.
-   */
   async findEntryByIdForUpdate(
     entryId: string,
     branchId: string,
@@ -77,49 +67,72 @@ export class PaymentsRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const entryLit = quoteLiteral(entryId);
     const branch = quoteLiteral(branchId);
-
-    // Query 1: lock the entry row (no joins, no GROUP BY)
     const lock = forUpdate ? 'FOR UPDATE' : '';
+
     const entryResult = await executor.execute(
       sql.raw(`
-      SELECT id, amount, status, branch_id
-      FROM ${schema}.financial_entries
-      WHERE id = ${entryLit}
-        AND branch_id = ${branch}
-        AND deleted_at IS NULL
-      LIMIT 1
-      ${lock}
-    `),
+        SELECT id, amount, status, type, branch_id
+        FROM ${schema}.financial_entries
+        WHERE id = ${entryLit}
+          AND branch_id = ${branch}
+          AND deleted_at IS NULL
+        LIMIT 1
+        ${lock}
+      `),
     );
 
     const entryRow = entryResult.rows[0] as Record<string, unknown> | undefined;
     if (!entryRow) return null;
 
-    // Query 2: aggregate payments for the entry (no FOR UPDATE)
     const paymentsResult = await executor.execute(
       sql.raw(`
-      SELECT COALESCE(SUM(amount), 0)::text AS total_paid, MAX(payment_date) AS last_payment_date
-      FROM ${schema}.financial_entry_payments
-      WHERE entry_id = ${entryLit}
-    `),
+        SELECT COALESCE(SUM(amount), 0)::text AS total_paid, MAX(payment_date) AS last_payment_date
+        FROM ${schema}.financial_entry_payments
+        WHERE entry_id = ${entryLit}
+      `),
     );
 
-    const paymentsRow = paymentsResult.rows[0] as
-      | Record<string, unknown>
-      | undefined;
+    const paymentsRow = paymentsResult.rows[0] as Record<string, unknown> | undefined;
     const totalPaidText = this.toText(paymentsRow?.total_paid ?? '0');
-    const remaining = new Decimal(this.toText(entryRow.amount)).minus(
-      new Decimal(totalPaidText),
-    );
+    const remaining = new Decimal(this.toText(entryRow.amount)).minus(new Decimal(totalPaidText));
 
     return {
       id: this.toText(entryRow.id),
       amount: this.toText(entryRow.amount),
       status: this.toText(entryRow.status),
+      type: this.toText(entryRow.type),
       branchId: this.toText(entryRow.branch_id),
       remainingBalance: remaining.toFixed(2),
       lastPaymentDate: this.toNullableText(paymentsRow?.last_payment_date) ?? null,
     };
+  }
+
+  async findPaymentById(
+    paymentId: string,
+    branchId: string,
+    tx?: SqlExecutor,
+  ): Promise<PaymentEntity | null> {
+    const executor = tx ?? this.drizzleService.getClient();
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const forUpdate = tx ? 'FOR UPDATE' : '';
+
+    const result = await executor.execute(
+      sql.raw(`
+        SELECT p.id, p.entry_id, p.amount, p.payment_date,
+               p.payment_method, p.bank_account_id, p.notes,
+               p.created_by, p.created_at
+        FROM ${schema}.financial_entry_payments p
+        INNER JOIN ${schema}.financial_entries e ON e.id = p.entry_id
+        WHERE p.id = ${quoteLiteral(paymentId)}::uuid
+          AND e.branch_id = ${quoteLiteral(branchId)}::uuid
+          AND e.deleted_at IS NULL
+        LIMIT 1
+        ${forUpdate}
+      `),
+    );
+
+    if (!result.rows.length) return null;
+    return this._mapPayment(result.rows[0] as Record<string, unknown>);
   }
 
   async createPayment(
@@ -130,37 +143,26 @@ export class PaymentsRepository {
   ): Promise<PaymentEntity> {
     const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const entry = quoteLiteral(entryId);
-    const amount = quoteLiteral(dto.amount);
-    const paymentDate = quoteLiteral(dto.paymentDate);
-    const paymentMethod = quoteLiteral(dto.paymentMethod ?? null);
-    const bankAccountId = quoteLiteral(dto.bankAccountId ?? null);
-    const notes = quoteLiteral(dto.notes ?? null);
-    const createdBy = quoteLiteral(userId);
 
     const result = await executor.execute(
       sql.raw(`
-      INSERT INTO ${schema}.financial_entry_payments (
-        entry_id, amount, payment_date, payment_method, bank_account_id, notes, created_by
-      ) VALUES (
-        ${entry}, ${amount}, ${paymentDate}, ${paymentMethod}, ${bankAccountId}, ${notes}, ${createdBy}
-      )
-      RETURNING id, entry_id, amount, payment_date, payment_method, bank_account_id, notes, created_by, created_at
-    `),
+        INSERT INTO ${schema}.financial_entry_payments (
+          entry_id, amount, payment_date, payment_method, bank_account_id, notes, created_by
+        ) VALUES (
+          ${quoteLiteral(entryId)},
+          ${quoteLiteral(dto.amount)},
+          ${quoteLiteral(dto.paymentDate)},
+          ${quoteLiteral(dto.paymentMethod ?? null)},
+          ${quoteLiteral(dto.bankAccountId ?? null)},
+          ${quoteLiteral(dto.notes ?? null)},
+          ${quoteLiteral(userId)}
+        )
+        RETURNING id, entry_id, amount, payment_date, payment_method,
+                  bank_account_id, notes, created_by, created_at
+      `),
     );
 
-    const row = result.rows[0] as Record<string, unknown>;
-    return {
-      id: this.toText(row.id),
-      entryId: this.toText(row.entry_id),
-      amount: this.toText(row.amount),
-      paymentDate: this.toText(row.payment_date),
-      paymentMethod: this.toNullableText(row.payment_method),
-      bankAccountId: this.toNullableText(row.bank_account_id),
-      notes: this.toNullableText(row.notes),
-      createdBy: this.toText(row.created_by),
-      createdAt: new Date(this.toText(row.created_at)).toISOString(),
-    };
+    return this._mapPayment(result.rows[0] as Record<string, unknown>);
   }
 
   async listPaymentAmounts(
@@ -169,14 +171,14 @@ export class PaymentsRepository {
   ): Promise<string[]> {
     const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const entry = quoteLiteral(entryId);
+
     const result = await executor.execute(
       sql.raw(`
-      SELECT amount
-      FROM ${schema}.financial_entry_payments
-      WHERE entry_id = ${entry}
-      ORDER BY created_at ASC
-    `),
+        SELECT amount
+        FROM ${schema}.financial_entry_payments
+        WHERE entry_id = ${quoteLiteral(entryId)}
+        ORDER BY created_at ASC
+      `),
     );
 
     return (result.rows as Array<Record<string, unknown>>).map((row) =>
@@ -184,41 +186,23 @@ export class PaymentsRepository {
     );
   }
 
-  async removeLastPayment(
-    entryId: string,
-    tx?: SqlExecutor,
+  async removePaymentById(
+    paymentId: string,
+    tx: SqlExecutor,
   ): Promise<PaymentEntity | null> {
-    const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const entry = quoteLiteral(entryId);
 
-    const result = await executor.execute(
+    const result = await tx.execute(
       sql.raw(`
-      DELETE FROM ${schema}.financial_entry_payments
-      WHERE id = (
-        SELECT id
-        FROM ${schema}.financial_entry_payments
-        WHERE entry_id = ${entry}
-        ORDER BY created_at DESC
-        LIMIT 1
-      )
-      RETURNING id, entry_id, amount, payment_date, payment_method, bank_account_id, notes, created_by, created_at
-    `),
+        DELETE FROM ${schema}.financial_entry_payments
+        WHERE id = ${quoteLiteral(paymentId)}::uuid
+        RETURNING id, entry_id, amount, payment_date, payment_method,
+                  bank_account_id, notes, created_by, created_at
+      `),
     );
 
     if (!result.rows.length) return null;
-    const row = result.rows[0] as Record<string, unknown>;
-    return {
-      id: this.toText(row.id),
-      entryId: this.toText(row.entry_id),
-      amount: this.toText(row.amount),
-      paymentDate: this.toText(row.payment_date),
-      paymentMethod: this.toNullableText(row.payment_method),
-      bankAccountId: this.toNullableText(row.bank_account_id),
-      notes: this.toNullableText(row.notes),
-      createdBy: this.toText(row.created_by),
-      createdAt: new Date(this.toText(row.created_at)).toISOString(),
-    };
+    return this._mapPayment(result.rows[0] as Record<string, unknown>);
   }
 
   async updateEntryPaidStatus(
@@ -228,44 +212,48 @@ export class PaymentsRepository {
   ): Promise<void> {
     const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const entry = quoteLiteral(entryId);
-    const statusLiteral = quoteLiteral(status);
 
     await executor.execute(
       sql.raw(`
-      UPDATE ${schema}.financial_entries
-      SET
-        status = ${statusLiteral},
-        paid_amount = (
-          SELECT COALESCE(SUM(amount), 0)
-          FROM ${schema}.financial_entry_payments
-          WHERE entry_id = ${entry}
-        ),
-        paid_date = (
-          SELECT MAX(payment_date)
-          FROM ${schema}.financial_entry_payments
-          WHERE entry_id = ${entry}
-        ),
-        updated_at = NOW()
-      WHERE id = ${entry}
-    `),
+        UPDATE ${schema}.financial_entries
+        SET
+          status = ${quoteLiteral(status)},
+          paid_amount = (
+            SELECT COALESCE(SUM(amount), 0)
+            FROM ${schema}.financial_entry_payments
+            WHERE entry_id = ${quoteLiteral(entryId)}
+          ),
+          paid_date = (
+            SELECT MAX(payment_date)
+            FROM ${schema}.financial_entry_payments
+            WHERE entry_id = ${quoteLiteral(entryId)}
+          ),
+          updated_at = NOW()
+        WHERE id = ${quoteLiteral(entryId)}
+      `),
     );
   }
 
   async listByEntry(entryId: string): Promise<PaymentEntity[]> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const entry = quoteLiteral(entryId);
 
     const result = await this.drizzleService.getClient().execute(
       sql.raw(`
-      SELECT id, entry_id, amount, payment_date, payment_method, bank_account_id, notes, created_by, created_at
-      FROM ${schema}.financial_entry_payments
-      WHERE entry_id = ${entry}
-      ORDER BY payment_date DESC, created_at DESC
-    `),
+        SELECT id, entry_id, amount, payment_date, payment_method,
+               bank_account_id, notes, created_by, created_at
+        FROM ${schema}.financial_entry_payments
+        WHERE entry_id = ${quoteLiteral(entryId)}
+        ORDER BY payment_date DESC, created_at DESC
+      `),
     );
 
-    return result.rows.map((row) => ({
+    return (result.rows as Array<Record<string, unknown>>).map((row) =>
+      this._mapPayment(row),
+    );
+  }
+
+  private _mapPayment(row: Record<string, unknown>): PaymentEntity {
+    return {
       id: this.toText(row.id),
       entryId: this.toText(row.entry_id),
       amount: this.toText(row.amount),
@@ -275,6 +263,6 @@ export class PaymentsRepository {
       notes: this.toNullableText(row.notes),
       createdBy: this.toText(row.created_by),
       createdAt: new Date(this.toText(row.created_at)).toISOString(),
-    }));
+    };
   }
 }

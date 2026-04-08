@@ -11,7 +11,7 @@ import { queryClient } from '@/lib/query-client';
 
 interface BranchContextValue {
   activeBranch: Branch | null;
-  activeBranchId: string;
+  activeBranchId: string | null;
   branches: Branch[];
   switchBranch: (branchId: string) => Promise<void>;
   isLoading: boolean;
@@ -19,34 +19,35 @@ interface BranchContextValue {
 
 const BranchContext = createContext<BranchContextValue | null>(null);
 
-function getCookie(name: string): string {
-  if (typeof document === 'undefined') {
-    return '';
-  }
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
 
   const entry = document.cookie
     .split('; ')
     .find((part) => part.startsWith(`${name}=`));
 
-  return entry ? decodeURIComponent(entry.split('=')[1]) : '';
+  return entry ? decodeURIComponent(entry.split('=')[1] ?? '') : null;
 }
 
 function setCookie(name: string, value: string): void {
-  if (typeof document === 'undefined') {
-    return;
-  }
+  if (typeof document === 'undefined') return;
+
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=2592000; samesite=lax`;
 }
 
 export function BranchProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [activeBranchId, setActiveBranchId] = useState<string>(() => getCookie('branch_id'));
+  const [activeBranchId, setActiveBranchId] = useState<string | null>(() => {
+    const id = getCookie('branch_id');
+    return id || null;
+  });
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: queryKeys.branches.my,
-    queryFn: () => api.get<Branch[]>('/branches/my'),
+    queryFn: ({ signal }) => api.get<Branch[]>('/branches/my', {}, { signal }),
     retry: false,
+    staleTime: 5 * 60 * 1000,
   });
 
   const branches = useMemo(() => data?.data ?? [], [data?.data]);
@@ -60,22 +61,18 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   }, [branches.length, error, isError, isLoading]);
 
   const switchBranch = useCallback(async (branchId: string) => {
-    if (!branchId || branchId === activeBranchId) {
-      return;
-    }
+    if (!branchId || branchId === activeBranchId) return;
 
     await queryClient.cancelQueries();
 
-    const cancelMutations = (
-      queryClient as typeof queryClient & {
-        cancelMutations?: () => Promise<void>;
-      }
-    ).cancelMutations;
-    if (typeof cancelMutations === 'function') {
-      await cancelMutations.call(queryClient);
-    }
+    queryClient.removeQueries({
+      predicate: (query) => {
+        const key = query.queryKey;
+        return Array.isArray(key) && activeBranchId !== null && key.includes(activeBranchId);
+      },
+    });
 
-    queryClient.removeQueries();
+    void queryClient.invalidateQueries();
 
     setCookie('branch_id', branchId);
     setActiveBranchId(branchId);
@@ -88,17 +85,13 @@ export function BranchProvider({ children }: { children: React.ReactNode }) {
   }, [isOnboardingRequired, pathname, router]);
 
   useEffect(() => {
-    if (branches.length === 0) {
-      return;
-    }
+    if (branches.length === 0) return;
 
     const persisted = branches.find((branch) => branch.id === activeBranchId);
-    if (persisted) {
-      return;
-    }
+    if (persisted) return;
 
     const headquarters = branches.find((branch) => branch.isHeadquarters);
-    switchBranch((headquarters ?? branches[0]).id);
+    void switchBranch((headquarters ?? branches[0]!).id);
   }, [activeBranchId, branches, switchBranch]);
 
   const activeBranch = useMemo(
