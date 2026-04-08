@@ -29,6 +29,12 @@ export const queryKeys = {
   history: (branchId: string) => ['approvals', branchId, 'history'] as const,
   count:   (branchId: string) => ['approvals', branchId, 'count']   as const,
   },
+  notifications: {
+    all: (userId: string) => ['notifications', userId] as const,
+    list: (userId: string, filters: { page: number; limit: number; unreadOnly: boolean }) =>
+      ['notifications', userId, 'list', safeJsonStringify(filters as unknown as Record<string, unknown>)] as const,
+    count: (userId: string) => ['notifications', userId, 'count'] as const,
+  },
   boletos: {
     list: (branchId: string) => ['boletos', branchId, 'list'] as const,
   },

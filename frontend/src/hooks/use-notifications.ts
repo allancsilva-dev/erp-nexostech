@@ -9,6 +9,7 @@ import {
   markAllNotificationsRead,
   deleteNotification,
 } from '@/lib/api/notifications';
+import { queryKeys } from '@/lib/query-keys';
 import type { NotificationsResponse } from '@/types/notifications';
 
 interface UseNotificationsOptions {
@@ -23,11 +24,18 @@ export function useNotifications(
 ) {
   const { page = 1, limit = 20, unreadOnly = false } = opts;
   const user = useAuth();
-  const userId = user?.id;
+  const userId = user?.id ?? null;
   const queryClient = useQueryClient();
 
-  const baseKey = ['notifications', userId];
-  const fullKey = ['notifications', userId, { page, limit, unreadOnly }];
+  const baseKey = userId
+    ? queryKeys.notifications.all(userId)
+    : (['notifications', 'disabled'] as const);
+  const fullKey = userId
+    ? queryKeys.notifications.list(userId, { page, limit, unreadOnly })
+    : (['notifications', 'disabled', 'list'] as const);
+  const countKey = userId
+    ? queryKeys.notifications.count(userId)
+    : (['notifications', 'disabled', 'count'] as const);
 
   const query = useQuery<NotificationsResponse>({
     queryKey: fullKey,
@@ -40,8 +48,17 @@ export function useNotifications(
 
   // mark as read
   const markMutation = useMutation({
-    mutationFn: (id: string) => markNotificationRead(id),
+    mutationFn: async (id: string) => {
+      if (!userId) {
+        return;
+      }
+      await markNotificationRead(id);
+    },
     onMutate: async (id: string) => {
+      if (!userId) {
+        return { previousData: undefined };
+      }
+
       await queryClient.cancelQueries({ queryKey: baseKey, exact: false });
 
       const previousData = queryClient.getQueryData<NotificationsResponse>(fullKey);
@@ -69,14 +86,23 @@ export function useNotifications(
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: baseKey, exact: false });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'count', userId] });
+      queryClient.invalidateQueries({ queryKey: countKey });
     },
   });
 
   // mark all as read
   const markAllMutation = useMutation({
-    mutationFn: () => markAllNotificationsRead(),
+    mutationFn: async () => {
+      if (!userId) {
+        return;
+      }
+      await markAllNotificationsRead();
+    },
     onMutate: async () => {
+      if (!userId) {
+        return { previousData: undefined };
+      }
+
       await queryClient.cancelQueries({ queryKey: baseKey, exact: false });
       const previousData = queryClient.getQueryData<NotificationsResponse>(fullKey);
 
@@ -96,7 +122,7 @@ export function useNotifications(
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: baseKey, exact: false });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'count', userId] });
+      queryClient.invalidateQueries({ queryKey: countKey });
     },
   });
 
@@ -104,9 +130,18 @@ export function useNotifications(
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteNotification(id),
+    mutationFn: async (id: string) => {
+      if (!userId) {
+        return;
+      }
+      await deleteNotification(id);
+    },
     retry: 0,
     onMutate: async (id: string) => {
+      if (!userId) {
+        return { previousData: undefined };
+      }
+
       setDeletingId(id);
       await queryClient.cancelQueries({ queryKey: baseKey, exact: false });
       const previousData = queryClient.getQueryData<NotificationsResponse>(fullKey);
@@ -130,7 +165,7 @@ export function useNotifications(
     onSettled: () => {
       setDeletingId(null);
       queryClient.invalidateQueries({ queryKey: baseKey, exact: false });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'count', userId] });
+      queryClient.invalidateQueries({ queryKey: countKey });
     },
   });
 

@@ -1,9 +1,23 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { QueueService } from '../../infrastructure/queue/queue.service';
-import { DrizzleService } from '../../infrastructure/database/drizzle.service';
 import { NotificationsService } from './notifications.service';
 import { resolveTenantSchema } from '../financial/jobs/jobs.util';
-import { quoteLiteral } from '../../infrastructure/database/sql-builder.util';
+
+interface NotificationJobPayload {
+  tenantId: string;
+  branchId?: string | null;
+  entryId?: string | null;
+  jobType?: string;
+  documentNumber?: string | null;
+  amount?: string | null;
+  entryType?: string | null;
+  createdBy?: string | null;
+  approverId?: string | null;
+  daysUntilDue?: number | null;
+  reason?: string | null;
+  title?: string;
+  message?: string;
+}
 
 @Injectable()
 export class NotificationProcessor implements OnModuleInit {
@@ -11,24 +25,29 @@ export class NotificationProcessor implements OnModuleInit {
 
   constructor(
     private readonly queueService: QueueService,
-    private readonly drizzle: DrizzleService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
   onModuleInit(): void {
-    this.queueService.registerProcessor('financial.notifications', async (payload) => {
+    this.queueService.registerProcessor('financial.notifications', async (rawPayload) => {
       try {
-        const schema = resolveTenantSchema(payload as Record<string, unknown>);
-        const jobType = (payload as any).jobType as string | undefined;
-        const entryId = (payload as any).entryId as string | undefined;
-        const documentNumber = (payload as any).documentNumber ?? null;
-        const amount = (payload as any).amount ?? null;
-        const entryType = (payload as any).entryType ?? null;
-        const branchId = (payload as any).branchId ?? null;
-        const createdBy = (payload as any).createdBy ?? null;
-        const approverId = (payload as any).approverId ?? null;
-        const daysUntilDue = (payload as any).daysUntilDue ?? null;
-        const jobId = (payload as any).jobId ?? null;
+        const payload = rawPayload as unknown as NotificationJobPayload;
+        const schema = resolveTenantSchema(rawPayload as Record<string, unknown>);
+
+        const jobType = payload.jobType;
+        const entryId = payload.entryId ?? null;
+        const entryType = payload.entryType ?? null;
+        const branchId = payload.branchId ?? null;
+        const createdBy = payload.createdBy ?? null;
+        const approverId = payload.approverId ?? null;
+        const daysUntilDue = payload.daysUntilDue ?? null;
+        const doc = payload.documentNumber ?? 'Lançamento';
+        const amount = payload.amount ?? '0,00';
+
+        if (!jobType) {
+          this.logger.warn('Skipping notification: missing jobType in payload');
+          return;
+        }
 
         let title = '';
         let message = '';
@@ -37,62 +56,60 @@ export class NotificationProcessor implements OnModuleInit {
         switch (jobType) {
           case 'approval.approved':
             title = 'Lançamento aprovado';
-            message = `${documentNumber} foi aprovado e está pronto para pagamento.`;
+            message = `${doc} foi aprovado e está pronto para pagamento.`;
             userId = createdBy;
             break;
           case 'approval.rejected':
             title = 'Lançamento rejeitado';
-            message = `${documentNumber} foi rejeitado. Motivo: ${(payload as any).reason ?? ''}`;
+            message = `${doc} foi rejeitado. Motivo: ${payload.reason ?? 'não informado'}`;
             userId = createdBy;
             break;
           case 'payment.created':
-            title = (entryType === 'PAYABLE') ? 'Pagamento registrado' : 'Recebimento registrado';
-            message = `Valor de R$ ${amount} registrado em ${documentNumber}.`;
+            title = entryType === 'PAYABLE' ? 'Pagamento registrado' : 'Recebimento registrado';
+            message = `Valor de R$ ${amount} registrado em ${doc}.`;
             userId = createdBy;
             break;
           case 'entry.overdue':
-            title = (entryType === 'PAYABLE') ? 'Conta a pagar vencida' : 'Conta a receber vencida';
-            message = `${documentNumber} venceu e requer atenção.`;
+            title = entryType === 'PAYABLE' ? 'Conta a pagar vencida' : 'Conta a receber vencida';
+            message = `${doc} venceu e requer atenção.`;
             userId = createdBy;
             break;
           case 'entry.due_soon':
-            title = (entryType === 'PAYABLE') ? 'Conta a pagar vence em breve' : 'Conta a receber vence em breve';
-            message = `${documentNumber} vence em ${daysUntilDue} dia(s).`;
+            title = entryType === 'PAYABLE' ? 'Conta a pagar vence em breve' : 'Conta a receber vence em breve';
+            message = `${doc} vence em ${daysUntilDue ?? '?'} dia(s).`;
             userId = createdBy;
             break;
           case 'approval.pending':
             title = 'Lançamento aguarda aprovação';
-            message = `${documentNumber} de R$ ${amount} aguarda sua aprovação.`;
-            userId = approverId as string | null;
+            message = `${doc} de R$ ${amount} aguarda sua aprovação.`;
+            userId = approverId;
             break;
           default:
-            title = (payload as any).title ?? 'Notificação';
-            message = (payload as any).message ?? '';
+            title = payload.title ?? 'Notificação';
+            message = payload.message ?? '';
             userId = createdBy;
             break;
         }
 
-        // The notifications table requires a non-null user_id (per migration).
-        // If the job doesn't target a specific user, skip persisting and log.
         if (!userId) {
-          this.logger.warn('Skipping notification: missing userId in payload', JSON.stringify(payload));
+          this.logger.warn(
+            `Skipping notification: missing userId for jobType=${jobType} entryId=${entryId}`,
+          );
           return;
         }
 
         await this.notificationsService.create(schema.replace(/"/g, ''), {
-          userId: userId as string | null,
-          branchId: branchId as string | null,
-          type: jobType ?? 'generic',
+          userId,
+          branchId,
+          type: jobType,
           title,
           message,
           metadata: {
             entry_id: entryId ?? null,
-            document_number: documentNumber,
+            document_number: payload.documentNumber ?? null,
             amount,
             type: entryType,
-            job_id: jobId ?? null,
           },
-          jobId: jobId ?? null,
         });
       } catch (e) {
         this.logger.error(`Erro ao processar notification job: ${e instanceof Error ? e.stack : String(e)}`);
