@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { v4 as uuid } from 'uuid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CurrencyInput } from '@/components/shared/currency-input';
@@ -35,8 +36,8 @@ function toBankAccountOptions(value: unknown): BankAccountOption[] {
 export function TransferForm() {
   const [amount, setAmount] = useState('0.00');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [fromBankAccountId, setFromBankAccountId] = useState('');
-  const [toBankAccountId, setToBankAccountId] = useState('');
+  const [fromAccountId, setFromAccountId] = useState('');
+  const [toAccountId, setToAccountId] = useState('');
   const [description, setDescription] = useState('');
 
   const bankAccounts = useBankAccounts();
@@ -56,9 +57,9 @@ export function TransferForm() {
   const isDisabled =
     createTransfer.isPending ||
     lockCheck.isLocked ||
-    !fromBankAccountId ||
-    !toBankAccountId ||
-    fromBankAccountId === toBankAccountId ||
+    !fromAccountId ||
+    !toAccountId ||
+    fromAccountId === toAccountId ||
     amount === '0.00' ||
     description.trim().length === 0;
 
@@ -72,11 +73,12 @@ export function TransferForm() {
 
     createTransfer.mutate(
       {
-        fromBankAccountId,
-        toBankAccountId,
+        fromAccountId,
+        toAccountId,
         amount: String(amount),
         transferDate: date,
         description,
+        idempotencyKey: uuid(),
       },
       {
         onSuccess: () => {
@@ -89,7 +91,7 @@ export function TransferForm() {
 
   return (
     <form className="grid gap-4 surface-card p-4 md:grid-cols-2" onSubmit={handleSubmit}>
-      <Select value={fromBankAccountId} onChange={(event) => setFromBankAccountId(event.target.value)}>
+      <Select value={fromAccountId} onChange={(event) => setFromAccountId(event.target.value)}>
         <option value="">Conta origem</option>
         {accountOptions.map((account) => (
           <option key={account.id} value={account.id}>
@@ -97,7 +99,7 @@ export function TransferForm() {
           </option>
         ))}
       </Select>
-      <Select value={toBankAccountId} onChange={(event) => setToBankAccountId(event.target.value)}>
+      <Select value={toAccountId} onChange={(event) => setToAccountId(event.target.value)}>
         <option value="">Conta destino</option>
         {accountOptions.map((account) => (
           <option key={account.id} value={account.id}>

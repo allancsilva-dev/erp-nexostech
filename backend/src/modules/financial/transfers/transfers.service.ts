@@ -15,6 +15,8 @@ import { EventBusService } from '../../../infrastructure/events/event-bus.servic
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { TransfersRepository } from './transfers.repository';
 
+type DrizzleTransaction = Parameters<Parameters<DrizzleService['transaction']>[0]>[0];
+
 @Injectable()
 export class TransfersService {
   constructor(
@@ -25,61 +27,48 @@ export class TransfersService {
   ) {}
 
   private toDate(date: string | Date): Date {
-    if (date instanceof Date) {
-      return new Date(date.getTime());
-    }
-
-    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return new Date(`${date}T00:00:00`);
-    }
-
+    if (date instanceof Date) return new Date(date.getTime());
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return new Date(`${date}T00:00:00.000Z`);
     return new Date(date);
-  }
-
-  private formatDateBr(date: Date): string {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
-
-  private async getLatestLockedUntil(branchId: string): Promise<string | null> {
-    const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const branchLiteral = quoteLiteral(branchId);
-
-    const result = await this.drizzleService.getClient().execute(
-      sql.raw(`
-      SELECT locked_until
-      FROM ${schema}.lock_periods
-      WHERE branch_id = ${branchLiteral}
-        AND deleted_at IS NULL
-      ORDER BY locked_until DESC
-      LIMIT 1
-    `),
-    );
-
-    const row = result.rows[0] as { locked_until?: unknown } | undefined;
-    if (!row?.locked_until) return null;
-    if (typeof row.locked_until === 'string') return row.locked_until;
-    return String(row.locked_until as Date);
   }
 
   private async checkLockPeriod(
     branchId: string,
     dateToCheck: string | Date,
   ): Promise<void> {
-    const latestLockedUntil = await this.getLatestLockedUntil(branchId);
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const branchLiteral = quoteLiteral(branchId);
 
-    if (!latestLockedUntil) {
+    const result = await this.drizzleService.getClient().execute(
+      sql.raw(`
+        SELECT locked_until
+        FROM ${schema}.lock_periods
+        WHERE branch_id = ${branchLiteral}
+          AND deleted_at IS NULL
+        ORDER BY locked_until DESC
+        LIMIT 1
+      `),
+    );
+
+    const row = result.rows[0] as { locked_until?: unknown } | undefined;
+    if (!row?.locked_until) {
       return;
     }
 
+    const latestLockedUntil =
+      typeof row.locked_until === 'string'
+        ? row.locked_until
+        : String(row.locked_until as Date);
+
     const lockedUntil = this.toDate(latestLockedUntil);
-    lockedUntil.setHours(23, 59, 59, 999);
+    lockedUntil.setUTCHours(23, 59, 59, 999);
 
     const operationDate = this.toDate(dateToCheck);
     if (Number.isNaN(operationDate.getTime())) {
-      return;
+      throw new BusinessException('VALIDATION_ERROR', 400, {
+        field: 'transferDate',
+        message: 'Data inválida',
+      });
     }
 
     if (operationDate <= lockedUntil) {
@@ -94,8 +83,41 @@ export class TransfersService {
     }
   }
 
-  async list(branchId: string) {
-    return this.transfersRepository.list(branchId);
+  private async insertAuditLog(
+    tx: DrizzleTransaction,
+    data: {
+      branchId: string;
+      userId: string;
+      userEmail: string;
+      action: string;
+      entity: string;
+      entityId: string;
+      metadata?: Record<string, unknown>;
+    },
+  ): Promise<void> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const metadataJson = quoteLiteral(JSON.stringify(data.metadata ?? {}));
+
+    await tx.execute(
+      sql.raw(`
+        INSERT INTO ${schema}.audit_logs (
+          branch_id, user_id, user_email, action, entity, entity_id, field_changes, metadata
+        ) VALUES (
+          ${quoteLiteral(data.branchId)},
+          ${quoteLiteral(data.userId)},
+          ${quoteLiteral(data.userEmail)},
+          ${quoteLiteral(data.action)},
+          ${quoteLiteral(data.entity)},
+          ${quoteLiteral(data.entityId)},
+          '[]'::jsonb,
+          ${metadataJson}::jsonb
+        )
+      `),
+    );
+  }
+
+  async list(branchId: string, options?: { page?: number; pageSize?: number }) {
+    return this.transfersRepository.list(branchId, options);
   }
 
   async create(branchId: string, dto: CreateTransferDto, user: AuthUser) {
@@ -111,6 +133,17 @@ export class TransfersService {
       });
     }
 
+    const sourceAccount = await this.transfersRepository.findActiveBankAccount(
+      dto.fromAccountId,
+    );
+    if (!sourceAccount || sourceAccount.branchId !== branchId) {
+      throw new BusinessException(
+        'TRANSFER_INVALID_ACCOUNT',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        { field: 'fromAccountId' },
+      );
+    }
+
     const destinationAccount = await this.transfersRepository.findActiveBankAccount(
       dto.toAccountId,
     );
@@ -118,6 +151,7 @@ export class TransfersService {
       throw new BusinessException(
         'TRANSFER_INVALID_ACCOUNT',
         HttpStatus.UNPROCESSABLE_ENTITY,
+        { field: 'toAccountId' },
       );
     }
 
@@ -144,7 +178,24 @@ export class TransfersService {
         );
       }
 
-      return this.transfersRepository.create(branchId, dto, user.sub, tx);
+      const transfer = await this.transfersRepository.create(branchId, dto, user.sub, tx);
+
+      await this.insertAuditLog(tx, {
+        branchId,
+        userId: user.sub,
+        userEmail: user.email ?? 'system@local',
+        action: 'CREATE',
+        entity: 'financial_transfers',
+        entityId: transfer.id,
+        metadata: {
+          fromAccountId: dto.fromAccountId,
+          toAccountId: dto.toAccountId,
+          amount: dto.amount,
+          transferDate: dto.transferDate,
+        },
+      });
+
+      return transfer;
     });
 
     this.eventBus.emit(
@@ -172,8 +223,17 @@ export class TransfersService {
       );
     }
 
-    await this.txHelper.run(async () => {
-      await this.transfersRepository.softDelete(transferId, branchId);
+    await this.txHelper.run(async (tx) => {
+      await this.transfersRepository.softDelete(transferId, branchId, tx);
+
+      await this.insertAuditLog(tx, {
+        branchId,
+        userId: user.sub,
+        userEmail: user.email ?? 'system@local',
+        action: 'DELETE',
+        entity: 'financial_transfers',
+        entityId: transferId,
+      });
     });
 
     this.eventBus.emit('transfer.deleted', {

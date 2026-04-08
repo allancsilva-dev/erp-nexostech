@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
@@ -30,8 +31,16 @@ export class TransfersController {
   @RequirePermission('financial.entries.view')
   async list(
     @BranchId() branchId: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
   ): Promise<ApiResponse<TransferResponse[]>> {
-    const items = await this.transfersService.list(branchId);
+    const pageNum = Math.max(1, Number.isFinite(Number(page)) ? Number(page) : 1);
+    const pageSizeNum = Math.min(100, Math.max(1, Number.isFinite(Number(pageSize)) ? Number(pageSize) : 20));
+
+    const items = await this.transfersService.list(branchId, {
+      page: pageNum,
+      pageSize: pageSizeNum,
+    });
     return ApiResponse.ok(items.map((item) => TransferResponse.from(item)));
   }
 
@@ -50,7 +59,7 @@ export class TransfersController {
 
   @Delete(':id')
   @Idempotent()
-  @RequirePermission('admin.users.manage')
+  @RequirePermission('financial.entries.delete')
   async reverse(
     @Param('id') id: string,
     @BranchId() branchId: string,

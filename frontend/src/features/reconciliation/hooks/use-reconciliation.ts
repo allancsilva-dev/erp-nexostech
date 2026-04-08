@@ -111,48 +111,47 @@ export function useReconciliation() {
   const state = uiStateQuery.data;
 
   const pending = useQuery({
-    queryKey: ['reconciliation', 'pending', activeBranchId || 'default'] as const,
-    queryFn: () => api.get<ReconciliationItemApi[]>('/reconciliation/pending'),
+    queryKey: queryKeys.reconciliation.all(activeBranchId!),
+    queryFn: ({ signal }) =>
+      api.get<ReconciliationItemApi[]>('/reconciliation/pending', {}, { signal, branchId: activeBranchId! }),
     enabled: Boolean(activeBranchId),
     staleTime: 30_000,
   });
 
   const batchItems = useQuery({
-    queryKey: ['reconciliation', 'batch', state.activeBatchId || 'none', activeBranchId || 'default'] as const,
-    queryFn: () => api.get<ReconciliationItemApi[]>(`/reconciliation/${state.activeBatchId}`),
+    queryKey: ['reconciliation', 'batch', state.activeBatchId, activeBranchId] as const,
+    queryFn: ({ signal }) =>
+      api.get<ReconciliationItemApi[]>(
+        `/reconciliation/${state.activeBatchId}`,
+        {},
+        { signal, branchId: activeBranchId! },
+      ),
     enabled: Boolean(activeBranchId && state.activeBatchId),
     staleTime: 10_000,
   });
 
   const entries = useQuery({
-    queryKey: queryKeys.entries.all(activeBranchId || 'default'),
-    queryFn: () => api.get<EntryListItem[]>('/entries'),
+    queryKey: queryKeys.entries.list(activeBranchId!, { status: 'PENDING' }),
+    queryFn: ({ signal }) =>
+      api.getList<EntryListItem>(
+        '/entries',
+        { status: 'PENDING', pageSize: 100 },
+        { signal, branchId: activeBranchId! },
+      ),
     enabled: Boolean(activeBranchId),
     staleTime: 30_000,
   });
 
   const importBatch = useMutation({
     mutationFn: async ({ file, bankAccountId, startDate, endDate }: ImportStatementParams) => {
-      const payload = {
-        bankAccountId,
-        startDate: startDate ?? monthStartIso(),
-        endDate: endDate ?? todayIso(),
-      };
-
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('bankAccountId', payload.bankAccountId);
-      formData.append('startDate', payload.startDate);
-      formData.append('endDate', payload.endDate);
+      formData.append('bankAccountId', bankAccountId);
+      formData.append('startDate', startDate ?? monthStartIso());
+      formData.append('endDate', endDate ?? todayIso());
 
-      try {
-        const response = await api.postForm<ImportedBatch>('/reconciliation/import', formData);
-        return response.data;
-      } catch {
-        // Fallback for environments where backend still expects JSON payload.
-        const response = await api.post<ImportedBatch>('/reconciliation/import', payload);
-        return response.data;
-      }
+      const response = await api.postForm<ImportedBatch>('/reconciliation/import', formData);
+      return response.data;
     },
     onSuccess: (batch) => {
       const batchId = batch.batchId ?? batch.id;
@@ -170,7 +169,10 @@ export function useReconciliation() {
       }));
 
       void queryClient.invalidateQueries({
-        queryKey: ['reconciliation', 'batch', batchId, activeBranchId || 'default'],
+        queryKey: ['reconciliation', 'batch', batchId, activeBranchId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.reconciliation.all(activeBranchId!),
       });
 
       toast.success('Extrato importado com sucesso');
@@ -191,11 +193,11 @@ export function useReconciliation() {
     onSuccess: () => {
       if (state.activeBatchId) {
         void queryClient.invalidateQueries({
-          queryKey: ['reconciliation', 'batch', state.activeBatchId, activeBranchId || 'default'],
+          queryKey: ['reconciliation', 'batch', state.activeBatchId, activeBranchId],
         });
       }
       void queryClient.invalidateQueries({
-        queryKey: ['reconciliation', 'pending', activeBranchId || 'default'],
+        queryKey: queryKeys.reconciliation.all(activeBranchId!),
       });
     },
   });
@@ -209,11 +211,11 @@ export function useReconciliation() {
     onSuccess: () => {
       if (state.activeBatchId) {
         void queryClient.invalidateQueries({
-          queryKey: ['reconciliation', 'batch', state.activeBatchId, activeBranchId || 'default'],
+          queryKey: ['reconciliation', 'batch', state.activeBatchId, activeBranchId],
         });
       }
       void queryClient.invalidateQueries({
-        queryKey: ['reconciliation', 'pending', activeBranchId || 'default'],
+        queryKey: queryKeys.reconciliation.all(activeBranchId!),
       });
     },
   });
@@ -231,7 +233,7 @@ export function useReconciliation() {
       }));
 
       void queryClient.invalidateQueries({
-        queryKey: ['reconciliation', 'pending', activeBranchId || 'default'],
+        queryKey: queryKeys.reconciliation.all(activeBranchId!),
       });
     },
   });
@@ -288,7 +290,7 @@ export function useReconciliation() {
         }));
 
         await queryClient.invalidateQueries({
-          queryKey: ['reconciliation', 'batch', batchId, activeBranchId || 'default'],
+          queryKey: ['reconciliation', 'batch', batchId, activeBranchId],
         });
       },
       confirmMatch: async (statementId: string, entryId: string) => {

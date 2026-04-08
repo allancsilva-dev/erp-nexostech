@@ -70,7 +70,7 @@ export class CollectionProcessor implements OnModuleInit {
           AND (
             (r.event = 'ON_DUE' AND e.due_date = CURRENT_DATE)
             OR (r.event = 'BEFORE_DUE' AND e.due_date - (r.days_offset * INTERVAL '1 day') = CURRENT_DATE)
-            OR (r.event = 'AFTER_DUE' AND e.due_date + (r.days_offset * INTERVAL '1 day') <= CURRENT_DATE)
+            OR (r.event = 'AFTER_DUE' AND e.due_date + (r.days_offset * INTERVAL '1 day') = CURRENT_DATE)
           )
         ON CONFLICT (rule_id, entry_id, dispatch_date)
         DO NOTHING

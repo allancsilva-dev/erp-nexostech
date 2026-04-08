@@ -74,19 +74,20 @@ export class TransfersRepository {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
     const page = Math.max(1, options.page ?? 1);
-    const pageSize = Math.min(200, Math.max(1, options.pageSize ?? 50));
+    const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 20));
     const offset = (page - 1) * pageSize;
 
     const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
-      SELECT id, branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by, created_at
-      FROM ${schema}.financial_transfers
-      WHERE branch_id = ${branchLiteral}
-        AND deleted_at IS NULL
-      ORDER BY created_at DESC, id DESC
-      LIMIT ${pageSize}
-      OFFSET ${offset}
-    `),
+        SELECT id, branch_id, from_account_id, to_account_id, amount,
+               transfer_date, description, created_by, created_at
+        FROM ${schema}.financial_transfers
+        WHERE branch_id = ${branchLiteral}
+          AND deleted_at IS NULL
+        ORDER BY transfer_date DESC, created_at DESC, id DESC
+        LIMIT ${pageSize}
+        OFFSET ${offset}
+      `),
     );
 
     return getRows(result).map((row) => this.mapRow(row));
@@ -94,18 +95,17 @@ export class TransfersRepository {
 
   async findById(id: string, branchId: string): Promise<TransferEntity | null> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const idLiteral = quoteLiteral(id);
-    const branchLiteral = quoteLiteral(branchId);
 
     const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
-      SELECT id, branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by, created_at
-      FROM ${schema}.financial_transfers
-      WHERE id = ${idLiteral}
-        AND branch_id = ${branchLiteral}
-        AND deleted_at IS NULL
-      LIMIT 1
-    `),
+        SELECT id, branch_id, from_account_id, to_account_id, amount,
+               transfer_date, description, created_by, created_at
+        FROM ${schema}.financial_transfers
+        WHERE id = ${quoteLiteral(id)}
+          AND branch_id = ${quoteLiteral(branchId)}
+          AND deleted_at IS NULL
+        LIMIT 1
+      `),
     );
 
     const row = getRows(result)[0];
@@ -120,23 +120,24 @@ export class TransfersRepository {
   ): Promise<TransferEntity> {
     const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const branchLiteral = quoteLiteral(branchId);
-    const fromAccountLiteral = quoteLiteral(dto.fromAccountId);
-    const toAccountLiteral = quoteLiteral(dto.toAccountId);
-    const amountLiteral = quoteLiteral(dto.amount);
-    const transferDateLiteral = quoteLiteral(dto.transferDate);
-    const descriptionLiteral = quoteLiteral(dto.description ?? null);
-    const userLiteral = quoteLiteral(userId);
 
     const result: unknown = await executor.execute(
       sql.raw(`
-      INSERT INTO ${schema}.financial_transfers (
-        branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by
-      ) VALUES (
-        ${branchLiteral}, ${fromAccountLiteral}, ${toAccountLiteral}, ${amountLiteral}, ${transferDateLiteral}, ${descriptionLiteral}, ${userLiteral}
-      )
-      RETURNING id, branch_id, from_account_id, to_account_id, amount, transfer_date, description, created_by, created_at
-    `),
+        INSERT INTO ${schema}.financial_transfers (
+          branch_id, from_account_id, to_account_id, amount,
+          transfer_date, description, created_by
+        ) VALUES (
+          ${quoteLiteral(branchId)},
+          ${quoteLiteral(dto.fromAccountId)},
+          ${quoteLiteral(dto.toAccountId)},
+          ${quoteLiteral(dto.amount)},
+          ${quoteLiteral(dto.transferDate)},
+          ${quoteLiteral(dto.description ?? null)},
+          ${quoteLiteral(userId)}
+        )
+        RETURNING id, branch_id, from_account_id, to_account_id, amount,
+                  transfer_date, description, created_by, created_at
+      `),
     );
 
     const row = getRows(result)[0];
@@ -147,8 +148,6 @@ export class TransfersRepository {
         HttpStatus.INTERNAL_SERVER_ERROR,
         {
           branchId,
-          fromAccountId: dto.fromAccountId,
-          toAccountId: dto.toAccountId,
           operation: 'CREATE_TRANSFER',
         },
       );
@@ -209,6 +208,7 @@ export class TransfersRepository {
       FROM ${schema}.bank_accounts ba
       WHERE ba.id = ${accountLiteral}
         AND ba.branch_id = ${branchLiteral}
+        AND ba.active = true
         AND ba.deleted_at IS NULL
       LIMIT 1
       FOR UPDATE OF ba
@@ -229,41 +229,34 @@ export class TransfersRepository {
 
   async findActiveBankAccount(accountId: string): Promise<{ branchId: string } | null> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const accountLiteral = quoteLiteral(accountId);
 
     const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
-      SELECT branch_id
-      FROM ${schema}.bank_accounts
-      WHERE id = ${accountLiteral}
-        AND deleted_at IS NULL
-      LIMIT 1
-    `),
+        SELECT branch_id
+        FROM ${schema}.bank_accounts
+        WHERE id = ${quoteLiteral(accountId)}
+          AND active = true
+          AND deleted_at IS NULL
+        LIMIT 1
+      `),
     );
 
     const row = getRows(result)[0];
-    if (!row) {
-      return null;
-    }
-
-    return {
-      branchId: toText(row.branch_id),
-    };
+    return row ? { branchId: toText(row.branch_id) } : null;
   }
 
-  async softDelete(id: string, branchId: string): Promise<void> {
+  async softDelete(id: string, branchId: string, tx?: SqlExecutor): Promise<void> {
+    const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const idLiteral = quoteLiteral(id);
-    const branchLiteral = quoteLiteral(branchId);
 
-    await this.drizzleService.getClient().execute(
+    await executor.execute(
       sql.raw(`
-      UPDATE ${schema}.financial_transfers
-      SET deleted_at = NOW()
-      WHERE id = ${idLiteral}
-        AND branch_id = ${branchLiteral}
-        AND deleted_at IS NULL
-    `),
+        UPDATE ${schema}.financial_transfers
+        SET deleted_at = NOW()
+        WHERE id = ${quoteLiteral(id)}
+          AND branch_id = ${quoteLiteral(branchId)}
+          AND deleted_at IS NULL
+      `),
     );
   }
 }

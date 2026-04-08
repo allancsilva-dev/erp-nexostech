@@ -79,7 +79,7 @@ export class ReconciliationController {
 
   @Delete(':batchId')
   @Idempotent()
-  @RequirePermission('admin.users.manage')
+  @RequirePermission('financial.reconciliation.execute')
   async undo(
     @Param('batchId') batchId: string,
     @BranchId() branchId: string,

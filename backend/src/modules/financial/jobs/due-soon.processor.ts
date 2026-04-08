@@ -35,8 +35,8 @@ export class DueSoonProcessor implements OnModuleInit {
           `),
             );
 
-          const alertDays =
-            (settingsRes?.rows?.[0]?.alert_days as unknown) ?? 3;
+          const alertDaysRaw = settingsRes?.rows?.[0]?.alert_days;
+          const alertDays = Number.isFinite(Number(alertDaysRaw)) ? Number(alertDaysRaw) : 3;
           const intervalLiteral = quoteLiteral(`${alertDays} days`);
 
           const entriesRes: any = await this.drizzleService

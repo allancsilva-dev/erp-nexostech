@@ -359,7 +359,7 @@ export class TenantsRepository {
 
         // PASSO 11 — Inicializar document_sequences para a Matriz (PAYABLE + RECEIVABLE)
         const currentYear = new Date().getFullYear();
-        for (const type of ['PAYABLE', 'RECEIVABLE']) {
+        for (const type of ['PAY', 'REC']) {
           await tx.execute(
             sql.raw(`
             INSERT INTO ${quotedSchema}.document_sequences (branch_id, type, year, last_sequence)

@@ -39,7 +39,9 @@ export const queryKeys = {
     list: (branchId: string) => ['boletos', branchId, 'list'] as const,
   },
   transfers: {
-    list: (branchId: string) => ['transfers', branchId, 'list'] as const,
+    all: (branchId: string) => ['transfers', branchId] as const,
+    list: (branchId: string, filters?: Record<string, unknown>) =>
+      ['transfers', branchId, 'list', safeJsonStringify(filters ?? {})] as const,
   },
   reports: {
     dre: (branchId: string, params?: Record<string, unknown>) =>

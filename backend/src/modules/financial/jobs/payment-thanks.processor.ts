@@ -4,7 +4,6 @@ import { DrizzleService } from '../../../infrastructure/database/drizzle.service
 import { QueueService } from '../../../infrastructure/queue/queue.service';
 import { resolveTenantSchema } from './jobs.util';
 import {
-  quoteIdent,
   quoteLiteral,
 } from '../../../infrastructure/database/sql-builder.util';
 
@@ -59,8 +58,8 @@ export class PaymentThanksProcessor implements OnModuleInit {
         const ruleResult = await this.drizzleService.getClient().execute(
           sql.raw(`
           SELECT r.id AS rule_id, r.email_template_id, t.subject, t.body_text
-          FROM ${quoteIdent(schema.replace(/"/g, ''))}.collection_rules r
-          LEFT JOIN ${quoteIdent(schema.replace(/"/g, ''))}.email_templates t
+          FROM ${schema}.collection_rules r
+          LEFT JOIN ${schema}.email_templates t
             ON t.id = r.email_template_id AND t.deleted_at IS NULL
           WHERE r.branch_id = ${quoteLiteral(branchId)}::uuid
             AND r.trigger_event = 'ON_PAYMENT'
@@ -81,7 +80,7 @@ export class PaymentThanksProcessor implements OnModuleInit {
         // Registra o dispatch como agendado para envio imediato
         await this.drizzleService.getClient().execute(
           sql.raw(`
-          INSERT INTO ${quoteIdent(schema.replace(/"/g, ''))}.collection_dispatches (
+          INSERT INTO ${schema}.collection_dispatches (
             rule_id,
             entry_id,
             branch_id,

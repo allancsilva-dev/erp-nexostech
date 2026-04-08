@@ -8,6 +8,7 @@ import {
 } from '../../../infrastructure/database/sql-builder.util';
 
 type QueryRow = Record<string, unknown>;
+type SqlExecutor = { execute(query: any): Promise<{ rows: unknown[] }> };
 
 function getRows(result: unknown): QueryRow[] {
   if (!result || typeof result !== 'object' || !('rows' in result)) {
@@ -38,6 +39,66 @@ function toText(value: unknown, fallback = ''): string {
 export class ReconciliationRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
 
+  async findActiveBankAccount(
+    accountId: string,
+    branchId: string,
+  ): Promise<{ id: string; branchId: string } | null> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result: unknown = await this.drizzleService.getClient().execute(
+      sql.raw(`
+        SELECT id, branch_id
+        FROM ${schema}.bank_accounts
+        WHERE id = ${quoteLiteral(accountId)}
+          AND branch_id = ${quoteLiteral(branchId)}
+          AND active = true
+          AND deleted_at IS NULL
+        LIMIT 1
+      `),
+    );
+    const row = getRows(result)[0];
+    return row ? { id: toText(row.id), branchId: toText(row.branch_id) } : null;
+  }
+
+  async findItemById(
+    itemId: string,
+    branchId: string,
+  ): Promise<{ id: string; reconciled: boolean; entryId: string } | null> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result: unknown = await this.drizzleService.getClient().execute(
+      sql.raw(`
+        SELECT id, reconciled, entry_id
+        FROM ${schema}.reconciliation_items
+        WHERE id = ${quoteLiteral(itemId)}
+          AND branch_id = ${quoteLiteral(branchId)}
+          AND deleted_at IS NULL
+        LIMIT 1
+      `),
+    );
+    const row = getRows(result)[0];
+    return row
+      ? {
+          id: toText(row.id),
+          reconciled: Boolean(row.reconciled),
+          entryId: toText(row.entry_id),
+        }
+      : null;
+  }
+
+  async entryBelongsToBranch(entryId: string, branchId: string): Promise<boolean> {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+    const result: unknown = await this.drizzleService.getClient().execute(
+      sql.raw(`
+        SELECT 1
+        FROM ${schema}.financial_entries
+        WHERE id = ${quoteLiteral(entryId)}
+          AND branch_id = ${quoteLiteral(branchId)}
+          AND deleted_at IS NULL
+        LIMIT 1
+      `),
+    );
+    return getRows(result).length > 0;
+  }
+
   async listPending(branchId: string) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const result: unknown = await this.drizzleService.getClient().execute(
@@ -57,7 +118,7 @@ export class ReconciliationRepository {
         AND i.deleted_at IS NULL
         AND i.reconciled = false
       ORDER BY i.payment_date DESC
-      LIMIT 200
+      LIMIT 100
     `),
     );
 
@@ -79,9 +140,11 @@ export class ReconciliationRepository {
     bankAccountId: string,
     startDate: string,
     endDate: string,
+    tx?: SqlExecutor,
   ) {
+    const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result: unknown = await this.drizzleService.getClient().execute(
+    const result: unknown = await executor.execute(
       sql.raw(`
       INSERT INTO ${schema}.reconciliation_batches (
         branch_id, bank_account_id, start_date, end_date, created_by
@@ -129,9 +192,11 @@ export class ReconciliationRepository {
     bankAccountId: string,
     startDate: string,
     endDate: string,
+    tx?: SqlExecutor,
   ): Promise<number> {
+    const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const result: unknown = await this.drizzleService.getClient().execute(
+    const result: unknown = await executor.execute(
       sql.raw(`
       INSERT INTO ${schema}.reconciliation_items (
         batch_id, branch_id, payment_id, entry_id, amount, payment_date, reconciled
@@ -159,9 +224,10 @@ export class ReconciliationRepository {
     return getRows(result).length;
   }
 
-  async undoBatch(batchId: string, branchId: string): Promise<void> {
+  async undoBatch(batchId: string, branchId: string, tx?: SqlExecutor): Promise<void> {
+    const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    await this.drizzleService.getClient().execute(
+    await executor.execute(
       sql.raw(`
       UPDATE ${schema}.reconciliation_items
       SET deleted_at = NOW(), updated_at = NOW()
@@ -171,7 +237,7 @@ export class ReconciliationRepository {
     `),
     );
 
-    await this.drizzleService.getClient().execute(
+    await executor.execute(
       sql.raw(`
       UPDATE ${schema}.reconciliation_batches
       SET deleted_at = NOW(), updated_at = NOW()
@@ -219,12 +285,14 @@ export class ReconciliationRepository {
     itemId: string,
     entryId: string | undefined,
     branchId: string,
+    tx?: SqlExecutor,
   ) {
+    const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const entryClause =
       entryId !== undefined ? `entry_id = ${quoteLiteral(entryId)},` : '';
 
-    const result: unknown = await this.drizzleService.getClient().execute(
+    const result: unknown = await executor.execute(
       sql.raw(`
       UPDATE ${schema}.reconciliation_items
       SET ${entryClause}
@@ -232,6 +300,7 @@ export class ReconciliationRepository {
           updated_at = NOW()
       WHERE id = ${quoteLiteral(itemId)}
         AND branch_id = ${quoteLiteral(branchId)}
+        AND reconciled = false
         AND deleted_at IS NULL
       RETURNING id, batch_id, payment_id, entry_id, amount, payment_date, reconciled, updated_at
     `),
@@ -239,11 +308,10 @@ export class ReconciliationRepository {
 
     const row = getRows(result)[0];
     if (!row) {
-      // TODO: mover esta regra de negocio para a camada de service (refactor futuro)
       throw new BusinessException(
-        'INTERNAL_ERROR',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        { itemId, entryId, branchId, operation: 'MATCH_RECONCILIATION_ITEM' },
+        'RECONCILIATION_ITEM_ALREADY_MATCHED',
+        HttpStatus.CONFLICT,
+        { itemId },
       );
     }
 
