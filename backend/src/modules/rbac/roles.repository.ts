@@ -9,6 +9,8 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { RoleEntity } from './dto/role.response';
 import { UpdateRoleDto } from './dto/update-role.dto';
 
+type DrizzleTransaction = Parameters<Parameters<DrizzleService['transaction']>[0]>[0];
+
 export type CurrentUserRoleRow = {
   roleId: string;
   roleName: string;
@@ -179,12 +181,16 @@ export class RolesRepository {
     );
   }
 
-  async unlinkRoleFromUser(userId: string, roleId: string): Promise<void> {
+  async unlinkRoleFromUser(
+    userId: string,
+    roleId: string,
+    tx?: DrizzleTransaction,
+  ): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const userLiteral = quoteLiteral(userId);
     const roleLiteral = quoteLiteral(roleId);
 
-    await this.drizzleService.getClient().execute(
+    await (tx ?? this.drizzleService.getClient()).execute(
       sql.raw(`
       DELETE FROM ${schema}.user_roles
       WHERE user_id = ${userLiteral}
@@ -214,9 +220,13 @@ export class RolesRepository {
     }));
   }
 
-  async assignRoleToUser(userId: string, roleId: string): Promise<void> {
+  async assignRoleToUser(
+    userId: string,
+    roleId: string,
+    tx?: DrizzleTransaction,
+  ): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    await this.drizzleService.getClient().execute(
+    await (tx ?? this.drizzleService.getClient()).execute(
       sql.raw(`
       INSERT INTO ${schema}.user_roles (user_id, role_id, email)
       VALUES (${quoteLiteral(userId)}, ${quoteLiteral(roleId)}, NULL)
@@ -356,9 +366,10 @@ export class RolesRepository {
     userId: string;
     roleId: string;
     email: string;
+    tx?: DrizzleTransaction;
   }): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    await this.drizzleService.getClient().execute(
+    await (params.tx ?? this.drizzleService.getClient()).execute(
       sql.raw(`
       INSERT INTO ${schema}.user_roles (user_id, role_id, email)
       VALUES (
@@ -373,12 +384,13 @@ export class RolesRepository {
   async replaceUserBranches(
     userId: string,
     branchIds: string[],
+    tx?: DrizzleTransaction,
   ): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const userLiteral = quoteLiteral(userId);
 
-    await this.drizzleService.transaction(async (tx) => {
-      await tx.execute(
+    const executeReplace = async (executor: DrizzleTransaction) => {
+      await executor.execute(
         sql.raw(`
         DELETE FROM ${schema}.user_branches
         WHERE user_id = ${userLiteral}
@@ -393,12 +405,21 @@ export class RolesRepository {
         .map((branchId) => `(${userLiteral}, ${quoteLiteral(branchId)})`)
         .join(', ');
 
-      await tx.execute(
+      await executor.execute(
         sql.raw(`
         INSERT INTO ${schema}.user_branches (user_id, branch_id)
         VALUES ${values}
       `),
       );
+    };
+
+    if (tx) {
+      await executeReplace(tx);
+      return;
+    }
+
+    await this.drizzleService.transaction(async (transactionTx) => {
+      await executeReplace(transactionTx);
     });
   }
 
