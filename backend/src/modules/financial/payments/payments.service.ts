@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import {
-  PaymentCreatedEvent,
   PaymentRefundedEvent,
 } from '../../../common/events/financial.events';
 import { BusinessException } from '../../../common/exceptions/business.exception';
@@ -10,6 +9,7 @@ import type { AuthUser } from '../../../common/types/auth-user.type';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
 import { EventBusService } from '../../../infrastructure/events/event-bus.service';
+import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
 import {
   quoteIdent,
   quoteLiteral,
@@ -31,6 +31,7 @@ export class PaymentsService {
     private readonly paymentsRepository: PaymentsRepository,
     private readonly txHelper: TransactionHelper,
     private readonly eventBus: EventBusService,
+    private readonly outboxService: OutboxService,
     private readonly drizzleService: DrizzleService,
   ) {}
 
@@ -70,13 +71,14 @@ export class PaymentsService {
 
       await this.paymentsRepository.updateEntryPaidStatus(entryId, status, tx);
 
+      await this.outboxService.insert(tx, user.tenantId, 'payment.created', {
+        branchId,
+        entryId,
+        amount: dto.amount,
+      });
+
       return created;
     });
-
-    this.eventBus.emit(
-      'payment.created',
-      new PaymentCreatedEvent(user.tenantId, branchId, entryId, dto.amount),
-    );
 
     return payment;
   }

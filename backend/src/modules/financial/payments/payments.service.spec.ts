@@ -3,6 +3,7 @@ import { PaymentsRepository } from './payments.repository';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
 import { EventBusService } from '../../../infrastructure/events/event-bus.service';
+import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
 import { RegisterPaymentDto } from './dto/register-payment.dto';
 
 describe('PaymentsService', () => {
@@ -56,8 +57,17 @@ describe('PaymentsService', () => {
     } as unknown as EventBusService;
 
     const drizzleService = {} as DrizzleService;
+    const outboxService = {
+      insert: jest.fn().mockResolvedValue(undefined),
+    } as unknown as OutboxService;
 
-    const service = new PaymentsService(repository, txHelper, eventBus, drizzleService);
+    const service = new PaymentsService(
+      repository,
+      txHelper,
+      eventBus,
+      outboxService,
+      drizzleService,
+    );
 
     const dto: RegisterPaymentDto = {
       amount: '100.00',
