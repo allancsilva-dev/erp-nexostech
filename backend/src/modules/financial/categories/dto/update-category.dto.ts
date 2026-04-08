@@ -1,5 +1,6 @@
 import {
   IsHexColor,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -17,8 +18,10 @@ export class UpdateCategoryDto {
   name?: string;
 
   @IsOptional()
-  @IsString({ message: 'Tipo deve ser um texto valido' })
-  type?: 'RECEITA' | 'DESPESA';
+  @IsIn(['RECEIVABLE', 'PAYABLE'], {
+    message: 'Tipo deve ser RECEIVABLE ou PAYABLE',
+  })
+  type?: 'RECEIVABLE' | 'PAYABLE';
 
   @IsOptional()
   @IsUUID('4', { message: 'Categoria pai invalida' })

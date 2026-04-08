@@ -10,14 +10,14 @@ export function useCategories(type?: 'PAYABLE' | 'RECEIVABLE') {
   const { activeBranchId } = useBranch();
 
   return useQuery({
-    queryKey: queryKeys.categories.tree(activeBranchId || 'default'),
-    queryFn: async () => {
-      const res = await api.get<Category[]>('/categories');
-      return res.data;
-    },
+    queryKey: queryKeys.categories.tree(activeBranchId!, type),
+    queryFn: ({ signal }) => api
+      .get<Category[]>('/categories', {}, { signal, branchId: activeBranchId! })
+      .then((res) => res.data),
     enabled: Boolean(activeBranchId),
-    select: (allCategories: Category[]) => (
-      type ? allCategories.filter((c) => c.type === type) : allCategories
-    ),
+    staleTime: 5 * 60 * 1000,
+    select: type
+      ? (allCategories: Category[]) => allCategories.filter((c) => c.type === type)
+      : undefined,
   });
 }

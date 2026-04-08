@@ -1,5 +1,6 @@
 import {
   IsHexColor,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -9,19 +10,16 @@ import {
   MinLength,
 } from 'class-validator';
 
-export enum CategoryType {
-  RECEITA = 'RECEITA',
-  DESPESA = 'DESPESA',
-}
-
 export class CreateCategoryDto {
   @IsString({ message: 'Nome deve ser um texto valido' })
   @MinLength(2, { message: 'Nome deve ter no minimo 2 caracteres' })
   @MaxLength(100, { message: 'Nome deve ter no maximo 100 caracteres' })
   name!: string;
 
-  @IsString({ message: 'Tipo deve ser um texto valido' })
-  type!: CategoryType;
+  @IsIn(['RECEIVABLE', 'PAYABLE'], {
+    message: 'Tipo deve ser RECEIVABLE ou PAYABLE',
+  })
+  type!: 'RECEIVABLE' | 'PAYABLE';
 
   @IsOptional()
   @IsUUID('4', { message: 'Categoria pai invalida' })
