@@ -70,34 +70,35 @@ export class ReportsRepository {
     const startLiteral = quoteLiteral(startDate);
     const endLiteral = quoteLiteral(endDate);
 
-    const balanceResult: unknown = await this.drizzleService
-      .getClient()
-      .execute(
-        sql.raw(`
-      SELECT
-        (
-          COALESCE((SELECT SUM(initial_balance) FROM ${schema}.bank_accounts WHERE branch_id = ${branchLiteral} AND deleted_at IS NULL), 0)
-          + COALESCE((SELECT SUM(fep.amount)
-                      FROM ${schema}.financial_entry_payments fep
-                      JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
-                      WHERE fe.branch_id = ${branchLiteral}
-                        AND fe.type = 'RECEIVABLE'
-                        AND fe.status = 'PAID'
-                        AND fe.deleted_at IS NULL
-                        AND fep.payment_date < ${startLiteral}
-                      ), 0)
-          - COALESCE((SELECT SUM(fep.amount)
-                      FROM ${schema}.financial_entry_payments fep
-                      JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
-                      WHERE fe.branch_id = ${branchLiteral}
-                        AND fe.type = 'PAYABLE'
-                        AND fe.status = 'PAID'
-                        AND fe.deleted_at IS NULL
-                        AND fep.payment_date < ${startLiteral}
-                      ), 0)
-        )::text AS start_balance
+    const balanceResult: unknown = await this.drizzleService.getClient().execute(
+      sql.raw(`
+      SELECT (
+        COALESCE((
+          SELECT SUM(initial_balance)
+          FROM ${schema}.bank_accounts
+          WHERE branch_id = ${branchLiteral} AND deleted_at IS NULL
+        ), 0)
+        + COALESCE((
+          SELECT SUM(fep.amount)
+          FROM ${schema}.financial_entry_payments fep
+          JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
+          WHERE fe.branch_id = ${branchLiteral}
+            AND fe.type = 'RECEIVABLE'
+            AND fe.deleted_at IS NULL
+            AND fep.payment_date < ${startLiteral}
+        ), 0)
+        - COALESCE((
+          SELECT SUM(fep.amount)
+          FROM ${schema}.financial_entry_payments fep
+          JOIN ${schema}.financial_entries fe ON fe.id = fep.entry_id
+          WHERE fe.branch_id = ${branchLiteral}
+            AND fe.type = 'PAYABLE'
+            AND fe.deleted_at IS NULL
+            AND fep.payment_date < ${startLiteral}
+        ), 0)
+      )::text AS start_balance
     `),
-      );
+    );
 
     const rowsResult: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
@@ -110,7 +111,7 @@ export class ReportsRepository {
         AND due_date >= ${startLiteral}
         AND due_date <= ${endLiteral}
         AND deleted_at IS NULL
-          AND status NOT IN ('DRAFT', 'CANCELLED')
+        AND status = 'PENDING'
       GROUP BY due_date
       ORDER BY due_date ASC
     `),
@@ -130,7 +131,6 @@ export class ReportsRepository {
         AND fep.payment_date >= ${startLiteral}
         AND fep.payment_date <= ${endLiteral}
         AND fe.deleted_at IS NULL
-        AND fe.status = 'PAID'
       GROUP BY fep.payment_date
       ORDER BY fep.payment_date ASC
     `),
@@ -212,9 +212,14 @@ export class ReportsRepository {
           WHEN CURRENT_DATE - e.due_date <= 60 THEN '31-60'
           ELSE '60+'
         END AS aging_range,
-        COALESCE(SUM(e.amount - COALESCE(e.paid_amount, 0)), 0)::text AS total,
+        COALESCE(SUM(e.amount - COALESCE(p.paid, 0)), 0)::text AS total,
         COUNT(*)::int AS count
       FROM ${schema}.financial_entries e
+      LEFT JOIN (
+        SELECT entry_id, SUM(amount) AS paid
+        FROM ${schema}.financial_entry_payments
+        GROUP BY entry_id
+      ) p ON p.entry_id = e.id
       WHERE e.branch_id = ${branchLiteral}
         AND e.type = 'RECEIVABLE'
         AND e.status IN ('PENDING', 'PARTIAL', 'OVERDUE')
