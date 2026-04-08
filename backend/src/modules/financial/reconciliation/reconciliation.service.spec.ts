@@ -1,6 +1,8 @@
 import { ReconciliationService } from './reconciliation.service';
 import { ReconciliationRepository } from './reconciliation.repository';
+import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
+import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
 import { ImportReconciliationDto } from './dto/import-reconciliation.dto';
 
 describe('ReconciliationService', () => {
@@ -17,6 +19,10 @@ describe('ReconciliationService', () => {
     const importFromPaymentsMock = jest.fn().mockResolvedValue(7);
     const repository: jest.Mocked<ReconciliationRepository> = {
       listPending: jest.fn(),
+      findActiveBankAccount: jest.fn().mockResolvedValue({
+        id: 'acc-1',
+        branchId: 'branch-1',
+      }),
       createBatch: createBatchMock,
       importFromPayments: importFromPaymentsMock,
       undoBatch: jest.fn(),
@@ -24,18 +30,26 @@ describe('ReconciliationService', () => {
       matchItem: jest.fn(),
     } as unknown as jest.Mocked<ReconciliationRepository>;
 
+    const tx = {
+      execute: jest.fn().mockResolvedValue({ rows: [] }),
+    };
+
     const txHelper = {
-      run: jest.fn(async (cb: () => Promise<unknown>) => cb()),
+      run: jest.fn(async (cb: (currentTx: typeof tx) => Promise<unknown>) => cb(tx)),
     } as unknown as TransactionHelper;
 
-    const eventBus = {
-      emit: jest.fn(),
-    };
+    const outboxService = {
+      insert: jest.fn().mockResolvedValue(undefined),
+    } as unknown as OutboxService;
+    const drizzleService = {
+      getTenantSchema: jest.fn().mockReturnValue('tenant_test'),
+    } as unknown as DrizzleService;
 
     const service = new ReconciliationService(
       repository,
       txHelper,
-      eventBus as { emit: (event: string, payload: unknown) => void },
+      outboxService,
+      drizzleService,
     );
 
     const dto: ImportReconciliationDto = {
@@ -61,6 +75,7 @@ describe('ReconciliationService', () => {
       'acc-1',
       '2026-03-01',
       '2026-03-31',
+      tx,
     );
     expect(result.importedCount).toBe(7);
   });

@@ -8,7 +8,7 @@ import {
   quoteLiteral,
 } from '../../../infrastructure/database/sql-builder.util';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
-import { EventBusService } from '../../../infrastructure/events/event-bus.service';
+import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
 import { ImportReconciliationDto } from './dto/import-reconciliation.dto';
 import { ReconciliationRepository } from './reconciliation.repository';
 
@@ -19,7 +19,7 @@ export class ReconciliationService {
   constructor(
     private readonly reconciliationRepository: ReconciliationRepository,
     private readonly txHelper: TransactionHelper,
-    private readonly eventBus: EventBusService,
+    private readonly outboxService: OutboxService,
     private readonly drizzleService: DrizzleService,
   ) {}
 
@@ -169,15 +169,14 @@ export class ReconciliationService {
         metadata: { entryId: entryId ?? null },
       });
 
-      return result;
-    });
+      await this.outboxService.insert(tx, user.tenantId, 'reconciliation.matched', {
+        branchId,
+        itemId,
+        entryId: result.entryId,
+        matchedBy: user.sub,
+      });
 
-    this.eventBus.emit('reconciliation.matched', {
-      tenantId: user.tenantId,
-      branchId,
-      itemId,
-      entryId: matched.entryId,
-      matchedBy: user.sub,
+      return result;
     });
 
     return matched;
