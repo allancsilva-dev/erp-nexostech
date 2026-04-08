@@ -9,9 +9,9 @@ export function useLockPeriods() {
   const { activeBranchId } = useBranch();
 
   return useQuery({
-    queryKey: queryKeys.settings.lockPeriods(activeBranchId || 'default'),
-    queryFn: () => fetchLockPeriods(activeBranchId!),
-    enabled: Boolean(activeBranchId),
+    queryKey: queryKeys.settings.lockPeriods(activeBranchId!),
+    queryFn: ({ signal }) => fetchLockPeriods(activeBranchId!, signal),
+    enabled: !!activeBranchId,
     staleTime: 60_000,
   });
 }

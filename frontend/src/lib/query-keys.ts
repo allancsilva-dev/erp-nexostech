@@ -50,6 +50,8 @@ export const queryKeys = {
       ['reports', branchId, 'balance-sheet', safeJsonStringify(params ?? {})] as const,
     aging: (branchId: string, params?: Record<string, unknown>) =>
       ['reports', branchId, 'aging', safeJsonStringify(params ?? {})] as const,
+    cashflow: (branchId: string, params?: Record<string, unknown>) =>
+      ['reports', branchId, 'cashflow', safeJsonStringify(params ?? {})] as const,
   },
   reconciliation: {
     all: (branchId: string) => ['reconciliation', branchId] as const,
@@ -63,7 +65,7 @@ export const queryKeys = {
     lockPeriods: (branchId: string) => ['lock-periods', branchId] as const,
     collectionRules: (branchId: string) => ['collection-rules', branchId] as const,
   },
-  roles: ['roles'] as const,
+  roles: (tenantId: string) => ['roles', tenantId] as const,
   branches: {
     my: ['branches', 'my'] as const,
   },
