@@ -2,6 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { CacheService } from '../../../infrastructure/cache/cache.service';
 import { CashflowCalculator } from './domain/cashflow.calculator';
 import { DreCalculator } from './domain/dre.calculator';
+import {
+  buildSimplePdf,
+  csvEscape,
+  formatCurrency,
+  formatTableRow,
+} from './pdf.builder';
 import { ReportsRepository } from './reports.repository';
 
 type DreData = {
@@ -47,6 +53,50 @@ export class ReportsService {
     readonly cacheService: CacheService,
     private readonly reportsRepository: ReportsRepository,
   ) {}
+
+  private buildDreCsv(data: DreData): string {
+    return [
+      'revenueTotal,expenseTotal,netResult',
+      [data.revenueTotal, data.expenseTotal, data.netResult]
+        .map(csvEscape)
+        .join(','),
+    ].join('\n');
+  }
+
+  private buildCashflowCsv(rows: CashflowRow[]): string {
+    return [
+      'date,inflow,outflow',
+      ...rows.map((row) =>
+        [row.date, row.inflow, row.outflow].map(csvEscape).join(','),
+      ),
+    ].join('\n');
+  }
+
+  private buildBalanceSheetCsv(data: BalanceSheetData): string {
+    return [
+      'category,inflow,outflow,net',
+      ...data.byCategory.map((row) =>
+        [row.categoryName, row.inflow, row.outflow, row.net]
+          .map(csvEscape)
+          .join(','),
+      ),
+      [
+        csvEscape('TOTAL'),
+        csvEscape(data.totals.inflow),
+        csvEscape(data.totals.outflow),
+        csvEscape(data.totals.net),
+      ].join(','),
+    ].join('\n');
+  }
+
+  private buildAgingCsv(data: AgingData): string {
+    return [
+      'range,total,count',
+      ...data.ranges.map((row) =>
+        [row.range, row.total, String(row.count)].map(csvEscape).join(','),
+      ),
+    ].join('\n');
+  }
 
   async getDre(
     tenantId: string,
@@ -132,7 +182,7 @@ export class ReportsService {
     return {
       format,
       filename,
-      content: `revenueTotal,expenseTotal,netResult\n${dre.revenueTotal},${dre.expenseTotal},${dre.netResult}`,
+      content: this.buildDreCsv(dre),
     };
   }
 
@@ -159,14 +209,10 @@ export class ReportsService {
       };
     }
 
-    const rows = cashflow.rows
-      .map((row) => `${row.date},${row.inflow},${row.outflow}`)
-      .join('\n');
-
     return {
       format,
       filename,
-      content: ['date,inflow,outflow', rows].filter(Boolean).join('\n'),
+      content: this.buildCashflowCsv(cashflow.rows),
     };
   }
 
@@ -180,16 +226,42 @@ export class ReportsService {
   ) {
     if (report === 'dre') {
       const data = await this.getDre(tenantId, branchId, startDate, endDate);
-      const csv = `revenueTotal,expenseTotal,netResult\n${data.revenueTotal},${data.expenseTotal},${data.netResult}`;
+      const csv = this.buildDreCsv(data);
+
+      if (format === 'pdf') {
+        const lines = [
+          `Periodo: ${startDate} - ${endDate}`,
+          '',
+          formatTableRow([
+            { value: 'Receita Total', width: 30 },
+            { value: formatCurrency(data.revenueTotal), width: 20 },
+          ]),
+          formatTableRow([
+            { value: 'Despesa Total', width: 30 },
+            { value: formatCurrency(data.expenseTotal), width: 20 },
+          ]),
+          '',
+          formatTableRow([
+            { value: 'Resultado Liquido', width: 30 },
+            { value: formatCurrency(data.netResult), width: 20 },
+          ]),
+        ];
+        const pdfBuffer = await buildSimplePdf(
+          'DRE - Demonstrativo de Resultado',
+          lines,
+        );
+
+        return {
+          format,
+          filename: `dre-${startDate}-${endDate}.pdf`,
+          content: pdfBuffer.toString('base64'),
+        };
+      }
+
       return {
         format,
         filename: `dre-${startDate}-${endDate}.${format}`,
-        content:
-          format === 'csv'
-            ? csv
-            : Buffer.from(`DRE\n${startDate} - ${endDate}\n${csv}`).toString(
-                'base64',
-              ),
+        content: csv,
       };
     }
 
@@ -200,20 +272,42 @@ export class ReportsService {
         startDate,
         endDate,
       );
-      const rows = data.rows
-        .map((row) => `${row.date},${row.inflow},${row.outflow}`)
-        .join('\n');
-      const csv = ['date,inflow,outflow', rows].filter(Boolean).join('\n');
+      const csv = this.buildCashflowCsv(data.rows);
+
+      if (format === 'pdf') {
+        const header = formatTableRow([
+          { value: 'Data', width: 14 },
+          { value: 'Entradas', width: 18 },
+          { value: 'Saidas', width: 18 },
+        ]);
+        const separator = '-'.repeat(50);
+        const lines = [
+          `Periodo: ${startDate} - ${endDate}`,
+          `Saldo Inicial: ${formatCurrency(data.startBalance)}`,
+          '',
+          header,
+          separator,
+          ...data.rows.map((row) =>
+            formatTableRow([
+              { value: row.date, width: 14 },
+              { value: formatCurrency(row.inflow), width: 18 },
+              { value: formatCurrency(row.outflow), width: 18 },
+            ]),
+          ),
+        ];
+        const pdfBuffer = await buildSimplePdf('Fluxo de Caixa', lines);
+
+        return {
+          format,
+          filename: `cashflow-${startDate}-${endDate}.pdf`,
+          content: pdfBuffer.toString('base64'),
+        };
+      }
 
       return {
         format,
         filename: `cashflow-${startDate}-${endDate}.${format}`,
-        content:
-          format === 'csv'
-            ? csv
-            : Buffer.from(
-                `CASHFLOW\n${startDate} - ${endDate}\n${csv}`,
-              ).toString('base64'),
+        content: csv,
       };
     }
 
@@ -224,43 +318,95 @@ export class ReportsService {
         startDate,
         endDate,
       );
-      const rows = data.byCategory
-        .map(
-          (row) =>
-            `${row.categoryName},${row.inflow},${row.outflow},${row.net}`,
-        )
-        .join('\n');
-      const csv = ['category,inflow,outflow,net', rows]
-        .filter(Boolean)
-        .join('\n');
+      const csv = this.buildBalanceSheetCsv(data);
+
+      if (format === 'pdf') {
+        const header = formatTableRow([
+          { value: 'Categoria', width: 30 },
+          { value: 'Entradas', width: 15 },
+          { value: 'Saidas', width: 15 },
+          { value: 'Resultado', width: 15 },
+        ]);
+        const separator = '-'.repeat(79);
+        const lines = [
+          `Periodo: ${startDate} - ${endDate}`,
+          '',
+          header,
+          separator,
+          ...data.byCategory.map((row) =>
+            formatTableRow([
+              { value: row.categoryName, width: 30 },
+              { value: formatCurrency(row.inflow), width: 15 },
+              { value: formatCurrency(row.outflow), width: 15 },
+              { value: formatCurrency(row.net), width: 15 },
+            ]),
+          ),
+          separator,
+          formatTableRow([
+            { value: 'TOTAL', width: 30 },
+            { value: formatCurrency(data.totals.inflow), width: 15 },
+            { value: formatCurrency(data.totals.outflow), width: 15 },
+            { value: formatCurrency(data.totals.net), width: 15 },
+          ]),
+        ];
+        const pdfBuffer = await buildSimplePdf(
+          'Balancete por Categoria',
+          lines,
+        );
+
+        return {
+          format,
+          filename: `balance-sheet-${startDate}-${endDate}.pdf`,
+          content: pdfBuffer.toString('base64'),
+        };
+      }
 
       return {
         format,
         filename: `balance-sheet-${startDate}-${endDate}.${format}`,
-        content:
-          format === 'csv'
-            ? csv
-            : Buffer.from(
-                `BALANCE SHEET\n${startDate} - ${endDate}\n${csv}`,
-              ).toString('base64'),
+        content: csv,
       };
     }
 
     const data = await this.getAging(tenantId, branchId, startDate, endDate);
-    const rows = data.ranges
-      .map((row) => `${row.range},${row.total},${row.count}`)
-      .join('\n');
-    const csv = ['range,total,count', rows].filter(Boolean).join('\n');
+    const csv = this.buildAgingCsv(data);
+
+    if (format === 'pdf') {
+      const header = formatTableRow([
+        { value: 'Faixa (dias)', width: 20 },
+        { value: 'Total', width: 20 },
+        { value: 'Quantidade', width: 12 },
+      ]);
+      const separator = '-'.repeat(54);
+      const lines = [
+        `Periodo: ${startDate} - ${endDate}`,
+        '',
+        header,
+        separator,
+        ...data.ranges.map((row) =>
+          formatTableRow([
+            { value: row.range, width: 20 },
+            { value: formatCurrency(row.total), width: 20 },
+            { value: String(row.count), width: 12 },
+          ]),
+        ),
+      ];
+      const pdfBuffer = await buildSimplePdf(
+        'Aging - Contas a Receber',
+        lines,
+      );
+
+      return {
+        format,
+        filename: `aging-${startDate}-${endDate}.pdf`,
+        content: pdfBuffer.toString('base64'),
+      };
+    }
 
     return {
       format,
       filename: `aging-${startDate}-${endDate}.${format}`,
-      content:
-        format === 'csv'
-          ? csv
-          : Buffer.from(`AGING\n${startDate} - ${endDate}\n${csv}`).toString(
-              'base64',
-            ),
+      content: csv,
     };
   }
 
