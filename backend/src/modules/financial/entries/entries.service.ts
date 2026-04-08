@@ -6,6 +6,7 @@ import { BusinessException } from '../../../common/exceptions/business.exception
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import { EventBusService } from '../../../infrastructure/events/event-bus.service';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
+import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
 import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
 import { AuthUser } from '../../../common/types/auth-user.type';
 import { CreateEntryDto, EntryType } from './dto/create-entry.dto';
@@ -32,6 +33,7 @@ export class EntriesService {
     private readonly entriesRepository: EntriesRepository,
     private readonly txHelper: TransactionHelper,
     private readonly eventBus: EventBusService,
+    private readonly outboxService: OutboxService,
     private readonly drizzleService: DrizzleService,
     private readonly approvalRulesService: ApprovalRulesService,
     private readonly categoriesService: CategoriesService,
@@ -200,6 +202,17 @@ export class EntriesService {
         metadata: { installmentTotal, status: initialStatus },
       });
 
+      if (initialStatus === 'PENDING_APPROVAL') {
+        await this.outboxService.insert(tx, user.tenantId, 'entry.pending_approval', {
+          branchId,
+          entryId: entries[0]!.id,
+          entryType: entries[0]!.type,
+          documentNumber: entries[0]!.documentNumber,
+          amount: entries[0]!.amount,
+          createdBy: user.sub,
+        });
+      }
+
       return entries[0]!;
     });
 
@@ -209,18 +222,6 @@ export class EntriesService {
       entryId: created.id,
       type: created.type,
     });
-
-    if (created.status === 'PENDING_APPROVAL') {
-      this.eventBus.emit('entry.pending_approval', {
-        tenantId: user.tenantId,
-        branchId,
-        entryId: created.id,
-        entryType: created.type,
-        documentNumber: created.documentNumber,
-        amount: created.amount,
-        createdBy: user.sub,
-      });
-    }
 
     return created;
   }
