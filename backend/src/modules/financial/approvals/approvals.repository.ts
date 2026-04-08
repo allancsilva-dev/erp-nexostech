@@ -4,6 +4,8 @@ import { BusinessException } from '../../../common/exceptions/business.exception
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
 
+type DrizzleTransaction = Parameters<Parameters<DrizzleService['transaction']>[0]>[0];
+
 @Injectable()
 export class ApprovalsRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
@@ -99,12 +101,13 @@ export class ApprovalsRepository {
     action: 'APPROVED' | 'REJECTED',
     notes?: string,
     entryType?: string,
+    tx?: DrizzleTransaction,
   ) {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const entryLiteral = quoteLiteral(entryId);
     const branchLiteral = quoteLiteral(branchId);
-    const result = await this.drizzleService.transaction(async (tx) => {
-      const insertRes = await tx.execute(
+    const runInTransaction = async (executor: DrizzleTransaction) => {
+      const insertRes = await executor.execute(
         sql.raw(`
           INSERT INTO ${schema}.entry_approvals (
             entry_id, branch_id, approved_by, action, notes
@@ -120,7 +123,7 @@ export class ApprovalsRepository {
         const prefix = (entryType ?? 'RECEIVABLE') === 'PAYABLE' ? 'PAY' : 'REC';
         const year = new Date().getFullYear();
 
-        const seqRes: unknown = await tx.execute(
+        const seqRes: unknown = await executor.execute(
           sql.raw(`
             INSERT INTO ${schema}.document_sequences (branch_id, type, year, last_sequence)
             VALUES (${branchLiteral}, ${quoteLiteral(prefix)}, ${year}, 1)
@@ -138,7 +141,7 @@ export class ApprovalsRepository {
         const nextSeq = Number(seqRows[0]?.last_sequence ?? 1);
         const documentNumber = `${prefix}-${year}-${String(nextSeq).padStart(5, '0')}`;
 
-        const updateResult = await tx.execute(
+        const updateResult = await executor.execute(
           sql.raw(`
             UPDATE ${schema}.financial_entries
             SET status = 'PENDING', document_number = ${quoteLiteral(documentNumber)}, updated_at = NOW()
@@ -154,7 +157,7 @@ export class ApprovalsRepository {
           throw new BusinessException('APPROVAL_ALREADY_PROCESSED', HttpStatus.CONFLICT);
         }
       } else {
-        const updateResult = await tx.execute(
+        const updateResult = await executor.execute(
           sql.raw(`
             UPDATE ${schema}.financial_entries
             SET status = 'CANCELLED', updated_at = NOW()
@@ -172,7 +175,13 @@ export class ApprovalsRepository {
       }
 
       return insertRes;
-    });
+    };
+
+    const result = tx
+      ? await runInTransaction(tx)
+      : await this.drizzleService.transaction(async (transactionTx) =>
+          runInTransaction(transactionTx),
+        );
 
     const row = result.rows[0] as Record<string, unknown>;
     return {

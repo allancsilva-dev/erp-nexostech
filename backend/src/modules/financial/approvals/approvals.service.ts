@@ -1,14 +1,16 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { BusinessException } from '../../../common/exceptions/business.exception';
 import type { AuthUser } from '../../../common/types/auth-user.type';
-import { EventBusService } from '../../../infrastructure/events/event-bus.service';
+import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
+import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
 import { ApprovalsRepository } from './approvals.repository';
 
 @Injectable()
 export class ApprovalsService {
   constructor(
     private readonly approvalsRepository: ApprovalsRepository,
-    private readonly eventBus: EventBusService,
+    private readonly txHelper: TransactionHelper,
+    private readonly outboxService: OutboxService,
   ) {}
 
   async listPending(branchId: string) {
@@ -37,23 +39,27 @@ export class ApprovalsService {
       );
     }
 
-    const record = await this.approvalsRepository.createApprovalRecord(
-      entryId,
-      branchId,
-      user.sub,
-      'APPROVED',
-      undefined,
-      entry.type,
-    );
+    const record = await this.txHelper.run(async (tx) => {
+      const createdRecord = await this.approvalsRepository.createApprovalRecord(
+        entryId,
+        branchId,
+        user.sub,
+        'APPROVED',
+        undefined,
+        entry.type,
+        tx,
+      );
 
-    this.eventBus.emit('entry.approved', {
-      tenantId: user.tenantId,
-      branchId,
-      entryId,
-      approverId: user.sub,
-      createdBy: entry.createdBy,
-      documentNumber: entry.documentNumber,
-      amount: entry.amount,
+      await this.outboxService.insert(tx, user.tenantId, 'entry.approved', {
+        branchId,
+        entryId,
+        approverId: user.sub,
+        createdBy: entry.createdBy,
+        documentNumber: entry.documentNumber,
+        amount: entry.amount,
+      });
+
+      return createdRecord;
     });
 
     return record;
@@ -85,22 +91,28 @@ export class ApprovalsService {
       });
     }
 
-    const record = await this.approvalsRepository.createApprovalRecord(
-      entryId,
-      branchId,
-      user.sub,
-      'REJECTED',
-      reason,
-    );
-    this.eventBus.emit('entry.rejected', {
-      tenantId: user.tenantId,
-      branchId,
-      entryId,
-      approverId: user.sub,
-      createdBy: entry.createdBy,
-      documentNumber: entry.documentNumber,
-      amount: entry.amount,
-      reason,
+    const record = await this.txHelper.run(async (tx) => {
+      const createdRecord = await this.approvalsRepository.createApprovalRecord(
+        entryId,
+        branchId,
+        user.sub,
+        'REJECTED',
+        reason,
+        undefined,
+        tx,
+      );
+
+      await this.outboxService.insert(tx, user.tenantId, 'entry.rejected', {
+        branchId,
+        entryId,
+        approverId: user.sub,
+        createdBy: entry.createdBy,
+        documentNumber: entry.documentNumber,
+        amount: entry.amount,
+        reason,
+      });
+
+      return createdRecord;
     });
 
     return record;
