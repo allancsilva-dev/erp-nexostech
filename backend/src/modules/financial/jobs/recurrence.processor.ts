@@ -85,7 +85,8 @@ export class RecurrenceProcessor implements OnModuleInit {
                 INSERT INTO ${schema}.financial_entries (
                   branch_id, document_number, type, description,
                   amount, issue_date, due_date, status,
-                  category_id, contact_id, bank_account_id, created_by
+                  category_id, contact_id, bank_account_id, created_by,
+                  recurrence_id
                 ) VALUES (
                   ${quoteLiteral(row.branch_id)},
                   ${quoteLiteral(documentNumber)},
@@ -98,9 +99,11 @@ export class RecurrenceProcessor implements OnModuleInit {
                   ${quoteLiteral(row.category_id)},
                   ${quoteLiteral(row.contact_id)},
                   ${quoteLiteral(row.bank_account_id)},
-                  ${quoteLiteral(row.created_by)}
+                  ${quoteLiteral(row.created_by)},
+                  ${quoteLiteral(row.id)}
                 )
-                ON CONFLICT (branch_id, document_number) WHERE deleted_at IS NULL
+                ON CONFLICT (recurrence_id, due_date)
+                WHERE recurrence_id IS NOT NULL AND deleted_at IS NULL
                 DO NOTHING
               `),
             );

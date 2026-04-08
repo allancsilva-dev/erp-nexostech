@@ -653,4 +653,17 @@ export const TENANT_MIGRATIONS: TenantMigration[] = [
        WHERE deleted_at IS NULL`,
     ],
   },
+  {
+    name: '019_add_recurrence_idempotency_to_financial_entries',
+    run: (schema) => [
+      `ALTER TABLE ${schema}.financial_entries
+       ADD COLUMN IF NOT EXISTS recurrence_id UUID REFERENCES ${schema}.recurrences(id) ON DELETE SET NULL`,
+      `CREATE INDEX IF NOT EXISTS idx_entries_recurrence
+       ON ${schema}.financial_entries(recurrence_id)
+       WHERE recurrence_id IS NOT NULL AND deleted_at IS NULL`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS uq_entries_recurrence_due_date
+       ON ${schema}.financial_entries(recurrence_id, due_date)
+       WHERE recurrence_id IS NOT NULL AND deleted_at IS NULL`,
+    ],
+  },
 ];
