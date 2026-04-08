@@ -7,6 +7,7 @@ import { envSchema } from './config/env.schema';
 import { CacheModule } from './cache/cache.module';
 import { DatabaseModule } from './database/database.module';
 import { EventsModule } from './events/events.module';
+import { OutboxModule } from './outbox/outbox.module';
 import { QueueModule } from './queue/queue.module';
 import { StorageModule } from './storage/storage.module';
 
@@ -28,6 +29,7 @@ import { StorageModule } from './storage/storage.module';
     DatabaseModule,
     CacheModule,
     EventsModule,
+    OutboxModule,
     QueueModule,
     StorageModule,
   ],
@@ -35,6 +37,7 @@ import { StorageModule } from './storage/storage.module';
     DatabaseModule,
     CacheModule,
     EventsModule,
+    OutboxModule,
     QueueModule,
     StorageModule,
   ],

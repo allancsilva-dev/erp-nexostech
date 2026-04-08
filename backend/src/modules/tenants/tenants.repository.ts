@@ -473,6 +473,27 @@ export class TenantsRepository {
       )
     `),
     );
+
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
+      CREATE TABLE IF NOT EXISTS public.outbox_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL,
+        event_name VARCHAR(100) NOT NULL,
+        payload JSONB NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        processed_at TIMESTAMP NULL
+      )
+    `),
+    );
+
+    await this.drizzleService.getClient().execute(
+      sql.raw(`
+      CREATE INDEX IF NOT EXISTS idx_outbox_unprocessed
+      ON public.outbox_events (processed_at, created_at)
+      WHERE processed_at IS NULL
+    `),
+    );
   }
 
   private async applyTenantMigrations(
