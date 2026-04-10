@@ -26,11 +26,10 @@ export class EntryStatusMachine {
 
   static assertTransition(from: EntryStatus, to: EntryStatus): void {
     if (!this.canTransition(from, to)) {
-      throw new BusinessException(
-        'INVALID_STATUS_TRANSITION',
-        undefined,
-        { currentStatus: from, targetStatus: to },
-      );
+      throw new BusinessException('INVALID_STATUS_TRANSITION', undefined, {
+        currentStatus: from,
+        targetStatus: to,
+      });
     }
   }
 }

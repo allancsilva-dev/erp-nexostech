@@ -8,7 +8,13 @@ import { EntriesRepository } from './entries.repository';
 import { EntriesService } from './entries.service';
 
 @Module({
-  imports: [DatabaseModule, EventsModule, OutboxModule, ApprovalRulesModule, CategoriesModule],
+  imports: [
+    DatabaseModule,
+    EventsModule,
+    OutboxModule,
+    ApprovalRulesModule,
+    CategoriesModule,
+  ],
   providers: [EntriesService, EntriesRepository],
   exports: [EntriesService],
 })

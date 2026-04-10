@@ -45,7 +45,8 @@ export class CreateEntryDto {
 
   @IsString({ message: 'Valor deve ser um texto valido' })
   @Matches(/^\d+\.\d{2}$/, {
-    message: 'Valor monetario invalido. Informe um numero positivo com 2 casas decimais',
+    message:
+      'Valor monetario invalido. Informe um numero positivo com 2 casas decimais',
   })
   amount!: string;
 

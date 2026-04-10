@@ -117,12 +117,17 @@ export class EntriesRepository {
     const page = Math.max(1, options.page ?? 1);
     const pageSize = Math.min(200, Math.max(1, options.pageSize ?? 50));
     const offset = (page - 1) * pageSize;
-    const allowedSortColumns: Record<NonNullable<EntriesListOptions['sortBy']>, string> = {
+    const allowedSortColumns: Record<
+      NonNullable<EntriesListOptions['sortBy']>,
+      string
+    > = {
       createdAt: 'e.created_at',
       dueDate: 'e.due_date',
       amount: 'e.amount',
     };
-    const sortColumn = options.sortBy ? allowedSortColumns[options.sortBy] : undefined;
+    const sortColumn = options.sortBy
+      ? allowedSortColumns[options.sortBy]
+      : undefined;
     const sortDirection = options.sortOrder === 'asc' ? 'ASC' : 'DESC';
 
     const whereClauses = [
