@@ -79,13 +79,13 @@ export class TenantInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    const schemaName = await this.resolveSchema(tenantId);
-
-    request.tenantId = tenantId;
-    this.clsService.set('tenantId', tenantId);
-    this.clsService.set('tenantSchema', schemaName);
-
-    return next.handle();
+    return this.clsService.run(async () => {
+      request.tenantId = tenantId;
+      this.clsService.set('tenantId', tenantId);
+      const schemaName = await this.resolveSchema(tenantId);
+      this.clsService.set('tenantSchema', schemaName);
+      return next.handle();
+    });
   }
 
   private async resolveSchema(tenantId: string): Promise<string> {
