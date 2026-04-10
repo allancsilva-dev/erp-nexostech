@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
-import { Observable, from, switchMap } from 'rxjs';
+import { Observable } from 'rxjs';
 import { sql } from 'drizzle-orm';
 import { AuthUser } from '../types/auth-user.type';
 import { DrizzleService } from '../../infrastructure/database/drizzle.service';
@@ -29,7 +29,10 @@ export class TenantInterceptor implements NestInterceptor {
     private readonly cacheService: CacheService,
   ) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+  async intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Promise<Observable<unknown>> {
     const request = context.switchToHttp().getRequest<TenantAwareRequest>();
     const path = (request.url ?? request.originalUrl ?? '').split('?')[0];
     const publicRoutes = ['/api/v1/health', '/api/v1/metrics'];
@@ -76,15 +79,13 @@ export class TenantInterceptor implements NestInterceptor {
       return next.handle();
     }
 
+    const schemaName = await this.resolveSchema(tenantId);
+
     request.tenantId = tenantId;
     this.clsService.set('tenantId', tenantId);
+    this.clsService.set('tenantSchema', schemaName);
 
-    return from(this.resolveSchema(tenantId)).pipe(
-      switchMap((schemaName) => {
-        this.clsService.set('tenantSchema', schemaName);
-        return next.handle();
-      }),
-    );
+    return next.handle();
   }
 
   private async resolveSchema(tenantId: string): Promise<string> {
