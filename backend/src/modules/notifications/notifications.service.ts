@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../infrastructure/database/sql-builder.util';
 
 export interface NotificationRow {
   id: string;
@@ -39,7 +42,9 @@ export class NotificationsService {
     const type = quoteLiteral(data.type);
     const title = quoteLiteral(data.title);
     const message = quoteLiteral(data.message);
-    const metadata = data.metadata ? quoteLiteral(JSON.stringify(data.metadata)) : 'NULL';
+    const metadata = data.metadata
+      ? quoteLiteral(JSON.stringify(data.metadata))
+      : 'NULL';
 
     try {
       await this.drizzle.getClient().execute(
@@ -59,10 +64,17 @@ export class NotificationsService {
         `),
       );
     } catch (e: unknown) {
-      if (e && typeof e === 'object' && 'code' in e && (e as { code: string }).code === '23505') {
+      if (
+        e &&
+        typeof e === 'object' &&
+        'code' in e &&
+        (e as { code: string }).code === '23505'
+      ) {
         return;
       }
-      this.logger.error(`Erro ao criar notificação: ${e instanceof Error ? e.stack : String(e)}`);
+      this.logger.error(
+        `Erro ao criar notificação: ${e instanceof Error ? e.stack : String(e)}`,
+      );
     }
   }
 
@@ -109,8 +121,12 @@ export class NotificationsService {
     const rows = Array.isArray(dataRes?.rows)
       ? (dataRes.rows as unknown as NotificationRow[])
       : [];
-    const total = Number((totalRes?.rows as Array<{ total: unknown }>)?.[0]?.total ?? 0);
-    const unread_count = Number((unreadRes?.rows as Array<{ unread: unknown }>)?.[0]?.unread ?? 0);
+    const total = Number(
+      (totalRes?.rows as Array<{ total: unknown }>)?.[0]?.total ?? 0,
+    );
+    const unread_count = Number(
+      (unreadRes?.rows as Array<{ unread: unknown }>)?.[0]?.unread ?? 0,
+    );
 
     return { data: rows, total, unread_count };
   }
@@ -128,7 +144,11 @@ export class NotificationsService {
     return Number((res?.rows as Array<{ unread: unknown }>)?.[0]?.unread ?? 0);
   }
 
-  async markAsRead(schemaPayload: string, userId: string, id: string): Promise<void> {
+  async markAsRead(
+    schemaPayload: string,
+    userId: string,
+    id: string,
+  ): Promise<void> {
     const schema = quoteIdent(schemaPayload);
     await this.drizzle.getClient().execute(
       sql.raw(`
@@ -153,7 +173,11 @@ export class NotificationsService {
     );
   }
 
-  async softDelete(schemaPayload: string, userId: string, id: string): Promise<void> {
+  async softDelete(
+    schemaPayload: string,
+    userId: string,
+    id: string,
+  ): Promise<void> {
     const schema = quoteIdent(schemaPayload);
     await this.drizzle.getClient().execute(
       sql.raw(`
