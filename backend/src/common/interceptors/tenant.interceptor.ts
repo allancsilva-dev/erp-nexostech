@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
-import { Observable } from 'rxjs';
+import { Observable, lastValueFrom } from 'rxjs';
 import { sql } from 'drizzle-orm';
 import { AuthUser } from '../types/auth-user.type';
 import { DrizzleService } from '../../infrastructure/database/drizzle.service';
@@ -84,7 +84,7 @@ export class TenantInterceptor implements NestInterceptor {
       this.clsService.set('tenantId', tenantId);
       const schemaName = await this.resolveSchema(tenantId);
       this.clsService.set('tenantSchema', schemaName);
-      return next.handle();
+      return lastValueFrom(next.handle());
     });
   }
 
