@@ -70,8 +70,10 @@ export class ReportsRepository {
     const startLiteral = quoteLiteral(startDate);
     const endLiteral = quoteLiteral(endDate);
 
-    const balanceResult: unknown = await this.drizzleService.getClient().execute(
-      sql.raw(`
+    const balanceResult: unknown = await this.drizzleService
+      .getClient()
+      .execute(
+        sql.raw(`
       SELECT (
         COALESCE((
           SELECT SUM(initial_balance)
@@ -98,7 +100,7 @@ export class ReportsRepository {
         ), 0)
       )::text AS start_balance
     `),
-    );
+      );
 
     const rowsResult: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`

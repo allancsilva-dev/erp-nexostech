@@ -15,7 +15,9 @@ import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { TransfersRepository } from './transfers.repository';
 
-type DrizzleTransaction = Parameters<Parameters<DrizzleService['transaction']>[0]>[0];
+type DrizzleTransaction = Parameters<
+  Parameters<DrizzleService['transaction']>[0]
+>[0];
 
 @Injectable()
 export class TransfersService {
@@ -29,7 +31,8 @@ export class TransfersService {
 
   private toDate(date: string | Date): Date {
     if (date instanceof Date) return new Date(date.getTime());
-    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return new Date(`${date}T00:00:00.000Z`);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date))
+      return new Date(`${date}T00:00:00.000Z`);
     return new Date(date);
   }
 
@@ -145,9 +148,8 @@ export class TransfersService {
       );
     }
 
-    const destinationAccount = await this.transfersRepository.findActiveBankAccount(
-      dto.toAccountId,
-    );
+    const destinationAccount =
+      await this.transfersRepository.findActiveBankAccount(dto.toAccountId);
     if (!destinationAccount || destinationAccount.branchId !== branchId) {
       throw new BusinessException(
         'TRANSFER_INVALID_ACCOUNT',
@@ -168,18 +170,19 @@ export class TransfersService {
       const requested = new Decimal(dto.amount);
 
       if (available.lt(requested)) {
-        throw new BusinessException(
-          'PAYMENT_INSUFFICIENT_BALANCE',
-          422,
-          {
-            accountId: dto.fromAccountId,
-            available: available.toFixed(2),
-            requested: requested.toFixed(2),
-          },
-        );
+        throw new BusinessException('PAYMENT_INSUFFICIENT_BALANCE', 422, {
+          accountId: dto.fromAccountId,
+          available: available.toFixed(2),
+          requested: requested.toFixed(2),
+        });
       }
 
-      const transfer = await this.transfersRepository.create(branchId, dto, user.sub, tx);
+      const transfer = await this.transfersRepository.create(
+        branchId,
+        dto,
+        user.sub,
+        tx,
+      );
 
       await this.insertAuditLog(tx, {
         branchId,
@@ -218,11 +221,10 @@ export class TransfersService {
       branchId,
     );
     if (!existing) {
-      throw new BusinessException(
-        'TRANSFER_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { transferId, branchId },
-      );
+      throw new BusinessException('TRANSFER_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        transferId,
+        branchId,
+      });
     }
 
     await this.txHelper.run(async (tx) => {

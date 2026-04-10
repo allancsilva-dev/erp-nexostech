@@ -12,7 +12,9 @@ import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
 import { ImportReconciliationDto } from './dto/import-reconciliation.dto';
 import { ReconciliationRepository } from './reconciliation.repository';
 
-type DrizzleTransaction = Parameters<Parameters<DrizzleService['transaction']>[0]>[0];
+type DrizzleTransaction = Parameters<
+  Parameters<DrizzleService['transaction']>[0]
+>[0];
 
 @Injectable()
 export class ReconciliationService {
@@ -68,10 +70,14 @@ export class ReconciliationService {
       branchId,
     );
     if (!account) {
-      throw new BusinessException('BANK_ACCOUNT_NOT_FOUND', HttpStatus.UNPROCESSABLE_ENTITY, {
-        bankAccountId: dto.bankAccountId,
-        branchId,
-      });
+      throw new BusinessException(
+        'BANK_ACCOUNT_NOT_FOUND',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        {
+          bankAccountId: dto.bankAccountId,
+          branchId,
+        },
+      );
     }
 
     return this.txHelper.run(async (tx) => {
@@ -132,22 +138,33 @@ export class ReconciliationService {
     branchId: string,
     user: AuthUser,
   ) {
-    const item = await this.reconciliationRepository.findItemById(itemId, branchId);
+    const item = await this.reconciliationRepository.findItemById(
+      itemId,
+      branchId,
+    );
     if (!item) {
-      throw new BusinessException('NOT_FOUND', HttpStatus.NOT_FOUND, { itemId, branchId });
-    }
-
-    if (item.reconciled) {
-      throw new BusinessException('RECONCILIATION_ITEM_ALREADY_MATCHED', HttpStatus.CONFLICT, {
+      throw new BusinessException('NOT_FOUND', HttpStatus.NOT_FOUND, {
         itemId,
+        branchId,
       });
     }
 
-    if (entryId) {
-      const entryBelongs = await this.reconciliationRepository.entryBelongsToBranch(
-        entryId,
-        branchId,
+    if (item.reconciled) {
+      throw new BusinessException(
+        'RECONCILIATION_ITEM_ALREADY_MATCHED',
+        HttpStatus.CONFLICT,
+        {
+          itemId,
+        },
       );
+    }
+
+    if (entryId) {
+      const entryBelongs =
+        await this.reconciliationRepository.entryBelongsToBranch(
+          entryId,
+          branchId,
+        );
       if (!entryBelongs) {
         throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, {
           entryId,
@@ -157,7 +174,12 @@ export class ReconciliationService {
     }
 
     const matched = await this.txHelper.run(async (tx) => {
-      const result = await this.reconciliationRepository.matchItem(itemId, entryId, branchId, tx);
+      const result = await this.reconciliationRepository.matchItem(
+        itemId,
+        entryId,
+        branchId,
+        tx,
+      );
 
       await this.insertAuditLog(tx, {
         branchId,
@@ -169,12 +191,17 @@ export class ReconciliationService {
         metadata: { entryId: entryId ?? null },
       });
 
-      await this.outboxService.insert(tx, user.tenantId, 'reconciliation.matched', {
-        branchId,
-        itemId,
-        entryId: result.entryId,
-        matchedBy: user.sub,
-      });
+      await this.outboxService.insert(
+        tx,
+        user.tenantId,
+        'reconciliation.matched',
+        {
+          branchId,
+          itemId,
+          entryId: result.entryId,
+          matchedBy: user.sub,
+        },
+      );
 
       return result;
     });

@@ -148,7 +148,10 @@ export class ReportsService {
 
     const actualAccumulated = this.cashflowCalculator.calculateAccumulated(
       base.startBalance,
-      (base.actualRows ?? []).map((row) => ({ inflow: row.inflow, outflow: row.outflow })),
+      (base.actualRows ?? []).map((row) => ({
+        inflow: row.inflow,
+        outflow: row.outflow,
+      })),
     );
 
     const result: CashflowData = {
@@ -391,10 +394,7 @@ export class ReportsService {
           ]),
         ),
       ];
-      const pdfBuffer = await buildSimplePdf(
-        'Aging - Contas a Receber',
-        lines,
-      );
+      const pdfBuffer = await buildSimplePdf('Aging - Contas a Receber', lines);
 
       return {
         format,

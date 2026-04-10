@@ -217,17 +217,18 @@ export class TransfersRepository {
 
     const rows = getRows(result);
     if (!rows[0]) {
-        throw new BusinessException(
-          'BANK_ACCOUNT_NOT_FOUND',
-          404,
-          { accountId, branchId },
-        );
+      throw new BusinessException('BANK_ACCOUNT_NOT_FOUND', 404, {
+        accountId,
+        branchId,
+      });
     }
 
     return toText(rows[0].balance, '0.00');
   }
 
-  async findActiveBankAccount(accountId: string): Promise<{ branchId: string } | null> {
+  async findActiveBankAccount(
+    accountId: string,
+  ): Promise<{ branchId: string } | null> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
 
     const result: unknown = await this.drizzleService.getClient().execute(
@@ -245,7 +246,11 @@ export class TransfersRepository {
     return row ? { branchId: toText(row.branch_id) } : null;
   }
 
-  async softDelete(id: string, branchId: string, tx?: SqlExecutor): Promise<void> {
+  async softDelete(
+    id: string,
+    branchId: string,
+    tx?: SqlExecutor,
+  ): Promise<void> {
     const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
 

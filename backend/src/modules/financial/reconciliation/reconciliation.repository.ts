@@ -84,7 +84,10 @@ export class ReconciliationRepository {
       : null;
   }
 
-  async entryBelongsToBranch(entryId: string, branchId: string): Promise<boolean> {
+  async entryBelongsToBranch(
+    entryId: string,
+    branchId: string,
+  ): Promise<boolean> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const result: unknown = await this.drizzleService.getClient().execute(
       sql.raw(`
@@ -224,7 +227,11 @@ export class ReconciliationRepository {
     return getRows(result).length;
   }
 
-  async undoBatch(batchId: string, branchId: string, tx?: SqlExecutor): Promise<void> {
+  async undoBatch(
+    batchId: string,
+    branchId: string,
+    tx?: SqlExecutor,
+  ): Promise<void> {
     const executor = tx ?? this.drizzleService.getClient();
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     await executor.execute(

@@ -35,7 +35,9 @@ describe('ReconciliationService', () => {
     };
 
     const txHelper = {
-      run: jest.fn(async (cb: (currentTx: typeof tx) => Promise<unknown>) => cb(tx)),
+      run: jest.fn(async (cb: (currentTx: typeof tx) => Promise<unknown>) =>
+        cb(tx),
+      ),
     } as unknown as TransactionHelper;
 
     const outboxService = {
