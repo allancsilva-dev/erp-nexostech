@@ -9,7 +9,9 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { RoleEntity } from './dto/role.response';
 import { UpdateRoleDto } from './dto/update-role.dto';
 
-type DrizzleTransaction = Parameters<Parameters<DrizzleService['transaction']>[0]>[0];
+type DrizzleTransaction = Parameters<
+  Parameters<DrizzleService['transaction']>[0]
+>[0];
 
 export type CurrentUserRoleRow = {
   roleId: string;

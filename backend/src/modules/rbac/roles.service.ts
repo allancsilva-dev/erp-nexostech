@@ -22,7 +22,9 @@ import { AuthApiService } from './auth-api.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import type { AuthUser } from '../../common/types/auth-user.type';
 
-type DrizzleTransaction = Parameters<Parameters<DrizzleService['transaction']>[0]>[0];
+type DrizzleTransaction = Parameters<
+  Parameters<DrizzleService['transaction']>[0]
+>[0];
 
 type QueryRow = Record<string, unknown>;
 
@@ -116,11 +118,10 @@ export class RolesService {
     );
 
     if (getRows(existing).length > 0) {
-      throw new BusinessException(
-        'VALIDATION_ERROR',
-        HttpStatus.CONFLICT,
-        { field: 'name', message: 'Ja existe uma role com este nome' },
-      );
+      throw new BusinessException('VALIDATION_ERROR', HttpStatus.CONFLICT, {
+        field: 'name',
+        message: 'Ja existe uma role com este nome',
+      });
     }
 
     const result: unknown = await this.drizzleService.getClient().execute(
@@ -155,11 +156,9 @@ export class RolesService {
     const existing = await this.findRoleOrFail(schema, id);
 
     if (existing.isSystem) {
-      throw new BusinessException(
-        'ROLE_SYSTEM_LOCKED',
-        HttpStatus.FORBIDDEN,
-        { id },
-      );
+      throw new BusinessException('ROLE_SYSTEM_LOCKED', HttpStatus.FORBIDDEN, {
+        id,
+      });
     }
 
     if (dto.name !== undefined) {
@@ -175,11 +174,10 @@ export class RolesService {
       );
 
       if (getRows(duplicated).length > 0) {
-        throw new BusinessException(
-          'VALIDATION_ERROR',
-          HttpStatus.CONFLICT,
-          { field: 'name', message: 'Ja existe uma role com este nome' },
-        );
+        throw new BusinessException('VALIDATION_ERROR', HttpStatus.CONFLICT, {
+          field: 'name',
+          message: 'Ja existe uma role com este nome',
+        });
       }
     }
 
@@ -216,11 +214,9 @@ export class RolesService {
     const existing = await this.findRoleOrFail(schema, id);
 
     if (existing.isSystem) {
-      throw new BusinessException(
-        'ROLE_SYSTEM_LOCKED',
-        HttpStatus.FORBIDDEN,
-        { id },
-      );
+      throw new BusinessException('ROLE_SYSTEM_LOCKED', HttpStatus.FORBIDDEN, {
+        id,
+      });
     }
 
     await this.drizzleService.getClient().execute(
@@ -315,10 +311,7 @@ export class RolesService {
     );
 
     if (rows.length === 0) {
-      throw new BusinessException(
-        'USER_NOT_PROVISIONED',
-        HttpStatus.FORBIDDEN,
-      );
+      throw new BusinessException('USER_NOT_PROVISIONED', HttpStatus.FORBIDDEN);
     }
 
     const rolesMap = new Map<
@@ -380,11 +373,9 @@ export class RolesService {
       authUser.id,
     );
     if (alreadyLinked) {
-      throw new BusinessException(
-        'USER_ALREADY_LINKED',
-        HttpStatus.CONFLICT,
-        { userId: authUser.id },
-      );
+      throw new BusinessException('USER_ALREADY_LINKED', HttpStatus.CONFLICT, {
+        userId: authUser.id,
+      });
     }
 
     await this.drizzleService.transaction(async (tx) => {
@@ -472,11 +463,9 @@ export class RolesService {
   ): Promise<{ updated: true }> {
     const exists = await this.rolesRepository.existsUserRole(userId);
     if (!exists) {
-      throw new BusinessException(
-        'USER_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { userId },
-      );
+      throw new BusinessException('USER_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        userId,
+      });
     }
 
     await this.rolesRepository.replaceUserBranches(userId, branchIds);
@@ -492,11 +481,9 @@ export class RolesService {
     const schema = this.schema();
     const existing = await this.findRoleOrFail(schema, roleId);
     if (existing.isSystem) {
-      throw new BusinessException(
-        'ROLE_SYSTEM_LOCKED',
-        HttpStatus.FORBIDDEN,
-        { roleId },
-      );
+      throw new BusinessException('ROLE_SYSTEM_LOCKED', HttpStatus.FORBIDDEN, {
+        roleId,
+      });
     }
 
     await this.replaceRolePermissions(schema, roleId, permissionCodes);
@@ -511,11 +498,9 @@ export class RolesService {
     );
 
     if (invalid.length > 0) {
-      throw new BusinessException(
-        'RBAC_FORBIDDEN',
-        HttpStatus.BAD_REQUEST,
-        { invalid },
-      );
+      throw new BusinessException('RBAC_FORBIDDEN', HttpStatus.BAD_REQUEST, {
+        invalid,
+      });
     }
   }
 
@@ -547,11 +532,9 @@ export class RolesService {
 
     const row = getRows(result)[0];
     if (!row) {
-      throw new BusinessException(
-        'ROLE_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { roleId },
-      );
+      throw new BusinessException('ROLE_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        roleId,
+      });
     }
 
     return {
@@ -584,11 +567,9 @@ export class RolesService {
 
     const row = getRows(result)[0];
     if (!row) {
-      throw new BusinessException(
-        'ROLE_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { roleId },
-      );
+      throw new BusinessException('ROLE_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        roleId,
+      });
     }
 
     return {
@@ -624,10 +605,7 @@ export class RolesService {
       }
 
       const values = normalized
-        .map(
-          (code) =>
-            `(${quoteLiteral(roleId)}::uuid, ${quoteLiteral(code)})`,
-        )
+        .map((code) => `(${quoteLiteral(roleId)}::uuid, ${quoteLiteral(code)})`)
         .join(', ');
 
       await tx.execute(

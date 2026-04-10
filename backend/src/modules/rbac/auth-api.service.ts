@@ -34,19 +34,16 @@ export class AuthApiService {
     }
 
     if (response.status === 403) {
-      throw new BusinessException(
-        'AUTH_FORBIDDEN',
-        HttpStatus.FORBIDDEN,
-        { email },
-      );
+      throw new BusinessException('AUTH_FORBIDDEN', HttpStatus.FORBIDDEN, {
+        email,
+      });
     }
 
     if (!response.ok) {
-      throw new BusinessException(
-        'AUTH_API_ERROR',
-        HttpStatus.BAD_GATEWAY,
-        { status: response.status, email },
-      );
+      throw new BusinessException('AUTH_API_ERROR', HttpStatus.BAD_GATEWAY, {
+        status: response.status,
+        email,
+      });
     }
 
     const body = (await response.json()) as unknown;
