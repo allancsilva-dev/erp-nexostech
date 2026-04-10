@@ -123,13 +123,15 @@ export class DashboardRepository {
     };
   }
 
-  async getOverdue(branchId: string): Promise<Array<{
-    id: string;
-    description: string;
-    amount: string;
-    dueDate: string;
-    type: string;
-  }>> {
+  async getOverdue(branchId: string): Promise<
+    Array<{
+      id: string;
+      description: string;
+      amount: string;
+      dueDate: string;
+      type: string;
+    }>
+  > {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
     const result = await this.drizzleService.getClient().execute(
@@ -157,7 +159,15 @@ export class DashboardRepository {
   async getCashflowChart(
     branchId: string,
     period: string,
-  ): Promise<Array<{ month: string; forecast_inflow: string; forecast_outflow: string; actual_inflow: string; actual_outflow: string }>> {
+  ): Promise<
+    Array<{
+      month: string;
+      forecast_inflow: string;
+      forecast_outflow: string;
+      actual_inflow: string;
+      actual_outflow: string;
+    }>
+  > {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const branchLiteral = quoteLiteral(branchId);
     const monthsBack = period === '6m' ? 6 : period === '3m' ? 3 : 12;

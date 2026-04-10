@@ -30,15 +30,11 @@ export class LockPeriodsService {
     });
 
     if (overlap) {
-      throw new BusinessException(
-        'INVALID_PERIOD_OVERLAP',
-        undefined,
-        {
-          conflictingPeriodId: overlap.id,
-          conflictingLockedUntil: overlap.lockedUntil,
-          requestedLockedUntil: dto.lockedUntil,
-        },
-      );
+      throw new BusinessException('INVALID_PERIOD_OVERLAP', undefined, {
+        conflictingPeriodId: overlap.id,
+        conflictingLockedUntil: overlap.lockedUntil,
+        requestedLockedUntil: dto.lockedUntil,
+      });
     }
 
     return this.lockPeriodsRepository.create(branchId, user.sub, dto);

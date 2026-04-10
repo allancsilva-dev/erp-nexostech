@@ -37,7 +37,10 @@ export class DashboardService {
   })
   async getCashflowChart(tenantId: string, branchId: string, period: string) {
     void tenantId;
-    const rows = await this.dashboardRepository.getCashflowChart(branchId, period);
+    const rows = await this.dashboardRepository.getCashflowChart(
+      branchId,
+      period,
+    );
     return rows.map((r) => ({
       month: r.month,
       forecastInflow: r.forecast_inflow,

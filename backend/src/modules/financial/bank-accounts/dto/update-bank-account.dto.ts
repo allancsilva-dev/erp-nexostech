@@ -15,7 +15,9 @@ export class UpdateBankAccountDto {
 
   @IsOptional()
   @IsString({ message: 'Codigo do banco deve ser um texto valido' })
-  @MaxLength(10, { message: 'Codigo do banco deve ter no maximo 10 caracteres' })
+  @MaxLength(10, {
+    message: 'Codigo do banco deve ter no maximo 10 caracteres',
+  })
   bankCode?: string;
 
   @IsOptional()
@@ -25,7 +27,9 @@ export class UpdateBankAccountDto {
 
   @IsOptional()
   @IsString({ message: 'Numero da conta deve ser um texto valido' })
-  @MaxLength(20, { message: 'Numero da conta deve ter no maximo 20 caracteres' })
+  @MaxLength(20, {
+    message: 'Numero da conta deve ter no maximo 20 caracteres',
+  })
   accountNumber?: string;
 
   @IsOptional()

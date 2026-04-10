@@ -16,11 +16,10 @@ export class CategoriesService {
   ): Promise<CategoryEntity> {
     const parent = await this.categoriesRepository.findById(parentId, branchId);
     if (!parent) {
-      throw new BusinessException(
-        'CATEGORY_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { parentId, branchId },
-      );
+      throw new BusinessException('CATEGORY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        parentId,
+        branchId,
+      });
     }
 
     return parent;
@@ -32,14 +31,10 @@ export class CategoriesService {
     branchId: string,
   ): Promise<void> {
     if (parentId === categoryId) {
-      throw new BusinessException(
-        'VALIDATION_ERROR',
-        HttpStatus.BAD_REQUEST,
-        {
-          field: 'parentId',
-          message: 'Categoria nao pode ser pai de si mesma',
-        },
-      );
+      throw new BusinessException('VALIDATION_ERROR', HttpStatus.BAD_REQUEST, {
+        field: 'parentId',
+        message: 'Categoria nao pode ser pai de si mesma',
+      });
     }
 
     let currentParent = await this.ensureParentExists(parentId, branchId);
@@ -56,7 +51,10 @@ export class CategoriesService {
         );
       }
 
-      currentParent = await this.ensureParentExists(currentParent.parentId, branchId);
+      currentParent = await this.ensureParentExists(
+        currentParent.parentId,
+        branchId,
+      );
     }
   }
 
@@ -79,11 +77,10 @@ export class CategoriesService {
   async update(id: string, branchId: string, dto: UpdateCategoryDto) {
     const existing = await this.categoriesRepository.findById(id, branchId);
     if (!existing) {
-      throw new BusinessException(
-        'CATEGORY_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { id, branchId },
-      );
+      throw new BusinessException('CATEGORY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        id,
+        branchId,
+      });
     }
 
     if (dto.parentId) {
@@ -96,11 +93,10 @@ export class CategoriesService {
   async softDelete(id: string, branchId: string): Promise<void> {
     const existing = await this.categoriesRepository.findById(id, branchId);
     if (!existing) {
-      throw new BusinessException(
-        'CATEGORY_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { id, branchId },
-      );
+      throw new BusinessException('CATEGORY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        id,
+        branchId,
+      });
     }
 
     await this.categoriesRepository.softDelete(id, branchId);

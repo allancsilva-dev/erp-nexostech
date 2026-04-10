@@ -118,10 +118,14 @@ export class BoletosGatewayClient {
       this.toNullableText(body?.error) ??
       fallback;
 
-    throw new BusinessException('INTERNAL_GATEWAY_ERROR', HttpStatus.BAD_GATEWAY, {
-      gatewayMessage: message,
-      gatewayStatus: response.status,
-    });
+    throw new BusinessException(
+      'INTERNAL_GATEWAY_ERROR',
+      HttpStatus.BAD_GATEWAY,
+      {
+        gatewayMessage: message,
+        gatewayStatus: response.status,
+      },
+    );
   }
 
   private async generateOnGateway(

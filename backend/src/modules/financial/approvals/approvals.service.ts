@@ -18,25 +18,34 @@ export class ApprovalsService {
   }
 
   async approve(entryId: string, branchId: string, user: AuthUser) {
-    const entry = await this.approvalsRepository.findEntryForApproval(entryId, branchId);
+    const entry = await this.approvalsRepository.findEntryForApproval(
+      entryId,
+      branchId,
+    );
 
     if (!entry) {
-      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, { entryId, branchId });
-    }
-
-    if (entry.status !== 'PENDING_APPROVAL') {
-      throw new BusinessException('ENTRY_INVALID_STATUS_APPROVE', HttpStatus.CONFLICT, {
+      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, {
         entryId,
-        currentStatus: entry.status,
+        branchId,
       });
     }
 
-    if (entry.createdBy === user.sub) {
+    if (entry.status !== 'PENDING_APPROVAL') {
       throw new BusinessException(
-        'APPROVAL_SELF_FORBIDDEN',
-        undefined,
-        { entryId, approverId: user.sub },
+        'ENTRY_INVALID_STATUS_APPROVE',
+        HttpStatus.CONFLICT,
+        {
+          entryId,
+          currentStatus: entry.status,
+        },
       );
+    }
+
+    if (entry.createdBy === user.sub) {
+      throw new BusinessException('APPROVAL_SELF_FORBIDDEN', undefined, {
+        entryId,
+        approverId: user.sub,
+      });
     }
 
     const record = await this.txHelper.run(async (tx) => {
@@ -78,17 +87,27 @@ export class ApprovalsService {
       });
     }
 
-    const entry = await this.approvalsRepository.findEntryForApproval(entryId, branchId);
+    const entry = await this.approvalsRepository.findEntryForApproval(
+      entryId,
+      branchId,
+    );
 
     if (!entry) {
-      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, { entryId, branchId });
+      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        entryId,
+        branchId,
+      });
     }
 
     if (entry.status !== 'PENDING_APPROVAL') {
-      throw new BusinessException('ENTRY_INVALID_STATUS_APPROVE', HttpStatus.CONFLICT, {
-        entryId,
-        currentStatus: entry.status,
-      });
+      throw new BusinessException(
+        'ENTRY_INVALID_STATUS_APPROVE',
+        HttpStatus.CONFLICT,
+        {
+          entryId,
+          currentStatus: entry.status,
+        },
+      );
     }
 
     const record = await this.txHelper.run(async (tx) => {
@@ -129,12 +148,12 @@ export class ApprovalsService {
       );
 
       for (let j = 0; j < settled.length; j++) {
-        const result = settled[j]!;
+        const result = settled[j];
         if (result.status === 'fulfilled') {
           results.push(result.value);
         } else {
           errors.push({
-            entryId: chunk[j]!,
+            entryId: chunk[j],
             error:
               result.reason instanceof Error
                 ? result.reason.message

@@ -2,9 +2,14 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { BusinessException } from '../../../common/exceptions/business.exception';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
-import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 
-type DrizzleTransaction = Parameters<Parameters<DrizzleService['transaction']>[0]>[0];
+type DrizzleTransaction = Parameters<
+  Parameters<DrizzleService['transaction']>[0]
+>[0];
 
 @Injectable()
 export class ApprovalsRepository {
@@ -12,13 +17,15 @@ export class ApprovalsRepository {
 
   private toText(value: unknown): string {
     if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'bigint') return String(value);
+    if (typeof value === 'number' || typeof value === 'bigint')
+      return String(value);
     return '';
   }
 
   private toNullableText(value: unknown): string | null {
     if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'bigint') return String(value);
+    if (typeof value === 'number' || typeof value === 'bigint')
+      return String(value);
     return null;
   }
 
@@ -120,7 +127,8 @@ export class ApprovalsRepository {
       );
 
       if (action === 'APPROVED') {
-        const prefix = (entryType ?? 'RECEIVABLE') === 'PAYABLE' ? 'PAY' : 'REC';
+        const prefix =
+          (entryType ?? 'RECEIVABLE') === 'PAYABLE' ? 'PAY' : 'REC';
         const year = new Date().getFullYear();
 
         const seqRes: unknown = await executor.execute(
@@ -136,7 +144,7 @@ export class ApprovalsRepository {
         );
 
         const seqRows = Array.isArray((seqRes as { rows?: unknown[] })?.rows)
-          ? ((seqRes as { rows: Array<Record<string, unknown>> }).rows)
+          ? (seqRes as { rows: Array<Record<string, unknown>> }).rows
           : [];
         const nextSeq = Number(seqRows[0]?.last_sequence ?? 1);
         const documentNumber = `${prefix}-${year}-${String(nextSeq).padStart(5, '0')}`;
@@ -154,7 +162,10 @@ export class ApprovalsRepository {
         );
 
         if (updateResult.rows.length === 0) {
-          throw new BusinessException('APPROVAL_ALREADY_PROCESSED', HttpStatus.CONFLICT);
+          throw new BusinessException(
+            'APPROVAL_ALREADY_PROCESSED',
+            HttpStatus.CONFLICT,
+          );
         }
       } else {
         const updateResult = await executor.execute(
@@ -170,7 +181,10 @@ export class ApprovalsRepository {
         );
 
         if (updateResult.rows.length === 0) {
-          throw new BusinessException('APPROVAL_ALREADY_PROCESSED', HttpStatus.CONFLICT);
+          throw new BusinessException(
+            'APPROVAL_ALREADY_PROCESSED',
+            HttpStatus.CONFLICT,
+          );
         }
       }
 
@@ -183,7 +197,7 @@ export class ApprovalsRepository {
           runInTransaction(transactionTx),
         );
 
-    const row = result.rows[0] as Record<string, unknown>;
+    const row = result.rows[0];
     return {
       id: this.toText(row.id),
       entryId: this.toText(row.entry_id),

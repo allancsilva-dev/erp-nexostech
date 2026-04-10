@@ -25,11 +25,10 @@ export class BoletosService {
       branchId,
     );
     if (existing && existing.status === 'ACTIVE') {
-      throw new BusinessException(
-        'BOLETO_ALREADY_GENERATED',
-        undefined,
-        { entryId, boletoId: existing.id },
-      );
+      throw new BusinessException('BOLETO_ALREADY_GENERATED', undefined, {
+        entryId,
+        boletoId: existing.id,
+      });
     }
 
     const gateway = await this.gatewayClient.generate({
