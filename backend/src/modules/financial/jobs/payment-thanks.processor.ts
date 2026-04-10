@@ -3,9 +3,7 @@ import { sql } from 'drizzle-orm';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
 import { QueueService } from '../../../infrastructure/queue/queue.service';
 import { resolveTenantSchema } from './jobs.util';
-import {
-  quoteLiteral,
-} from '../../../infrastructure/database/sql-builder.util';
+import { quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
 
 /**
  * Job de agradecimento pós-pagamento.

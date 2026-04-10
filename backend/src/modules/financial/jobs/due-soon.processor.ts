@@ -29,11 +29,16 @@ export class DueSoonProcessor implements OnModuleInit {
           `due-soon: processando ${active.length} tenants em chunks de ${DueSoonProcessor.CONCURRENCY}`,
         );
 
-        for (let index = 0; index < active.length; index += DueSoonProcessor.CONCURRENCY) {
-          const chunk = active.slice(index, index + DueSoonProcessor.CONCURRENCY);
-          await Promise.all(
-            chunk.map((tenant) => this.processTenant(tenant)),
+        for (
+          let index = 0;
+          index < active.length;
+          index += DueSoonProcessor.CONCURRENCY
+        ) {
+          const chunk = active.slice(
+            index,
+            index + DueSoonProcessor.CONCURRENCY,
           );
+          await Promise.all(chunk.map((tenant) => this.processTenant(tenant)));
         }
       },
       { concurrency: 1 },
@@ -52,8 +57,9 @@ export class DueSoonProcessor implements OnModuleInit {
         `),
       );
 
-      const alertDaysRaw = (settingsRes?.rows?.[0] as Record<string, unknown> | undefined)
-        ?.alert_days;
+      const alertDaysRaw = (
+        settingsRes?.rows?.[0] as Record<string, unknown> | undefined
+      )?.alert_days;
       const alertDays = Number.isFinite(Number(alertDaysRaw))
         ? Number(alertDaysRaw)
         : 3;
@@ -68,9 +74,7 @@ export class DueSoonProcessor implements OnModuleInit {
         `,
       );
 
-      const rows = Array.isArray(entriesRes?.rows)
-        ? (entriesRes.rows as Array<Record<string, unknown>>)
-        : [];
+      const rows = Array.isArray(entriesRes?.rows) ? entriesRes.rows : [];
 
       const today = new Date().toLocaleDateString('en-CA');
       await Promise.all(

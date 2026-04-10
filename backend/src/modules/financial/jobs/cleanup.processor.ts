@@ -72,7 +72,11 @@ export class CleanupProcessor implements OnModuleInit {
     );
   }
 
-  private async deleteBatch(schema: string, table: string, where: string): Promise<number> {
+  private async deleteBatch(
+    schema: string,
+    table: string,
+    where: string,
+  ): Promise<number> {
     let total = 0;
 
     while (true) {

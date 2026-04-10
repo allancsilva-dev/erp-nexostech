@@ -74,7 +74,9 @@ export class RecurrenceProcessor implements OnModuleInit {
             );
 
             const seqRows = Array.isArray((seqRes as { rows?: unknown })?.rows)
-              ? ((seqRes as { rows: unknown[] }).rows as Array<Record<string, unknown>>)
+              ? ((seqRes as { rows: unknown[] }).rows as Array<
+                  Record<string, unknown>
+                >)
               : [];
             const nextSeq = Number(seqRows[0]?.last_sequence ?? 1);
             const prefix = row.type === 'PAYABLE' ? 'PAY' : 'REC';
@@ -108,7 +110,10 @@ export class RecurrenceProcessor implements OnModuleInit {
               `),
             );
 
-            const nextDueDate = this.calculateNextDueDate(dueDate, row.frequency);
+            const nextDueDate = this.calculateNextDueDate(
+              dueDate,
+              row.frequency,
+            );
             await tx.execute(
               sql.raw(`
                 UPDATE ${schema}.recurrences
@@ -132,7 +137,11 @@ export class RecurrenceProcessor implements OnModuleInit {
   }
 
   private calculateNextDueDate(currentDate: string, frequency: string): string {
-    const [year, month, day] = currentDate.split('-').map(Number) as [number, number, number];
+    const [year, month, day] = currentDate.split('-').map(Number) as [
+      number,
+      number,
+      number,
+    ];
 
     switch (frequency) {
       case 'WEEKLY':
@@ -145,7 +154,9 @@ export class RecurrenceProcessor implements OnModuleInit {
       default: {
         const nextMonth = month === 12 ? 1 : month + 1;
         const nextYear = month === 12 ? year + 1 : year;
-        const daysInNextMonth = new Date(Date.UTC(nextYear, nextMonth, 0)).getUTCDate();
+        const daysInNextMonth = new Date(
+          Date.UTC(nextYear, nextMonth, 0),
+        ).getUTCDate();
         const nextDay = Math.min(day, daysInNextMonth);
         return `${nextYear}-${String(nextMonth).padStart(2, '0')}-${String(nextDay).padStart(2, '0')}`;
       }

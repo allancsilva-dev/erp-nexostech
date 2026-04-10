@@ -17,7 +17,8 @@ export class SequencesProcessor implements OnModuleInit {
       'financial.sequences',
       async (payload) => {
         const schema = resolveTenantSchema(payload);
-        const branchId = typeof payload.branchId === 'string' ? payload.branchId : null;
+        const branchId =
+          typeof payload.branchId === 'string' ? payload.branchId : null;
         if (!branchId) {
           return;
         }
