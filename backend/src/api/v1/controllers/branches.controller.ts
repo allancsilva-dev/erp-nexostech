@@ -53,8 +53,9 @@ export class BranchesController {
   @RequirePermission('admin.branches.manage')
   async create(
     @Body() dto: CreateBranchDto,
+    @CurrentUser() user: AuthUser,
   ): Promise<ApiResponse<BranchResponse>> {
-    const created = await this.branchesService.create(dto);
+    const created = await this.branchesService.create(dto, user);
     return ApiResponse.created(BranchResponse.from(created));
   }
 

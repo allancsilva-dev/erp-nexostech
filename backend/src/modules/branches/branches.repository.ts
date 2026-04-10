@@ -9,6 +9,12 @@ import { CreateBranchDto } from './dto/create-branch.dto';
 import { BranchEntity } from './dto/branch.response';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 
+type BranchesTransaction = {
+  execute: (
+    query: ReturnType<typeof sql.raw>,
+  ) => Promise<{ rows: Record<string, unknown>[] }>;
+};
+
 @Injectable()
 export class BranchesRepository {
   constructor(private readonly drizzleService: DrizzleService) {}
@@ -81,7 +87,10 @@ export class BranchesRepository {
     return result.rows.map((row) => this.mapRow(row));
   }
 
-  async create(dto: CreateBranchDto): Promise<BranchEntity> {
+  async create(
+    dto: CreateBranchDto,
+    tx?: BranchesTransaction,
+  ): Promise<BranchEntity> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
     const name = quoteLiteral(dto.name);
     const legalName = quoteLiteral(dto.legalName ?? null);
@@ -94,14 +103,15 @@ export class BranchesRepository {
     const addressState = quoteLiteral(dto.addressState ?? null);
     const zip = dto.addressZip?.replace(/\D/g, '') ?? null;
     const addressZip = quoteLiteral(zip ?? null);
+    const executor = tx ?? this.drizzleService.getClient();
 
-    const result = await this.drizzleService.getClient().execute(
+    const result = (await executor.execute(
       sql.raw(`
       INSERT INTO ${schema}.branches (
         name, legal_name, document, phone, email, address_city, address_state, address_zip,
         is_headquarters, active
       ) VALUES (
-        ${name}, ${legalName}, ${document}, ${phone}, ${email}, ${addressCity}, ${addressState}, ${addressZip},
+        ${name}, ${legalName}, ${document}, ${phoneLiteral}, ${email}, ${addressCity}, ${addressState}, ${addressZip},
         false, true
       )
       RETURNING
@@ -109,7 +119,7 @@ export class BranchesRepository {
         address_city, address_state, address_zip,
         is_headquarters, active
     `),
-    );
+    )) as { rows: Record<string, unknown>[] };
 
     return this.mapRow(result.rows[0]);
   }

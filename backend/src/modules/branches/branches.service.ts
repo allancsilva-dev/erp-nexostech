@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { BusinessException } from '../../common/exceptions/business.exception';
+import { DrizzleService } from '../../infrastructure/database/drizzle.service';
+import { quoteIdent } from '../../infrastructure/database/sql-builder.util';
+import { OnboardingService } from '../onboarding/onboarding.service';
 import { BranchesRepository } from './branches.repository';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
@@ -8,7 +10,11 @@ import type { AuthUser } from '../../common/types/auth-user.type';
 
 @Injectable()
 export class BranchesService {
-  constructor(private readonly branchesRepository: BranchesRepository) {}
+  constructor(
+    private readonly branchesRepository: BranchesRepository,
+    private readonly onboardingService: OnboardingService,
+    private readonly drizzleService: DrizzleService,
+  ) {}
 
   async list() {
     return this.branchesRepository.list();
@@ -22,8 +28,20 @@ export class BranchesService {
     return this.branchesRepository.listByUser(user.sub);
   }
 
-  async create(dto: CreateBranchDto) {
-    return this.branchesRepository.create(dto);
+  async create(dto: CreateBranchDto, user: AuthUser) {
+    const schema = quoteIdent(this.drizzleService.getTenantSchema());
+
+    return this.drizzleService.transaction(async (tx) => {
+      const branch = await this.branchesRepository.create(dto, tx);
+
+      await this.onboardingService.onboardBranch(tx, {
+        branchId: branch.id,
+        adminUserId: user.sub,
+        schema,
+      });
+
+      return branch;
+    });
   }
 
   async update(id: string, dto: UpdateBranchDto) {
