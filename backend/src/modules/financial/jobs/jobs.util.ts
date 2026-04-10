@@ -12,12 +12,14 @@ export function resolveTenantSchema(payload: Record<string, unknown>): string {
     return quoteIdent(payload.tenantSchema);
   }
 
+  // TEMPORARIO - remover apos confirmar que todos os jobs
+  // propagam tenantSchema no payload (ver backlog)
   if (typeof payload.tenantId === 'string' && payload.tenantId.length > 0) {
     return quoteIdent(`tenant_${payload.tenantId}`);
   }
 
   throw new BusinessException('INTERNAL_ERROR', 500, {
-    reason: 'JOB_PAYLOAD_MISSING_TENANT_CONTEXT',
+    reason: 'JOB_PAYLOAD_MISSING_TENANT_SCHEMA',
   });
 }
 

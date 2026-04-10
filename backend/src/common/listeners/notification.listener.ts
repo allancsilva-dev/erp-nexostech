@@ -8,6 +8,7 @@ import { quoteLiteral } from '../../infrastructure/database/sql-builder.util';
 
 type EntryApprovedPayload = {
   tenantId: string;
+  tenantSchema: string;
   branchId?: string;
   entryId: string;
   approverId?: string;
@@ -18,6 +19,7 @@ type EntryApprovedPayload = {
 
 type EntryRejectedPayload = {
   tenantId: string;
+  tenantSchema: string;
   branchId?: string;
   entryId: string;
   approverId?: string;
@@ -29,6 +31,7 @@ type EntryRejectedPayload = {
 
 type PaymentCreatedPayload = {
   tenantId: string;
+  tenantSchema: string;
   branchId?: string;
   entryId: string;
   paymentId?: string;
@@ -40,6 +43,7 @@ type PaymentCreatedPayload = {
 
 type OverduePayload = {
   tenantId: string;
+  tenantSchema: string;
   branchId?: string;
   entryId: string;
   entryType?: string;
@@ -52,6 +56,7 @@ type DueSoonPayload = OverduePayload & { daysUntilDue?: number };
 
 type PendingApprovalPayload = {
   tenantId: string;
+  tenantSchema: string;
   branchId?: string;
   entryId: string;
   entryType?: string;
@@ -59,6 +64,47 @@ type PendingApprovalPayload = {
   amount?: string;
   createdBy?: string;
 };
+
+type EntryNotificationRow = {
+  branch_id?: unknown;
+  document_number?: unknown;
+  amount?: unknown;
+  created_by?: unknown;
+  type?: unknown;
+};
+
+type ApproverRow = {
+  user_id?: unknown;
+};
+
+function firstRow<T>(result: unknown): T | null {
+  if (!result || typeof result !== 'object' || !('rows' in result)) {
+    return null;
+  }
+
+  const rows = (result as { rows?: unknown }).rows;
+  return Array.isArray(rows) && rows.length > 0 ? (rows[0] as T) : null;
+}
+
+function allRows<T>(result: unknown): T[] {
+  if (!result || typeof result !== 'object' || !('rows' in result)) {
+    return [];
+  }
+
+  const rows = (result as { rows?: unknown }).rows;
+  return Array.isArray(rows) ? (rows as T[]) : [];
+}
+
+function toOptionalString(
+  value: unknown,
+  fallback: string | null = null,
+): string | null {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value);
+  }
+
+  return fallback;
+}
 
 /**
  * Listener de notificações.
@@ -83,12 +129,17 @@ export class NotificationListener {
     try {
       // Enrich payload if necessary (single query)
       const schema = resolveTenantSchema(payload as Record<string, unknown>);
-      if (!payload.documentNumber || !payload.branchId || !payload.amount || !payload.createdBy) {
+      if (
+        !payload.documentNumber ||
+        !payload.branchId ||
+        !payload.amount ||
+        !payload.createdBy
+      ) {
         this.logger.warn(
           `[entry.approved] Payload incompleto para entry ${payload.entryId} - acionando fallback de enriquecimento`,
         );
         const entryIdLiteral = quoteLiteral(payload.entryId);
-        const row: any = (
+        const row = firstRow<EntryNotificationRow>(
           await this.drizzleService.getClient().execute(
             sql.raw(`
           SELECT branch_id, document_number, amount::text AS amount, created_by
@@ -96,14 +147,18 @@ export class NotificationListener {
           WHERE id = ${entryIdLiteral}
           LIMIT 1
         `),
-          )
-        ).rows[0];
+          ),
+        );
 
         if (row) {
           payload.branchId = payload.branchId ?? String(row.branch_id);
-          payload.documentNumber = payload.documentNumber ?? (row.document_number ?? null);
-          payload.amount = payload.amount ?? String(row.amount ?? '0');
-          payload.createdBy = payload.createdBy ?? String(row.created_by ?? '');
+          payload.documentNumber =
+            payload.documentNumber ??
+            toOptionalString(row.document_number, null);
+          payload.amount =
+            payload.amount ?? toOptionalString(row.amount, '0') ?? '0';
+          payload.createdBy =
+            payload.createdBy ?? toOptionalString(row.created_by, '') ?? '';
         }
       }
 
@@ -112,6 +167,7 @@ export class NotificationListener {
         'entry-approved',
         {
           tenantId: payload.tenantId,
+          tenantSchema: payload.tenantSchema,
           branchId: payload.branchId,
           entryId: payload.entryId,
           documentNumber: payload.documentNumber ?? null,
@@ -134,12 +190,17 @@ export class NotificationListener {
   async onEntryRejected(payload: EntryRejectedPayload): Promise<void> {
     try {
       const schema = resolveTenantSchema(payload as Record<string, unknown>);
-      if (!payload.documentNumber || !payload.branchId || !payload.amount || !payload.createdBy) {
+      if (
+        !payload.documentNumber ||
+        !payload.branchId ||
+        !payload.amount ||
+        !payload.createdBy
+      ) {
         this.logger.warn(
           `[entry.rejected] Payload incompleto para entry ${payload.entryId} - acionando fallback de enriquecimento`,
         );
         const entryIdLiteral = quoteLiteral(payload.entryId);
-        const row: any = (
+        const row = firstRow<EntryNotificationRow>(
           await this.drizzleService.getClient().execute(
             sql.raw(`
           SELECT branch_id, document_number, amount::text AS amount, created_by
@@ -147,14 +208,18 @@ export class NotificationListener {
           WHERE id = ${entryIdLiteral}
           LIMIT 1
         `),
-          )
-        ).rows[0];
+          ),
+        );
 
         if (row) {
           payload.branchId = payload.branchId ?? String(row.branch_id);
-          payload.documentNumber = payload.documentNumber ?? (row.document_number ?? null);
-          payload.amount = payload.amount ?? String(row.amount ?? '0');
-          payload.createdBy = payload.createdBy ?? String(row.created_by ?? '');
+          payload.documentNumber =
+            payload.documentNumber ??
+            toOptionalString(row.document_number, null);
+          payload.amount =
+            payload.amount ?? toOptionalString(row.amount, '0') ?? '0';
+          payload.createdBy =
+            payload.createdBy ?? toOptionalString(row.created_by, '') ?? '';
         }
       }
 
@@ -163,6 +228,7 @@ export class NotificationListener {
         'entry-rejected',
         {
           tenantId: payload.tenantId,
+          tenantSchema: payload.tenantSchema,
           branchId: payload.branchId,
           entryId: payload.entryId,
           documentNumber: payload.documentNumber ?? null,
@@ -190,12 +256,15 @@ export class NotificationListener {
         'payment-thanks',
         {
           tenantId: payload.tenantId,
+          tenantSchema: payload.tenantSchema,
           branchId: payload.branchId,
           entryId: payload.entryId,
           paymentId: payload.paymentId ?? null,
           amount: payload.amount ?? null,
         },
-        { jobId: `notif.payment.${payload.entryId}.${payload.paymentId ?? payload.createdAt ?? ''}` },
+        {
+          jobId: `notif.payment.${payload.entryId}.${payload.paymentId ?? payload.createdAt ?? ''}`,
+        },
       );
     } catch (error) {
       this.logger.error(
@@ -209,9 +278,15 @@ export class NotificationListener {
   async onEntryOverdue(payload: OverduePayload): Promise<void> {
     try {
       const schema = resolveTenantSchema(payload as Record<string, unknown>);
-      if (!payload.documentNumber || !payload.branchId || !payload.amount || !payload.createdBy || !payload.entryType) {
+      if (
+        !payload.documentNumber ||
+        !payload.branchId ||
+        !payload.amount ||
+        !payload.createdBy ||
+        !payload.entryType
+      ) {
         const entryIdLiteral = quoteLiteral(payload.entryId);
-        const row: any = (
+        const row = firstRow<EntryNotificationRow>(
           await this.drizzleService.getClient().execute(
             sql.raw(`
           SELECT branch_id, document_number, amount::text AS amount, created_by, type
@@ -219,15 +294,22 @@ export class NotificationListener {
           WHERE id = ${entryIdLiteral}
           LIMIT 1
         `),
-          )
-        ).rows[0];
+          ),
+        );
 
         if (row) {
           payload.branchId = payload.branchId ?? String(row.branch_id);
-          payload.documentNumber = payload.documentNumber ?? (row.document_number ?? null);
-          payload.amount = payload.amount ?? String(row.amount ?? '0');
-          payload.createdBy = payload.createdBy ?? String(row.created_by ?? '');
-          payload.entryType = payload.entryType ?? String(row.type ?? 'PAYABLE');
+          payload.documentNumber =
+            payload.documentNumber ??
+            toOptionalString(row.document_number, null);
+          payload.amount =
+            payload.amount ?? toOptionalString(row.amount, '0') ?? '0';
+          payload.createdBy =
+            payload.createdBy ?? toOptionalString(row.created_by, '') ?? '';
+          payload.entryType =
+            payload.entryType ??
+            toOptionalString(row.type, 'PAYABLE') ??
+            'PAYABLE';
         }
       }
 
@@ -236,6 +318,7 @@ export class NotificationListener {
         'entry-overdue',
         {
           tenantId: payload.tenantId,
+          tenantSchema: payload.tenantSchema,
           branchId: payload.branchId,
           entryId: payload.entryId,
           entryType: payload.entryType,
@@ -244,7 +327,9 @@ export class NotificationListener {
           createdBy: payload.createdBy ?? null,
           jobType: 'entry.overdue',
         },
-        { jobId: `notif.overdue.${payload.entryId}.${new Date().toISOString().slice(0,10)}` },
+        {
+          jobId: `notif.overdue.${payload.entryId}.${new Date().toISOString().slice(0, 10)}`,
+        },
       );
     } catch (error) {
       this.logger.error(
@@ -258,9 +343,15 @@ export class NotificationListener {
   async onEntryDueSoon(payload: DueSoonPayload): Promise<void> {
     try {
       const schema = resolveTenantSchema(payload as Record<string, unknown>);
-      if (!payload.documentNumber || !payload.branchId || !payload.amount || !payload.createdBy || !payload.entryType) {
+      if (
+        !payload.documentNumber ||
+        !payload.branchId ||
+        !payload.amount ||
+        !payload.createdBy ||
+        !payload.entryType
+      ) {
         const entryIdLiteral = quoteLiteral(payload.entryId);
-        const row: any = (
+        const row = firstRow<EntryNotificationRow>(
           await this.drizzleService.getClient().execute(
             sql.raw(`
           SELECT branch_id, document_number, amount::text AS amount, created_by, type
@@ -268,15 +359,22 @@ export class NotificationListener {
           WHERE id = ${entryIdLiteral}
           LIMIT 1
         `),
-          )
-        ).rows[0];
+          ),
+        );
 
         if (row) {
           payload.branchId = payload.branchId ?? String(row.branch_id);
-          payload.documentNumber = payload.documentNumber ?? (row.document_number ?? null);
-          payload.amount = payload.amount ?? String(row.amount ?? '0');
-          payload.createdBy = payload.createdBy ?? String(row.created_by ?? '');
-          payload.entryType = payload.entryType ?? String(row.type ?? 'PAYABLE');
+          payload.documentNumber =
+            payload.documentNumber ??
+            toOptionalString(row.document_number, null);
+          payload.amount =
+            payload.amount ?? toOptionalString(row.amount, '0') ?? '0';
+          payload.createdBy =
+            payload.createdBy ?? toOptionalString(row.created_by, '') ?? '';
+          payload.entryType =
+            payload.entryType ??
+            toOptionalString(row.type, 'PAYABLE') ??
+            'PAYABLE';
         }
       }
 
@@ -285,6 +383,7 @@ export class NotificationListener {
         'entry-due-soon',
         {
           tenantId: payload.tenantId,
+          tenantSchema: payload.tenantSchema,
           branchId: payload.branchId,
           entryId: payload.entryId,
           entryType: payload.entryType,
@@ -294,7 +393,9 @@ export class NotificationListener {
           daysUntilDue: payload.daysUntilDue ?? null,
           jobType: 'entry.due_soon',
         },
-        { jobId: `notif.due_soon.${payload.entryId}.${new Date().toISOString().slice(0,10)}` },
+        {
+          jobId: `notif.due_soon.${payload.entryId}.${new Date().toISOString().slice(0, 10)}`,
+        },
       );
     } catch (error) {
       this.logger.error(
@@ -316,7 +417,7 @@ export class NotificationListener {
       }
 
       const branchLiteral = quoteLiteral(payload.branchId);
-      const rows: any = (
+      const rows = allRows<ApproverRow>(
         await this.drizzleService.getClient().execute(
           sql.raw(`
         SELECT DISTINCT ur.user_id
@@ -327,8 +428,8 @@ export class NotificationListener {
           AND ur.deleted_at IS NULL
           AND ub.branch_id = ${branchLiteral}::uuid
       `),
-        )
-      ).rows as Array<Record<string, unknown>>;
+        ),
+      );
 
       for (const r of rows) {
         const approverId = String(r.user_id);
@@ -337,6 +438,7 @@ export class NotificationListener {
           'approval-pending',
           {
             tenantId: payload.tenantId,
+            tenantSchema: payload.tenantSchema,
             branchId: payload.branchId ?? null,
             entryId: payload.entryId,
             entryType: payload.entryType ?? null,

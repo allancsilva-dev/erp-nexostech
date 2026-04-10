@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
-import {
-  PaymentRefundedEvent,
-} from '../../../common/events/financial.events';
+import { PaymentRefundedEvent } from '../../../common/events/financial.events';
 import { BusinessException } from '../../../common/exceptions/business.exception';
 import type { AuthUser } from '../../../common/types/auth-user.type';
 import { DrizzleService } from '../../../infrastructure/database/drizzle.service';
@@ -43,7 +41,11 @@ export class PaymentsService {
   ) {
     const payment = await this.txHelper.run(async (tx) => {
       const entry: EntryStub | null =
-        await this.paymentsRepository.findEntryByIdForUpdate(entryId, branchId, tx);
+        await this.paymentsRepository.findEntryByIdForUpdate(
+          entryId,
+          branchId,
+          tx,
+        );
 
       if (!entry) {
         throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, {
@@ -62,16 +64,31 @@ export class PaymentsService {
         });
       }
 
-      this.paymentRules.validatePaymentAmount(entry.remainingBalance, dto.amount);
+      this.paymentRules.validatePaymentAmount(
+        entry.remainingBalance,
+        dto.amount,
+      );
 
-      const created = await this.paymentsRepository.createPayment(entryId, dto, user.sub, tx);
+      const created = await this.paymentsRepository.createPayment(
+        entryId,
+        dto,
+        user.sub,
+        tx,
+      );
 
-      const amounts = await this.paymentsRepository.listPaymentAmounts(entryId, tx);
-      const status = this.paymentCalculator.determineStatus(entry.amount, amounts);
+      const amounts = await this.paymentsRepository.listPaymentAmounts(
+        entryId,
+        tx,
+      );
+      const status = this.paymentCalculator.determineStatus(
+        entry.amount,
+        amounts,
+      );
 
       await this.paymentsRepository.updateEntryPaidStatus(entryId, status, tx);
 
       await this.outboxService.insert(tx, user.tenantId, 'payment.created', {
+        tenantSchema: this.drizzleService.getTenantSchema(),
         branchId,
         entryId,
         amount: dto.amount,
@@ -89,11 +106,10 @@ export class PaymentsService {
       branchId,
     );
     if (!entry) {
-      throw new BusinessException(
-        'ENTRY_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { entryId, branchId },
-      );
+      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        entryId,
+        branchId,
+      });
     }
 
     return this.paymentsRepository.listByEntry(entryId);
@@ -166,11 +182,20 @@ export class PaymentsService {
 
       await this.validateRefundDeadline(entry, payment.paymentDate, branchId);
 
-      const removed = await this.paymentsRepository.removePaymentById(dto.paymentId, tx);
+      const removed = await this.paymentsRepository.removePaymentById(
+        dto.paymentId,
+        tx,
+      );
       if (!removed) return null;
 
-      const amounts = await this.paymentsRepository.listPaymentAmounts(entryId, tx);
-      const status = this.paymentCalculator.determineStatus(entry.amount, amounts);
+      const amounts = await this.paymentsRepository.listPaymentAmounts(
+        entryId,
+        tx,
+      );
+      const status = this.paymentCalculator.determineStatus(
+        entry.amount,
+        amounts,
+      );
       await this.paymentsRepository.updateEntryPaidStatus(entryId, status, tx);
 
       return removed;
@@ -181,6 +206,7 @@ export class PaymentsService {
         'payment.refunded',
         new PaymentRefundedEvent(
           user.tenantId,
+          this.drizzleService.getTenantSchema(),
           branchId,
           entryId,
           removedPayment.id,

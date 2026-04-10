@@ -67,7 +67,9 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
         );
       }
 
-      await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      await new Promise<void>((resolve) =>
+        setTimeout(resolve, POLL_INTERVAL_MS),
+      );
     }
 
     this.running = false;
@@ -102,8 +104,21 @@ export class OutboxWorker implements OnModuleInit, OnModuleDestroy {
               ? row.payload
               : {};
 
-          await this.clsService.run(async () => {
+          this.clsService.run(() => {
             this.clsService.set('tenantId', row.tenant_id);
+
+            if (
+              typeof payload.tenantSchema === 'string' &&
+              payload.tenantSchema.length > 0
+            ) {
+              this.clsService.set('tenantSchema', payload.tenantSchema);
+            } else {
+              this.logger.warn('Outbox event sem tenantSchema', {
+                event: row.event_name,
+                tenantId: row.tenant_id,
+              });
+            }
+
             this.eventBus.emit(row.event_name, {
               ...payload,
               tenantId: row.tenant_id,

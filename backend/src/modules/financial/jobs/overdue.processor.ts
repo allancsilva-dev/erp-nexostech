@@ -17,11 +17,11 @@ export class OverdueProcessor implements OnModuleInit {
     this.queueService.registerProcessor(
       'financial.overdue',
       async (payload) => {
-          const schema = resolveTenantSchema(payload);
-          const branchClause = optionalBranchClause(payload);
+        const schema = resolveTenantSchema(payload);
+        const branchClause = optionalBranchClause(payload);
 
-          const result: unknown = await this.drizzleService.getClient().execute(
-            sql.raw(`
+        const result: unknown = await this.drizzleService.getClient().execute(
+          sql.raw(`
               UPDATE ${schema}.financial_entries
               SET status = 'OVERDUE', updated_at = NOW()
               WHERE due_date < CURRENT_DATE
@@ -30,23 +30,36 @@ export class OverdueProcessor implements OnModuleInit {
                 ${branchClause}
               RETURNING id, branch_id, type, document_number, amount::text AS amount, created_by
             `),
-          );
+        );
 
-          const rows = Array.isArray((result as { rows?: unknown })?.rows)
-            ? ((result as { rows: unknown[] }).rows as Array<Record<string, unknown>>)
-            : [];
+        const rows = Array.isArray((result as { rows?: unknown })?.rows)
+          ? ((result as { rows: unknown[] }).rows as Array<
+              Record<string, unknown>
+            >)
+          : [];
 
-          for (const entry of rows) {
-            this.eventBus.emit('entry.overdue', {
-              tenantId: payload.tenantId,
-              branchId: String(entry.branch_id),
-              entryId: String(entry.id),
-              entryType: String(entry.type),
-              documentNumber: entry.document_number ?? null,
-              amount: String(entry.amount ?? '0'),
-              createdBy: String(entry.created_by ?? null),
-            });
-          }
+        for (const entry of rows) {
+          const amount =
+            typeof entry.amount === 'string' || typeof entry.amount === 'number'
+              ? String(entry.amount)
+              : '0';
+          const createdBy =
+            typeof entry.created_by === 'string' ||
+            typeof entry.created_by === 'number'
+              ? String(entry.created_by)
+              : 'null';
+
+          this.eventBus.emit('entry.overdue', {
+            tenantId: payload.tenantId,
+            tenantSchema: payload.tenantSchema,
+            branchId: String(entry.branch_id),
+            entryId: String(entry.id),
+            entryType: String(entry.type),
+            documentNumber: entry.document_number ?? null,
+            amount,
+            createdBy,
+          });
+        }
       },
     );
   }

@@ -7,7 +7,10 @@ import { DrizzleService } from '../../../infrastructure/database/drizzle.service
 import { EventBusService } from '../../../infrastructure/events/event-bus.service';
 import { TransactionHelper } from '../../../infrastructure/database/transaction.helper';
 import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
-import { quoteIdent, quoteLiteral } from '../../../infrastructure/database/sql-builder.util';
+import {
+  quoteIdent,
+  quoteLiteral,
+} from '../../../infrastructure/database/sql-builder.util';
 import { AuthUser } from '../../../common/types/auth-user.type';
 import { CreateEntryDto, EntryType } from './dto/create-entry.dto';
 import { UpdateEntryDto } from './dto/update-entry.dto';
@@ -22,7 +25,9 @@ import {
 import { ApprovalRulesService } from '../approval-rules/approval-rules.service';
 import { CategoriesService } from '../categories/categories.service';
 
-type DrizzleTransaction = Parameters<Parameters<DrizzleService['transaction']>[0]>[0];
+type DrizzleTransaction = Parameters<
+  Parameters<DrizzleService['transaction']>[0]
+>[0];
 
 @Injectable()
 export class EntriesService {
@@ -66,7 +71,10 @@ export class EntriesService {
     return String(row.locked_until as Date);
   }
 
-  private async checkLockPeriod(branchId: string, dateToCheck: string | Date): Promise<void> {
+  private async checkLockPeriod(
+    branchId: string,
+    dateToCheck: string | Date,
+  ): Promise<void> {
     const latestLockedUntil = await this.getLatestLockedUntil(branchId);
     if (!latestLockedUntil) return;
 
@@ -99,14 +107,21 @@ export class EntriesService {
     return user.email ?? 'system@local';
   }
 
-  async list(branchId: string, filters: EntriesListFilters, options: EntriesListOptions) {
+  async list(
+    branchId: string,
+    filters: EntriesListFilters,
+    options: EntriesListOptions,
+  ) {
     return this.entriesRepository.list(branchId, filters, options);
   }
 
   async getById(entryId: string, branchId: string) {
     const entry = await this.entriesRepository.findById(entryId, branchId);
     if (!entry) {
-      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, { entryId, branchId });
+      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        entryId,
+        branchId,
+      });
     }
     return entry;
   }
@@ -116,7 +131,10 @@ export class EntriesService {
     await this.checkLockPeriod(branchId, dto.issueDate);
 
     // Valida categoria antes de abrir transação
-    const category = await this.categoriesService.findById(dto.categoryId, branchId);
+    const category = await this.categoriesService.findById(
+      dto.categoryId,
+      branchId,
+    );
     if (!category) {
       throw new BusinessException('CATEGORY_NOT_FOUND', HttpStatus.NOT_FOUND, {
         categoryId: dto.categoryId,
@@ -124,7 +142,8 @@ export class EntriesService {
       });
     }
 
-    const expectedCategoryType = dto.type === 'PAYABLE' ? 'PAYABLE' : 'RECEIVABLE';
+    const expectedCategoryType =
+      dto.type === 'PAYABLE' ? 'PAYABLE' : 'RECEIVABLE';
     if (category.type !== expectedCategoryType) {
       throw new BusinessException('ENTRY_CATEGORY_INCOMPATIBLE', 422, {
         categoryId: dto.categoryId,
@@ -138,14 +157,23 @@ export class EntriesService {
       ? await this.checkApprovalRules(branchId, dto.type, dto.amount)
       : false;
 
-    const initialStatus = !dto.submit ? 'DRAFT' : needsApproval ? 'PENDING_APPROVAL' : 'PENDING';
+    const initialStatus = !dto.submit
+      ? 'DRAFT'
+      : needsApproval
+        ? 'PENDING_APPROVAL'
+        : 'PENDING';
 
     // Calcula todas as parcelas — não só a primeira
     const installmentAmounts = dto.installment
-      ? this.entryCalculator.calculateInstallments(dto.amount, dto.installmentCount ?? 1)
+      ? this.entryCalculator.calculateInstallments(
+          dto.amount,
+          dto.installmentCount ?? 1,
+        )
       : [dto.amount];
 
-    const installmentTotal = dto.installment ? (dto.installmentCount ?? 1) : null;
+    const installmentTotal = dto.installment
+      ? (dto.installmentCount ?? 1)
+      : null;
 
     const created = await this.txHelper.run(async (tx) => {
       // Cria todas as parcelas dentro da mesma transação
@@ -154,9 +182,7 @@ export class EntriesService {
         const amount = installmentAmounts[i] ?? dto.amount;
 
         // Parcelas seguintes têm vencimento calculado a partir da primeira
-        const dueDate = i === 0
-          ? dto.dueDate
-          : this.addMonths(dto.dueDate, i);
+        const dueDate = i === 0 ? dto.dueDate : this.addMonths(dto.dueDate, i);
 
         // Cada parcela PENDING recebe seu próprio número; PENDING_APPROVAL permanece sem número.
         const partialDocNumber =
@@ -198,26 +224,32 @@ export class EntriesService {
         userEmail: this.getAuditUserEmail(user),
         action: 'CREATE',
         entity: 'financial_entries',
-        entityId: entries[0]!.id,
+        entityId: entries[0].id,
         metadata: { installmentTotal, status: initialStatus },
       });
 
       if (initialStatus === 'PENDING_APPROVAL') {
-        await this.outboxService.insert(tx, user.tenantId, 'entry.pending_approval', {
-          branchId,
-          entryId: entries[0]!.id,
-          entryType: entries[0]!.type,
-          documentNumber: entries[0]!.documentNumber,
-          amount: entries[0]!.amount,
-          createdBy: user.sub,
-        });
+        await this.outboxService.insert(
+          tx,
+          user.tenantId,
+          'entry.pending_approval',
+          {
+            branchId,
+            entryId: entries[0].id,
+            entryType: entries[0].type,
+            documentNumber: entries[0].documentNumber,
+            amount: entries[0].amount,
+            createdBy: user.sub,
+          },
+        );
       }
 
-      return entries[0]!;
+      return entries[0];
     });
 
     this.eventBus.emit('entry.created', {
       tenantId: user.tenantId,
+      tenantSchema: this.drizzleService.getTenantSchema(),
       branchId,
       entryId: created.id,
       type: created.type,
@@ -280,7 +312,9 @@ export class EntriesService {
       `),
     );
 
-    const rows = Array.isArray((result as any)?.rows) ? (result as any).rows : [];
+    const rows = Array.isArray((result as any)?.rows)
+      ? (result as any).rows
+      : [];
     const nextSeq = Number(rows[0]?.last_sequence ?? 1);
 
     return `${prefix}-${year}-${String(nextSeq).padStart(5, '0')}`;
@@ -301,7 +335,9 @@ export class EntriesService {
     },
   ): Promise<void> {
     const schema = quoteIdent(this.drizzleService.getTenantSchema());
-    const fieldChangesJson = quoteLiteral(JSON.stringify(data.fieldChanges ?? []));
+    const fieldChangesJson = quoteLiteral(
+      JSON.stringify(data.fieldChanges ?? []),
+    );
     const metadataJson = quoteLiteral(JSON.stringify(data.metadata ?? {}));
 
     await tx.execute(
@@ -322,12 +358,21 @@ export class EntriesService {
     );
   }
 
-  async update(entryId: string, dto: UpdateEntryDto, user: AuthUser, branchId: string) {
+  async update(
+    entryId: string,
+    dto: UpdateEntryDto,
+    user: AuthUser,
+    branchId: string,
+  ) {
     const existing = await this.getById(entryId, branchId);
     await this.checkLockPeriod(branchId, existing.issueDate);
 
     const updated = await this.txHelper.run(async (tx) => {
-      const result = await this.entriesRepository.update(entryId, branchId, dto);
+      const result = await this.entriesRepository.update(
+        entryId,
+        branchId,
+        dto,
+      );
 
       await this.insertAuditLog(tx, {
         branchId,
@@ -344,6 +389,7 @@ export class EntriesService {
 
     this.eventBus.emit('entry.updated', {
       tenantId: user.tenantId,
+      tenantSchema: this.drizzleService.getTenantSchema(),
       branchId,
       entryId,
       updatedBy: user.sub,
@@ -352,7 +398,11 @@ export class EntriesService {
     return updated;
   }
 
-  async softDelete(entryId: string, user: AuthUser, branchId: string): Promise<void> {
+  async softDelete(
+    entryId: string,
+    user: AuthUser,
+    branchId: string,
+  ): Promise<void> {
     const entry = await this.getById(entryId, branchId);
     await this.checkLockPeriod(branchId, entry.issueDate);
 
@@ -371,6 +421,7 @@ export class EntriesService {
 
     this.eventBus.emit('entry.deleted', {
       tenantId: user.tenantId,
+      tenantSchema: this.drizzleService.getTenantSchema(),
       branchId,
       entryId,
       deletedBy: user.sub,
@@ -378,9 +429,15 @@ export class EntriesService {
   }
 
   async restore(entryId: string, user: AuthUser, branchId: string) {
-    const deleted = await this.entriesRepository.findDeletedById(entryId, branchId);
+    const deleted = await this.entriesRepository.findDeletedById(
+      entryId,
+      branchId,
+    );
     if (!deleted) {
-      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, { entryId, branchId });
+      throw new BusinessException('ENTRY_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        entryId,
+        branchId,
+      });
     }
 
     await this.checkLockPeriod(branchId, deleted.issueDate);
@@ -402,6 +459,7 @@ export class EntriesService {
 
     this.eventBus.emit('entry.restored', {
       tenantId: user.tenantId,
+      tenantSchema: this.drizzleService.getTenantSchema(),
       branchId,
       entryId,
       restoredBy: user.sub,
@@ -419,7 +477,12 @@ export class EntriesService {
     }
   }
 
-  async cancel(entryId: string, reason: string | undefined, user: AuthUser, branchId: string) {
+  async cancel(
+    entryId: string,
+    reason: string | undefined,
+    user: AuthUser,
+    branchId: string,
+  ) {
     const entry = await this.getById(entryId, branchId);
     await this.checkLockPeriod(branchId, entry.issueDate);
 
@@ -459,6 +522,7 @@ export class EntriesService {
 
     this.eventBus.emit('entry.cancelled', {
       tenantId: user.tenantId,
+      tenantSchema: this.drizzleService.getTenantSchema(),
       branchId,
       entryId,
       cancelledBy: user.sub,
