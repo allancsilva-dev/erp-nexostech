@@ -7,21 +7,16 @@ export class PaymentRules {
     const amount = new Decimal(amountToPay);
 
     if (amount.lte(0)) {
-      throw new BusinessException(
-        'VALIDATION_AMOUNT',
-        400,
-        {
-          field: 'amount',
-        },
-      );
+      throw new BusinessException('VALIDATION_AMOUNT', 400, {
+        field: 'amount',
+      });
     }
 
     if (amount.gt(remaining)) {
-      throw new BusinessException(
-        'PAYMENT_AMOUNT_EXCEEDS',
-        undefined,
-        { remainingBalance, amountToPay },
-      );
+      throw new BusinessException('PAYMENT_AMOUNT_EXCEEDS', undefined, {
+        remainingBalance,
+        amountToPay,
+      });
     }
   }
 
@@ -33,11 +28,11 @@ export class PaymentRules {
     );
 
     if (elapsedDays > maxRefundDays) {
-      throw new BusinessException(
-        'PAYMENT_REFUND_PERIOD_EXPIRED',
-        undefined,
-        { lastPaymentDate, maxRefundDays, elapsedDays },
-      );
+      throw new BusinessException('PAYMENT_REFUND_PERIOD_EXPIRED', undefined, {
+        lastPaymentDate,
+        maxRefundDays,
+        elapsedDays,
+      });
     }
   }
 }

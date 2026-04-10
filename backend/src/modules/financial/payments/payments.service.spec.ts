@@ -49,7 +49,9 @@ describe('PaymentsService', () => {
     } as unknown as jest.Mocked<PaymentsRepository>;
 
     const txHelper = {
-      run: jest.fn(async (cb: (currentTx: typeof tx) => Promise<unknown>) => cb(tx)),
+      run: jest.fn(async (cb: (currentTx: typeof tx) => Promise<unknown>) =>
+        cb(tx),
+      ),
     } as unknown as TransactionHelper;
 
     const eventBus = {
@@ -85,6 +87,10 @@ describe('PaymentsService', () => {
     await service.registerPayment('entry-1', dto, user, 'branch-1');
 
     expect(listPaymentAmountsMock).toHaveBeenCalledWith('entry-1', tx);
-    expect(updateEntryPaidStatusMock).toHaveBeenCalledWith('entry-1', 'PAID', tx);
+    expect(updateEntryPaidStatusMock).toHaveBeenCalledWith(
+      'entry-1',
+      'PAID',
+      tx,
+    );
   });
 });

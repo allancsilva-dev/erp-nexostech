@@ -47,7 +47,12 @@ export class PaymentsRepository {
     entryId: string,
     branchId: string,
   ): Promise<EntryStub | null> {
-    return this._findEntry(entryId, branchId, this.drizzleService.getClient(), false);
+    return this._findEntry(
+      entryId,
+      branchId,
+      this.drizzleService.getClient(),
+      false,
+    );
   }
 
   async findEntryByIdForUpdate(
@@ -92,9 +97,13 @@ export class PaymentsRepository {
       `),
     );
 
-    const paymentsRow = paymentsResult.rows[0] as Record<string, unknown> | undefined;
+    const paymentsRow = paymentsResult.rows[0] as
+      | Record<string, unknown>
+      | undefined;
     const totalPaidText = this.toText(paymentsRow?.total_paid ?? '0');
-    const remaining = new Decimal(this.toText(entryRow.amount)).minus(new Decimal(totalPaidText));
+    const remaining = new Decimal(this.toText(entryRow.amount)).minus(
+      new Decimal(totalPaidText),
+    );
 
     return {
       id: this.toText(entryRow.id),
@@ -103,7 +112,8 @@ export class PaymentsRepository {
       type: this.toText(entryRow.type),
       branchId: this.toText(entryRow.branch_id),
       remainingBalance: remaining.toFixed(2),
-      lastPaymentDate: this.toNullableText(paymentsRow?.last_payment_date) ?? null,
+      lastPaymentDate:
+        this.toNullableText(paymentsRow?.last_payment_date) ?? null,
     };
   }
 
@@ -247,9 +257,7 @@ export class PaymentsRepository {
       `),
     );
 
-    return (result.rows as Array<Record<string, unknown>>).map((row) =>
-      this._mapPayment(row),
-    );
+    return result.rows.map((row) => this._mapPayment(row));
   }
 
   private _mapPayment(row: Record<string, unknown>): PaymentEntity {
