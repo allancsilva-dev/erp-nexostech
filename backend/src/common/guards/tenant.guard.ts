@@ -1,13 +1,13 @@
 import {
-  CallHandler,
+  CanActivate,
   ExecutionContext,
   Injectable,
-  NestInterceptor,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { ClsService } from 'nestjs-cls';
-import { Observable } from 'rxjs';
 import { sql } from 'drizzle-orm';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { AuthUser } from '../types/auth-user.type';
 import { DrizzleService } from '../../infrastructure/database/drizzle.service';
 import { CacheService } from '../../infrastructure/cache/cache.service';
@@ -22,25 +22,24 @@ type TenantAwareRequest = {
 };
 
 @Injectable()
-export class TenantInterceptor implements NestInterceptor {
+export class TenantGuard implements CanActivate {
   constructor(
+    private readonly reflector: Reflector,
     private readonly clsService: ClsService,
     private readonly drizzleService: DrizzleService,
     private readonly cacheService: CacheService,
   ) {}
 
-  async intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Promise<Observable<unknown>> {
-    const request = context.switchToHttp().getRequest<TenantAwareRequest>();
-    const path = (request.url ?? request.originalUrl ?? '').split('?')[0];
-    const publicRoutes = ['/api/v1/health', '/api/v1/metrics'];
-
-    if (publicRoutes.some((route) => path.endsWith(route))) {
-      return next.handle();
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) {
+      return true;
     }
 
+    const request = context.switchToHttp().getRequest<TenantAwareRequest>();
     const tenantFromToken = request.user?.tenantId ?? null;
     const headerValue = request.headers['x-tenant-id'];
     const tenantFromHeader =
@@ -59,6 +58,7 @@ export class TenantInterceptor implements NestInterceptor {
         throw new UnauthorizedException('Tenant nao encontrado no contexto');
       }
 
+      const path = (request.url ?? request.originalUrl ?? '').split('?')[0];
       const superadminNoTenantRoutes = [
         '/tenants',
         '/admin',
@@ -76,15 +76,16 @@ export class TenantInterceptor implements NestInterceptor {
         throw new UnauthorizedException('Tenant nao encontrado no contexto');
       }
 
-      return next.handle();
+      return true;
     }
 
     request.tenantId = tenantId;
     this.clsService.set('tenantId', tenantId);
+
     const schemaName = await this.resolveSchema(tenantId);
     this.clsService.set('tenantSchema', schemaName);
 
-    return next.handle();
+    return true;
   }
 
   private async resolveSchema(tenantId: string): Promise<string> {
