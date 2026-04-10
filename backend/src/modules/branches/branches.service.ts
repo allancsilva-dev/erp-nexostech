@@ -29,11 +29,9 @@ export class BranchesService {
   async update(id: string, dto: UpdateBranchDto) {
     const existing = await this.branchesRepository.findById(id);
     if (!existing) {
-      throw new BusinessException(
-        'BRANCH_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { id },
-      );
+      throw new BusinessException('BRANCH_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        id,
+      });
     }
 
     return this.branchesRepository.update(id, dto);
@@ -42,11 +40,9 @@ export class BranchesService {
   async softDelete(id: string): Promise<void> {
     const existing = await this.branchesRepository.findById(id);
     if (!existing) {
-      throw new BusinessException(
-        'BRANCH_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { id },
-      );
+      throw new BusinessException('BRANCH_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        id,
+      });
     }
 
     await this.branchesRepository.softDelete(id);

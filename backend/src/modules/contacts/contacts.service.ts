@@ -20,11 +20,9 @@ export class ContactsService {
   async findById(id: string) {
     const existing = await this.contactsRepository.findById(id);
     if (!existing) {
-      throw new BusinessException(
-        'CONTACT_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { id },
-      );
+      throw new BusinessException('CONTACT_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        id,
+      });
     }
 
     return existing;
@@ -33,11 +31,9 @@ export class ContactsService {
   async update(id: string, dto: UpdateContactDto) {
     const existing = await this.contactsRepository.findById(id);
     if (!existing) {
-      throw new BusinessException(
-        'CONTACT_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { id },
-      );
+      throw new BusinessException('CONTACT_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        id,
+      });
     }
 
     return this.contactsRepository.update(id, dto);
@@ -46,11 +42,9 @@ export class ContactsService {
   async softDelete(id: string, _userId: string): Promise<void> {
     const existing = await this.contactsRepository.findById(id);
     if (!existing) {
-      throw new BusinessException(
-        'CONTACT_NOT_FOUND',
-        HttpStatus.NOT_FOUND,
-        { id },
-      );
+      throw new BusinessException('CONTACT_NOT_FOUND', HttpStatus.NOT_FOUND, {
+        id,
+      });
     }
 
     await this.contactsRepository.softDelete(id);

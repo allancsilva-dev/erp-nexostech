@@ -148,8 +148,7 @@ export class BranchesRepository {
       sets.push(`legal_name = ${quoteLiteral(dto.legalName)}`);
     if (dto.document !== undefined)
       sets.push(`document = ${quoteLiteral(doc)}`);
-    if (dto.phone !== undefined)
-      sets.push(`phone = ${phoneLiteral}`);
+    if (dto.phone !== undefined) sets.push(`phone = ${phoneLiteral}`);
     if (dto.email !== undefined)
       sets.push(`email = ${quoteLiteral(dto.email)}`);
     if (dto.addressCity !== undefined)
@@ -157,7 +156,9 @@ export class BranchesRepository {
     if (dto.addressState !== undefined)
       sets.push(`address_state = ${quoteLiteral(dto.addressState)}`);
     if (dto.addressZip !== undefined)
-      sets.push(`address_zip = ${quoteLiteral(dto.addressZip?.replace(/\D/g, '') ?? null)}`);
+      sets.push(
+        `address_zip = ${quoteLiteral(dto.addressZip?.replace(/\D/g, '') ?? null)}`,
+      );
 
     if (sets.length > 0) {
       await this.drizzleService.getClient().execute(
