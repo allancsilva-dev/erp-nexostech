@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ClsModule } from 'nestjs-cls';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { JwtGuard } from './common/guards/jwt.guard';
 import { AuditLogListener } from './common/listeners/audit-log.listener';
 import { CacheInvalidationListener } from './common/listeners/cache-invalidation.listener';
 import { NotificationListener } from './common/listeners/notification.listener';
@@ -27,6 +28,12 @@ import { V1Module } from './api/v1/v1.module';
     CacheInvalidationListener,
     NotificationListener,
     RbacCacheInvalidationListener,
+    // IMPORTANTE: JwtGuard deve ser o primeiro APP_GUARD —
+    // popula request.user antes do TenantInterceptor resolver o schema
+    {
+      provide: APP_GUARD,
+      useClass: JwtGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

@@ -1,6 +1,8 @@
 import { Controller, HttpCode, HttpStatus, Post, Res } from '@nestjs/common';
 import type { Response } from 'express';
+import { Public } from '../../../common/decorators/public.decorator';
 
+@Public()
 @Controller('auth')
 export class AuthController {
   @Post('local-logout')

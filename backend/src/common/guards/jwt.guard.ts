@@ -5,7 +5,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
 import { createRemoteJWKSet, jwtVerify, JWTPayload } from 'jose';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { AuthUser } from '../types/auth-user.type';
 
 function toText(value: unknown, fallback = ''): string {
@@ -30,7 +32,10 @@ export class JwtGuard implements CanActivate {
   private readonly audience: string;
   private readonly issuer: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly reflector: Reflector,
+  ) {
     const jwksUrl = this.configService.getOrThrow<string>('AUTH_JWKS_URL');
     this.audience = this.configService.getOrThrow<string>('AUTH_JWT_AUDIENCE');
     this.issuer = this.configService.getOrThrow<string>('AUTH_JWT_ISSUER');
@@ -42,6 +47,12 @@ export class JwtGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     const request = context.switchToHttp().getRequest<{
       headers: Record<string, string | undefined>;
       cookies?: Record<string, string | undefined>;
@@ -51,7 +62,10 @@ export class JwtGuard implements CanActivate {
     const token = this.extractToken(request);
     if (!token) {
       throw new UnauthorizedException({
-        error: { code: 'AUTH_UNAUTHORIZED', message: 'JWT ausente ou inválido' },
+        error: {
+          code: 'AUTH_UNAUTHORIZED',
+          message: 'JWT ausente ou inválido',
+        },
       });
     }
 
@@ -66,7 +80,10 @@ export class JwtGuard implements CanActivate {
       return true;
     } catch {
       throw new UnauthorizedException({
-        error: { code: 'AUTH_UNAUTHORIZED', message: 'Token inválido ou expirado' },
+        error: {
+          code: 'AUTH_UNAUTHORIZED',
+          message: 'Token inválido ou expirado',
+        },
       });
     }
   }

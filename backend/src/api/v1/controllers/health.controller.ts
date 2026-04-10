@@ -1,6 +1,8 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiResponse } from '../../../common/dtos/api-response.dto';
+import { Public } from '../../../common/decorators/public.decorator';
 
+@Public()
 @Controller('health')
 export class HealthController {
   @Get()
