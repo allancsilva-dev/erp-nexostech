@@ -16,7 +16,10 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function mergeNestedOption<T>(base: T | undefined, override: T | undefined): T | undefined {
+function mergeNestedOption<T>(
+  base: T | undefined,
+  override: T | undefined,
+): T | undefined {
   if (isPlainObject(base) && isPlainObject(override)) {
     return { ...base, ...override } as T;
   }
@@ -28,10 +31,7 @@ function mergeJobOptions(options?: JobsOptions): JobsOptions {
   return {
     ...DEFAULT_JOB_OPTIONS,
     ...options,
-    backoff: mergeNestedOption(
-      DEFAULT_JOB_OPTIONS.backoff,
-      options?.backoff,
-    ),
+    backoff: mergeNestedOption(DEFAULT_JOB_OPTIONS.backoff, options?.backoff),
     removeOnComplete: mergeNestedOption(
       DEFAULT_JOB_OPTIONS.removeOnComplete,
       options?.removeOnComplete,

@@ -67,7 +67,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
       if (status === HttpStatus.BAD_REQUEST) {
         const messages =
-          typeof body === 'object' && body !== null && Array.isArray(body.message)
+          typeof body === 'object' &&
+          body !== null &&
+          Array.isArray(body.message)
             ? body.message
             : null;
 
@@ -75,7 +77,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
           const firstMessage = String(messages[0] ?? '');
           const code = this.resolveValidationCode(firstMessage);
           const field = this.extractField(firstMessage);
-          const details = { fields: this.extractAllFields(messages.map(String)) };
+          const details = {
+            fields: this.extractAllFields(messages.map(String)),
+          };
 
           this.logger.warn({
             code,
@@ -184,10 +188,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (normalized.includes('issue_date') || normalized.includes('futura')) {
       return 'VALIDATION_DATE_FUTURE';
     }
-    if (
-      normalized.includes('installment') ||
-      normalized.includes('parcel')
-    ) {
+    if (normalized.includes('installment') || normalized.includes('parcel')) {
       return 'VALIDATION_INSTALLMENTS';
     }
     if (

@@ -34,8 +34,14 @@ export class TransfersController {
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ): Promise<ApiResponse<TransferResponse[]>> {
-    const pageNum = Math.max(1, Number.isFinite(Number(page)) ? Number(page) : 1);
-    const pageSizeNum = Math.min(100, Math.max(1, Number.isFinite(Number(pageSize)) ? Number(pageSize) : 20));
+    const pageNum = Math.max(
+      1,
+      Number.isFinite(Number(page)) ? Number(page) : 1,
+    );
+    const pageSizeNum = Math.min(
+      100,
+      Math.max(1, Number.isFinite(Number(pageSize)) ? Number(pageSize) : 20),
+    );
 
     const items = await this.transfersService.list(branchId, {
       page: pageNum,

@@ -4,8 +4,7 @@
 
 export const ErrorCodes = {
   // Validacao
-  VALIDATION_ERROR:
-    'Dados invalidos. Verifique os campos do formulario',
+  VALIDATION_ERROR: 'Dados invalidos. Verifique os campos do formulario',
   VALIDATION_REQUIRED: 'Campo obrigatorio nao informado',
   VALIDATION_PHONE:
     'Telefone em formato invalido. Use apenas numeros (10 ou 11 digitos)',
@@ -32,8 +31,7 @@ export const ErrorCodes = {
     'Lancamentos pagos ou parcialmente pagos devem ser estornados antes de cancelar',
   ENTRY_INVALID_STATUS_REFUND:
     'Apenas lancamentos pagos ou parcialmente pagos podem ser estornados',
-  ENTRY_INVALID_STATUS_APPROVE:
-    'Este lancamento ja foi aprovado ou rejeitado',
+  ENTRY_INVALID_STATUS_APPROVE: 'Este lancamento ja foi aprovado ou rejeitado',
   ENTRY_CATEGORY_INACTIVE:
     'A categoria selecionada esta inativa. Selecione uma categoria ativa',
   ENTRY_CATEGORY_INCOMPATIBLE:
@@ -79,8 +77,7 @@ export const ErrorCodes = {
   BRANCH_MISSING: 'Filial nao informada. Selecione uma filial para continuar',
   AUTH_UNAUTHORIZED: 'Sessao expirada. Faca login novamente',
   AUTH_TOKEN_INVALID: 'Token invalido ou corrompido',
-  AUTH_RATE_LIMIT:
-    'Limite de requisicoes atingido. Aguarde alguns instantes',
+  AUTH_RATE_LIMIT: 'Limite de requisicoes atingido. Aguarde alguns instantes',
   AUTH_PLAN_RESTRICTED:
     'Esta funcionalidade nao esta disponivel no seu plano atual',
 
@@ -112,11 +109,9 @@ export const ErrorCodes = {
   BANK_ACCOUNT_NOT_FOUND:
     'Conta bancaria nao encontrada para a filial informada',
   ATTACHMENT_NOT_FOUND: 'Anexo nao encontrado',
-  BOLETO_ALREADY_GENERATED:
-    'Ja existe um boleto ativo para este lancamento',
+  BOLETO_ALREADY_GENERATED: 'Ja existe um boleto ativo para este lancamento',
   BRANCH_NOT_FOUND: 'Filial nao encontrada',
-  CATEGORY_NOT_FOUND:
-    'Categoria nao encontrada para a filial informada',
+  CATEGORY_NOT_FOUND: 'Categoria nao encontrada para a filial informada',
   COLLECTION_RULE_NOT_FOUND:
     'Regra de cobranca nao encontrada para a filial informada',
   CONTACT_NOT_FOUND: 'Contato nao encontrado',
@@ -134,8 +129,7 @@ export const ErrorCodes = {
     'Saldo insuficiente na conta de origem para concluir a transferencia',
   INVALID_PERIOD_OVERLAP:
     'Ja existe um periodo de bloqueio que se sobrepoe com as datas informadas',
-  INVALID_STATUS_TRANSITION:
-    'Nao e possivel executar esta transicao de status',
+  INVALID_STATUS_TRANSITION: 'Nao e possivel executar esta transicao de status',
   NOT_FOUND: 'Registro nao encontrado',
   ONBOARDING_FAILED:
     'Falha ao configurar a empresa. Tente novamente em instantes',
@@ -143,12 +137,10 @@ export const ErrorCodes = {
     'O valor informado excede o saldo restante do lancamento',
   RECONCILIATION_AMOUNT_DIVERGENCE:
     'O valor do extrato diverge do valor do lancamento acima da tolerancia permitida',
-  RECONCILIATION_ITEM_ALREADY_MATCHED:
-    'Este item do extrato ja foi conciliado',
+  RECONCILIATION_ITEM_ALREADY_MATCHED: 'Este item do extrato ja foi conciliado',
   ROLE_NOT_FOUND: 'Role nao encontrada',
   ROLE_SYSTEM_LOCKED: 'Roles do sistema nao podem ser alteradas ou excluidas',
-  TRANSFER_NOT_FOUND:
-    'Transferencia nao encontrada para a filial informada',
+  TRANSFER_NOT_FOUND: 'Transferencia nao encontrada para a filial informada',
   USER_ALREADY_LINKED: 'Usuario ja vinculado a este tenant',
   USER_NOT_FOUND: 'Usuario nao encontrado neste tenant',
   USER_NOT_PROVISIONED:
