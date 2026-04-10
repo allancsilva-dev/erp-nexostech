@@ -31,6 +31,9 @@ import { V1Module } from './api/v1/v1.module';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    // IMPORTANTE: a ordem dos interceptors é obrigatória.
+    // TenantInterceptor deve ser SEMPRE o primeiro — ele resolve o schema
+    // do tenant no CLS antes de qualquer outro interceptor acessar o banco.
     {
       provide: APP_INTERCEPTOR,
       useClass: TenantInterceptor,

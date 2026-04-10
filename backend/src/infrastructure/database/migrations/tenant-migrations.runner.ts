@@ -4,7 +4,7 @@ import { TENANT_MIGRATIONS } from './migration-manifest';
 
 loadEnv();
 
-type Tenant = { id: string };
+type Tenant = { id: string; name: string };
 
 function requireDatabaseUrl(): string {
   const value = process.env.DATABASE_URL;
@@ -61,12 +61,16 @@ async function listTenants(
   tenantOverride?: string,
 ): Promise<Tenant[]> {
   if (tenantOverride) {
-    return [{ id: tenantOverride }];
+    const result = await pool.query<Tenant>(
+      'SELECT id, name FROM public.tenants WHERE id = $1 LIMIT 1',
+      [tenantOverride],
+    );
+    return result.rows;
   }
 
   // Supoe tabela public.tenants no auth/onboarding. Ajustar em ambiente real se necessario.
   const result = await pool.query<Tenant>(
-    'SELECT id FROM public.tenants WHERE active = true ORDER BY created_at ASC',
+    'SELECT id, name FROM public.tenants WHERE active = true ORDER BY created_at ASC',
   );
   return result.rows;
 }
@@ -121,21 +125,31 @@ async function saveMigrationStatus(
   );
 }
 
-function schemaFromTenant(tenantId: string): string {
-  // Converte caracteres invalidos em underscore para manter consistencia.
-  return `tenant_${tenantId.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+// NOTA: lógica duplicada intencionalmente — este script é standalone
+// e não pode importar de src/. Manter sincronizado com tenant-schema.util.ts.
+function generateTenantSchema(tenantName: string, tenantId: string): string {
+  const slug = tenantName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 40);
+  const safeSlug = slug.length > 0 ? slug : 'default';
+  const suffix = tenantId.replace(/-/g, '').slice(0, 8);
+  return `tenant_${safeSlug}_${suffix}`;
 }
 
 async function applyForTenant(
   pool: Pool,
-  tenantId: string,
+  tenant: Tenant,
   retryMode = false,
 ): Promise<void> {
-  const schema = schemaFromTenant(tenantId);
-  await pool.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+  const schema = generateTenantSchema(tenant.name, tenant.id);
+  await pool.query(`CREATE SCHEMA IF NOT EXISTS "${schema}"`);
 
   for (const migration of TENANT_MIGRATIONS) {
-    if (!retryMode && (await wasApplied(pool, tenantId, migration.name))) {
+    if (!retryMode && (await wasApplied(pool, tenant.id, migration.name))) {
       continue;
     }
 
@@ -144,7 +158,7 @@ async function applyForTenant(
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
-        `${tenantId}:${migration.name}`,
+        `${tenant.id}:${migration.name}`,
       ]);
 
       const statements = migration.run(schema);
@@ -155,7 +169,7 @@ async function applyForTenant(
       await client.query('COMMIT');
 
       await saveMigrationStatus(pool, {
-        tenantId,
+        tenantId: tenant.id,
         migrationName: migration.name,
         status: 'SUCCESS',
         durationMs: Date.now() - start,
@@ -163,7 +177,7 @@ async function applyForTenant(
     } catch (error) {
       await client.query('ROLLBACK');
       await saveMigrationStatus(pool, {
-        tenantId,
+        tenantId: tenant.id,
         migrationName: migration.name,
         status: 'FAILED',
         errorMessage: error instanceof Error ? error.message : 'unknown error',
@@ -190,7 +204,7 @@ async function run(): Promise<void> {
 
     const tenants = await listTenants(pool, tenantArg);
     for (const tenant of tenants) {
-      await applyForTenant(pool, tenant.id, mode === 'retry');
+      await applyForTenant(pool, tenant, mode === 'retry');
     }
   } finally {
     await pool.end();

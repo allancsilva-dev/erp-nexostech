@@ -6,8 +6,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
-import { Observable } from 'rxjs';
+import { Observable, from, switchMap } from 'rxjs';
+import { sql } from 'drizzle-orm';
 import { AuthUser } from '../types/auth-user.type';
+import { DrizzleService } from '../../infrastructure/database/drizzle.service';
+import { CacheService } from '../../infrastructure/cache/cache.service';
+import { quoteLiteral } from '../../infrastructure/database/sql-builder.util';
 
 type TenantAwareRequest = {
   user?: AuthUser;
@@ -19,7 +23,11 @@ type TenantAwareRequest = {
 
 @Injectable()
 export class TenantInterceptor implements NestInterceptor {
-  constructor(private readonly clsService: ClsService) {}
+  constructor(
+    private readonly clsService: ClsService,
+    private readonly drizzleService: DrizzleService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<TenantAwareRequest>();
@@ -64,14 +72,43 @@ export class TenantInterceptor implements NestInterceptor {
       if (!isAllowedSuperAdminRoute) {
         throw new UnauthorizedException('Tenant nao encontrado no contexto');
       }
+
+      return next.handle();
     }
 
     request.tenantId = tenantId;
+    this.clsService.set('tenantId', tenantId);
 
-    if (tenantId) {
-      this.clsService.set('tenantId', tenantId);
+    return from(this.resolveSchema(tenantId)).pipe(
+      switchMap((schemaName) => {
+        this.clsService.set('tenantSchema', schemaName);
+        return next.handle();
+      }),
+    );
+  }
+
+  private async resolveSchema(tenantId: string): Promise<string> {
+    const cacheKey = `tenant:schema:${tenantId}`;
+
+    const cached = await this.cacheService.get<string>(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.drizzleService
+      .getClient()
+      .execute(
+        sql.raw(
+          `SELECT schema_name FROM public.tenants WHERE id = ${quoteLiteral(tenantId)}::uuid LIMIT 1`,
+        ),
+      );
+
+    const schemaName = result.rows[0]?.schema_name as string | undefined;
+
+    if (!schemaName) {
+      throw new UnauthorizedException('Tenant nao encontrado no banco');
     }
 
-    return next.handle();
+    await this.cacheService.set(cacheKey, schemaName, 5 * 60 * 1000);
+
+    return schemaName;
   }
 }

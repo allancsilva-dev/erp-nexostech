@@ -2,10 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { TENANT_MIGRATIONS } from '../../infrastructure/database/migrations/migration-manifest';
 import { DrizzleService } from '../../infrastructure/database/drizzle.service';
+import { generateTenantSchema } from '../../infrastructure/database/tenant-schema.util';
 import {
   quoteIdent,
   quoteLiteral,
 } from '../../infrastructure/database/sql-builder.util';
+import { CacheService } from '../../infrastructure/cache/cache.service';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 
@@ -152,7 +154,10 @@ const DEFAULT_COLLECTION_RULES: Array<{
 export class TenantsRepository {
   private readonly logger = new Logger(TenantsRepository.name);
 
-  constructor(private readonly drizzleService: DrizzleService) {}
+  constructor(
+    private readonly drizzleService: DrizzleService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async list(): Promise<TenantEntity[]> {
     await this.ensureTenantsTable();
@@ -193,7 +198,7 @@ export class TenantsRepository {
         ),
       );
     const tenantId = String(tenantIdResult.rows[0].id);
-    const schemaName = this.schemaFromTenant(tenantId);
+    const schemaName = generateTenantSchema(dto.name, tenantId);
     const quotedSchema = quoteIdent(schemaName);
     const baseSlug = this.slugify(dto.slug ?? dto.name);
     const slug =
@@ -218,6 +223,8 @@ export class TenantsRepository {
         updated_at = NOW()
     `),
     );
+
+    await this.cacheService.del(`tenant:schema:${tenantId}`);
 
     try {
       // PASSO 1 — Criar schema e aplicar todas as migrations (DDL)
@@ -404,14 +411,10 @@ export class TenantsRepository {
           dropError instanceof Error ? dropError.stack : String(dropError),
         );
       }
-      throw new BusinessException(
-        'ONBOARDING_FAILED',
-        undefined,
-        {
-          tenantId,
-          cause: error instanceof Error ? error.message : String(error),
-        },
-      );
+      throw new BusinessException('ONBOARDING_FAILED', undefined, {
+        tenantId,
+        cause: error instanceof Error ? error.message : String(error),
+      });
     }
 
     const [tenant] = await this.findById(tenantId);
@@ -570,10 +573,6 @@ export class TenantsRepository {
         throw error;
       }
     }
-  }
-
-  private schemaFromTenant(tenantId: string): string {
-    return `tenant_${tenantId.replace(/[^a-zA-Z0-9_]/g, '_')}`;
   }
 
   private slugify(value: string): string {
