@@ -161,7 +161,7 @@ const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = 
 const baseItem =
   'group/sidebar-item relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition-[background-color,color,transform] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--sidebar-active-bg))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--sidebar-bg))]';
 const normalItem = `${baseItem} text-[hsl(var(--sidebar-text-muted))] hover:translate-x-0.5 hover:bg-[hsl(var(--background)/0.97)] hover:text-[hsl(var(--sidebar-text))]`;
-const activeItem = `${baseItem} rounded-l-xl rounded-r-none bg-[hsl(var(--background))] text-[var(--text-primary)] shadow-sm after:pointer-events-none after:absolute after:-right-3 after:top-0 after:h-full after:w-3 after:bg-[hsl(var(--background))] after:content-['']`;
+const activeItem = `${baseItem} rounded-l-xl rounded-r-none bg-[hsl(var(--background))] text-[var(--text-primary)] shadow-sm after:pointer-events-none after:absolute after:-right-3 after:top-0 after:bottom-0 after:w-3 after:bg-[hsl(var(--background))] after:content-['']`;
 
 function getIdentityLabel(user: { name?: string | null; email: string | null; roles?: Array<{ name: string }> } | null): string {
   return user?.name || user?.email || 'Utilizador';
