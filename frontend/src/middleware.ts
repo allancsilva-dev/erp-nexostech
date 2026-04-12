@@ -3,8 +3,9 @@ import { Buffer } from 'node:buffer';
 
 const AUTH_URL = process.env.AUTH_URL ?? process.env.NEXT_PUBLIC_AUTH_URL ?? 'https://auth.zonadev.tech';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://erp.zonadev.tech';
-const APP_AUD = process.env.NEXT_PUBLIC_APP_AUDIENCE ?? 'erp.zonadev.tech';
+const CLIENT_ID = process.env.OIDC_CLIENT_ID ?? 'erp-nexostech';
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? 'erp_access_token';
+const REDIRECT_URI = `${APP_URL}/api/auth/callback`;
 const PUBLIC_PATHS = ['/login', '/api/', '/_next', '/favicon.ico'];
 
 export async function middleware(req: NextRequest) {
@@ -20,46 +21,57 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Token exchange: zonadev_sid -> erp_access_token.
-  const sid = req.cookies.get('zonadev_sid')?.value;
-  if (sid) {
-    try {
-      const tokenRes = await fetch(`${AUTH_URL}/oauth/token?aud=${APP_AUD}`, {
-        headers: { Cookie: `zonadev_sid=${sid}` },
-        signal: AbortSignal.timeout(3000),
-      });
+  // Inicia o fluxo Authorization Code + PKCE para obter um token proprio do ERP.
+  const verifierBytes = new Uint8Array(32);
+  crypto.getRandomValues(verifierBytes);
+  const codeVerifier = base64url(verifierBytes);
 
-      if (tokenRes.ok) {
-        const data = (await tokenRes.json()) as {
-          access_token: string;
-          expires_in: number;
-        };
+  const challengeBuffer = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(codeVerifier),
+  );
+  const codeChallenge = base64url(new Uint8Array(challengeBuffer));
 
-        const response = NextResponse.next();
-        response.cookies.set(COOKIE_NAME, data.access_token, {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'lax',
-          domain: 'erp.zonadev.tech',
-          maxAge: data.expires_in,
-          path: '/',
-        });
+  // State aleatorio protege o callback contra CSRF durante a troca do code.
+  const stateBytes = new Uint8Array(16);
+  crypto.getRandomValues(stateBytes);
+  const state = base64url(stateBytes);
 
-        return response;
-      }
-    } catch {
-      // Fallback para redirect de login.
-    }
-  }
+  const authorizeUrl = new URL(`${AUTH_URL}/oauth/authorize`);
+  authorizeUrl.searchParams.set('client_id', CLIENT_ID);
+  authorizeUrl.searchParams.set('redirect_uri', REDIRECT_URI);
+  authorizeUrl.searchParams.set('response_type', 'code');
+  authorizeUrl.searchParams.set('state', state);
+  authorizeUrl.searchParams.set('code_challenge', codeChallenge);
+  authorizeUrl.searchParams.set('code_challenge_method', 'S256');
+  authorizeUrl.searchParams.set('scope', 'openid');
 
-  const loginUrl = new URL(`${AUTH_URL}/login`);
-  loginUrl.searchParams.set('app', APP_AUD);
-  loginUrl.searchParams.set(
-    'redirect',
-    APP_URL + req.nextUrl.pathname + req.nextUrl.search,
+  const response = NextResponse.redirect(authorizeUrl);
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 300,
+  };
+
+  response.cookies.set('erp_oauth_state', state, cookieOptions);
+  response.cookies.set('erp_oauth_verifier', codeVerifier, cookieOptions);
+  response.cookies.set(
+    'erp_oauth_return',
+    req.nextUrl.pathname + req.nextUrl.search,
+    cookieOptions,
   );
 
-  return NextResponse.redirect(loginUrl);
+  return response;
+}
+
+function base64url(bytes: Uint8Array): string {
+  return Buffer.from(bytes)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 }
 
 function isTokenExpired(token: string): boolean {
@@ -69,6 +81,7 @@ function isTokenExpired(token: string): boolean {
     ) as { exp?: number };
 
     if (!payload.exp) return true;
+    // Margem curta evita navegar com um token prestes a expirar.
     return Date.now() >= (payload.exp * 1000) - 60_000;
   } catch {
     return true;
