@@ -8,35 +8,43 @@ import {
   ArrowLeftRight,
   BarChart3,
   BookOpen,
+  Building2,
   CheckCircle2,
   Clock4,
   FileText,
+  FolderTree,
   GitCompare,
   LayoutDashboard,
   LogOut,
   Receipt,
   ScrollText,
+  Send,
   Settings,
   TrendingUp,
+  UserCog,
+  Users,
   type LucideIcon,
 } from 'lucide-react';
 import { ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import CollapsibleMenu from './collapsible-menu';
 import { usePermissions } from '@/hooks/use-permissions';
-import { useFeatureFlag } from '@/hooks/use-feature-flags';
+import { useFeatureFlags } from '@/hooks/use-feature-flags';
 import { useApprovals } from '@/features/approvals/hooks/use-approvals';
 import { useAuthContext } from '@/providers/auth-provider';
 
 type SidebarItem = {
-  section: 'main' | 'financeiro' | 'relatorios' | 'controle' | 'configuracoes';
+  section: 'main' | 'financeiro' | 'relatorios' | 'controle' | 'configuracoes' | 'admin';
   label: string;
   href: string;
   permission: string;
   icon: LucideIcon;
   subtitle?: string;
   featureFlag?:
-    | 'collection_rules_enabled';
+    | 'collection_rules_enabled'
+    | 'boletos_enabled'
+    | 'approval_flow_enabled'
+    | 'branches_enabled';
   badge?: 'approvals';
 };
 
@@ -81,8 +89,22 @@ const ITEMS: SidebarItem[] = [
     section: 'financeiro',
     label: 'Transferências',
     href: ROUTES.transferencias,
-    permission: 'financial.entries.create',
+    permission: 'financial.transfers.manage',
     icon: ArrowLeftRight,
+  },
+  {
+    section: 'financeiro',
+    label: 'Categorias',
+    href: ROUTES.categorias,
+    permission: 'financial.categories.manage',
+    icon: FolderTree,
+  },
+  {
+    section: 'financeiro',
+    label: 'Contatos',
+    href: ROUTES.contatos,
+    permission: 'contacts.manage',
+    icon: Users,
   },
   {
     section: 'financeiro',
@@ -90,6 +112,7 @@ const ITEMS: SidebarItem[] = [
     href: ROUTES.boletos,
     permission: 'financial.entries.view',
     icon: FileText,
+    featureFlag: 'boletos_enabled',
   },
   {
     section: 'relatorios',
@@ -118,6 +141,7 @@ const ITEMS: SidebarItem[] = [
     href: ROUTES.aprovacoes,
     permission: 'financial.entries.approve',
     icon: CheckCircle2,
+    featureFlag: 'approval_flow_enabled',
     badge: 'approvals',
   },
   {
@@ -136,12 +160,27 @@ const ITEMS: SidebarItem[] = [
     
   },
   {
-    section: 'configuracoes',
+    section: 'controle',
     label: 'Régua de cobrança',
     href: ROUTES.reguaCobranca,
     permission: 'financial.settings.manage',
-    icon: Settings,
+    icon: Send,
     featureFlag: 'collection_rules_enabled',
+  },
+  {
+    section: 'admin',
+    label: 'Filiais',
+    href: ROUTES.adminFiliais,
+    permission: 'admin.branches.manage',
+    icon: Building2,
+    featureFlag: 'branches_enabled',
+  },
+  {
+    section: 'admin',
+    label: 'Usuários',
+    href: ROUTES.adminUsuarios,
+    permission: 'admin.users.manage',
+    icon: UserCog,
   },
 ];
 
@@ -150,12 +189,13 @@ const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = 
   relatorios: 'Relatórios',
   controle: 'Controle',
   configuracoes: 'Configurações',
+  admin: 'Administração',
 };
 
 const baseItem =
   'group/sidebar-item relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition-[background-color,color,transform] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--sidebar-active-bg))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--sidebar-bg))]';
-const normalItem = `${baseItem} text-[hsl(var(--sidebar-text-muted))] hover:translate-x-0.5 hover:bg-[hsl(var(--background)/0.97)] hover:text-[hsl(var(--sidebar-text))]`;
-const activeItem = `${baseItem} rounded-l-xl rounded-r-none bg-[hsl(var(--background))] text-[var(--text-primary)] shadow-sm after:pointer-events-none after:absolute after:-right-3 after:top-0 after:h-full after:w-3 after:bg-[hsl(var(--background))] after:content-['']`;
+const normalItem = `${baseItem} text-[hsl(var(--sidebar-text-muted))] hover:translate-x-0.5 hover:bg-[var(--bg-surface-hover)] hover:text-[hsl(var(--sidebar-text))]`;
+const activeItem = `${baseItem} bg-[hsl(var(--sidebar-active-bg))] text-[var(--text-primary)]`;
 
 function getIdentityLabel(user: { name?: string | null; email: string | null; roles?: Array<{ name: string }> } | null): string {
   return user?.name || user?.email || 'Utilizador';
@@ -188,15 +228,15 @@ function getIdentityInitials(identity: string): string {
 export function Sidebar({ isVisible }: { isVisible: boolean }) {
   const { hasPermission } = usePermissions();
   const { user, logout } = useAuthContext();
-  const collectionRulesEnabled = useFeatureFlag('collection_rules_enabled');
-  const { pending } = useApprovals({ enabled: { pending: true, history: false } });
+  const featureFlags = useFeatureFlags();
+  const canApprove = hasPermission('financial.entries.approve');
+  const { pending } = useApprovals({ enabled: { pending: canApprove, history: false } });
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
-  useEffect(() => {
-    const persisted = localStorage.getItem('sidebar_collapsed');
-    setIsCollapsed(persisted === '1');
-  }, []);
+  const [isCollapsed, setIsCollapsed] = useState(() =>
+    typeof window !== 'undefined'
+      ? localStorage.getItem('sidebar_collapsed') === '1'
+      : false,
+  );
 
   useEffect(() => {
     localStorage.setItem('sidebar_collapsed', isCollapsed ? '1' : '0');
@@ -212,18 +252,10 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
 
   const filteredItems = useMemo(
     () =>
-      ITEMS.filter((item) => hasPermission(item.permission)).filter((item) => {
-        if (!item.featureFlag) {
-          return true;
-        }
-
-        if (item.featureFlag === 'collection_rules_enabled') {
-          return collectionRulesEnabled;
-        }
-
-        return false;
-      }),
-    [collectionRulesEnabled, hasPermission],
+      ITEMS.filter((item) => hasPermission(item.permission)).filter(
+        (item) => !item.featureFlag || featureFlags[item.featureFlag],
+      ),
+    [featureFlags, hasPermission],
   );
 
   const sections = useMemo(() => {
@@ -233,6 +265,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
       relatorios: filteredItems.filter((item) => item.section === 'relatorios'),
       controle: filteredItems.filter((item) => item.section === 'controle'),
       configuracoes: filteredItems.filter((item) => item.section === 'configuracoes'),
+      admin: filteredItems.filter((item) => item.section === 'admin'),
     };
   }, [filteredItems]);
 
@@ -242,8 +275,6 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
     const itemClassName = cn(
       isActive ? activeItem : normalItem,
       isCollapsed ? 'justify-center px-2.5' : '',
-      isActive && !isCollapsed ? '-mr-3 pr-6' : '',
-      isActive && isCollapsed ? 'rounded-2xl after:hidden' : '',
     );
     const labelClassName = cn(
       'truncate transition-transform duration-300 ease-out',
@@ -262,13 +293,6 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         title={isCollapsed ? item.label : undefined}
         aria-label={item.label}
       >
-        <span
-          aria-hidden="true"
-          className={cn(
-            'absolute bottom-1 left-0 top-1 h-auto w-[3px] -translate-x-2 scale-y-75 rounded-full bg-[hsl(var(--sidebar-active-bg))] opacity-0 transition-all duration-300 ease-out',
-            isActive && 'translate-x-0 scale-y-100 opacity-100',
-          )}
-        />
         <Icon
           size={18}
           strokeWidth={1.8}
@@ -343,9 +367,10 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
           </div>
         ) : null}
         {renderSection('configuracoes')}
+        {renderSection('admin')}
       </nav>
 
-      <div className="relative z-10 mt-3 border-t border-transparent bg-[hsl(var(--sidebar-bg))] pt-3">
+      <div className="mt-3 border-t border-[hsl(var(--sidebar-section-label)/0.2)] pt-3">
         <div className={cn('flex items-center gap-2', isCollapsed ? 'justify-center' : '')}>
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-bold text-[var(--accent-foreground)]">
             {getIdentityInitials(identity)}
@@ -362,7 +387,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
           onClick={() => {
             void logout();
           }}
-          className={cn(normalItem, 'mt-2', isCollapsed ? 'justify-center px-2.5' : '')}
+          className={cn(normalItem, 'mt-2 hover:bg-transparent hover:text-[var(--danger)]', isCollapsed ? 'justify-center px-2.5' : '')}
           aria-label="Sair"
         >
           <LogOut size={18} strokeWidth={1.8} className="shrink-0 text-current" />

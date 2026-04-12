@@ -16,6 +16,7 @@ export const ROUTES = {
   contasReceber: '/financeiro/contas-receber',
   fluxoCaixa: '/financeiro/fluxo-caixa',
   categorias: '/financeiro/categorias',
+  contatos: '/financeiro/contatos',
   conciliacao: '/financeiro/conciliacao',
   relatorios: '/financeiro/relatorios',
   transferencias: '/financeiro/transferencias',

@@ -47,9 +47,12 @@ const DEFAULT_ROLES: Array<{
       'financial.settings.manage',
       'financial.audit.view',
       'financial.bank_accounts.manage',
+      'financial.transfers.manage',
       'financial.approval_rules.manage',
       'admin.branches.manage',
       'admin.users.manage',
+      'contacts.view',
+      'contacts.manage',
     ],
   },
   {
@@ -67,6 +70,9 @@ const DEFAULT_ROLES: Array<{
       'financial.reports.view',
       'financial.reports.export',
       'financial.bank_accounts.manage',
+      'financial.transfers.manage',
+      'contacts.view',
+      'contacts.manage',
     ],
   },
   {
@@ -77,6 +83,8 @@ const DEFAULT_ROLES: Array<{
       'financial.entries.view',
       'financial.entries.create',
       'financial.categories.view',
+      'contacts.view',
+      'contacts.manage',
     ],
   },
   {
@@ -89,6 +97,7 @@ const DEFAULT_ROLES: Array<{
       'financial.reports.view',
       'financial.reports.export',
       'financial.audit.view',
+      'contacts.view',
     ],
   },
 ];

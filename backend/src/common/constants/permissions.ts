@@ -96,6 +96,11 @@ export const SYSTEM_PERMISSIONS: PermissionDef[] = [
     description: 'Gerenciar contas bancárias',
   },
   {
+    code: 'financial.transfers.manage',
+    module: 'financial',
+    description: 'Criar e gerenciar transferências entre contas',
+  },
+  {
     code: 'financial.approval_rules.manage',
     module: 'financial',
     description: 'Gerenciar regras de aprovação',
@@ -109,5 +114,15 @@ export const SYSTEM_PERMISSIONS: PermissionDef[] = [
     code: 'admin.users.manage',
     module: 'admin',
     description: 'Gerenciar usuários e permissões',
+  },
+  {
+    code: 'contacts.view',
+    module: 'contacts',
+    description: 'Visualizar contatos',
+  },
+  {
+    code: 'contacts.manage',
+    module: 'contacts',
+    description: 'Gerenciar contatos',
   },
 ];
