@@ -54,12 +54,31 @@ export class JwtGuard implements CanActivate {
     if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest<{
+      url?: string;
       headers: Record<string, string | undefined>;
       cookies?: Record<string, string | undefined>;
       user?: AuthUser;
     }>();
 
+    console.log('[JWT DEBUG] path:', request.url);
+    console.log(
+      '[JWT DEBUG] authorization:',
+      request.headers.authorization
+        ? `Bearer ${request.headers.authorization.substring(7, 20)}...`
+        : 'ABSENT',
+    );
+    console.log(
+      '[JWT DEBUG] cookie erp_access_token:',
+      request.cookies?.erp_access_token
+        ? `${request.cookies.erp_access_token.substring(0, 20)}...`
+        : 'ABSENT',
+    );
+
     const token = this.extractToken(request);
+    console.log(
+      '[JWT DEBUG] extracted token:',
+      token ? `${token.substring(0, 20)}... (len=${token.length})` : 'NULL',
+    );
     if (!token) {
       throw new UnauthorizedException({
         error: {
@@ -78,7 +97,8 @@ export class JwtGuard implements CanActivate {
 
       request.user = this.mapPayload(payload);
       return true;
-    } catch {
+    } catch (error) {
+      console.log('[JWT DEBUG] jwtVerify FAILED:', (error as Error).message);
       throw new UnauthorizedException({
         error: {
           code: 'AUTH_UNAUTHORIZED',
