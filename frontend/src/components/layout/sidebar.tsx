@@ -336,7 +336,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         {renderSection('configuracoes')}
       </nav>
 
-      <div className="mt-auto border-t border-[hsl(var(--sidebar-section-label)/0.12)] pt-3">
+        <div className="mt-auto border-t border-[hsl(var(--sidebar-text)/0.15)] pt-3">
         <div className={cn('flex items-center gap-2', isCollapsed ? 'justify-center' : '')}>
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-bold text-[var(--accent-foreground)]">
             {getIdentityInitials(identity)}
