@@ -322,7 +322,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
         {!isCollapsed ? <span className="text-[14px] font-semibold text-[hsl(var(--sidebar-text))]">Nexos Financeiro</span> : null}
       </button>
 
-      <nav className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pr-0 bg-[hsl(var(--sidebar-bg))]" aria-label="Navegação do ERP">
+      <nav className="scrollbar-thin flex-1 overflow-y-auto pr-0" aria-label="Navegação do ERP">
         <div className="space-y-1">{sections.main.map(renderItem)}</div>
         {renderSection('financeiro')}
         {renderSection('controle')}
