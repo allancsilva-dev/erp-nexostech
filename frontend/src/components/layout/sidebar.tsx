@@ -8,11 +8,9 @@ import {
   ArrowLeftRight,
   BarChart3,
   BookOpen,
-  Building2,
   CheckCircle2,
   Clock4,
   FileText,
-  FolderTree,
   GitCompare,
   LayoutDashboard,
   LogOut,
@@ -21,8 +19,6 @@ import {
   Send,
   Settings,
   TrendingUp,
-  UserCog,
-  Users,
   type LucideIcon,
 } from 'lucide-react';
 import { ROUTES } from '@/lib/constants';
@@ -34,7 +30,7 @@ import { useApprovals } from '@/features/approvals/hooks/use-approvals';
 import { useAuthContext } from '@/providers/auth-provider';
 
 type SidebarItem = {
-  section: 'main' | 'financeiro' | 'relatorios' | 'controle' | 'configuracoes' | 'admin';
+  section: 'main' | 'financeiro' | 'relatorios' | 'controle' | 'configuracoes';
   label: string;
   href: string;
   permission: string;
@@ -91,20 +87,6 @@ const ITEMS: SidebarItem[] = [
     href: ROUTES.transferencias,
     permission: 'financial.transfers.manage',
     icon: ArrowLeftRight,
-  },
-  {
-    section: 'financeiro',
-    label: 'Categorias',
-    href: ROUTES.categorias,
-    permission: 'financial.categories.manage',
-    icon: FolderTree,
-  },
-  {
-    section: 'financeiro',
-    label: 'Contatos',
-    href: ROUTES.contatos,
-    permission: 'contacts.manage',
-    icon: Users,
   },
   {
     section: 'financeiro',
@@ -167,21 +149,6 @@ const ITEMS: SidebarItem[] = [
     icon: Send,
     featureFlag: 'collection_rules_enabled',
   },
-  {
-    section: 'admin',
-    label: 'Filiais',
-    href: ROUTES.adminFiliais,
-    permission: 'admin.branches.manage',
-    icon: Building2,
-    featureFlag: 'branches_enabled',
-  },
-  {
-    section: 'admin',
-    label: 'Usuários',
-    href: ROUTES.adminUsuarios,
-    permission: 'admin.users.manage',
-    icon: UserCog,
-  },
 ];
 
 const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = {
@@ -189,13 +156,12 @@ const SECTION_LABELS: Record<Exclude<SidebarItem['section'], 'main'>, string> = 
   relatorios: 'Relatórios',
   controle: 'Controle',
   configuracoes: 'Configurações',
-  admin: 'Administração',
 };
 
 const baseItem =
   'group/sidebar-item relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition-[background-color,color,transform] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--sidebar-active-bg))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--sidebar-bg))]';
-const normalItem = `${baseItem} text-[hsl(var(--sidebar-text-muted))] hover:translate-x-0.5 hover:bg-[var(--bg-surface-hover)] hover:text-[hsl(var(--sidebar-text))]`;
-const activeItem = `${baseItem} bg-[hsl(var(--sidebar-active-bg))] text-[var(--text-primary)]`;
+const normalItem = `${baseItem} text-[hsl(var(--sidebar-text-muted))] hover:translate-x-0.5 hover:bg-[hsl(var(--background)/0.97)] hover:text-[hsl(var(--sidebar-text))]`;
+const activeItem = `${baseItem} rounded-l-xl rounded-r-none bg-[hsl(var(--background))] text-[var(--text-primary)] shadow-sm after:pointer-events-none after:absolute after:-right-3 after:top-0 after:h-full after:w-3 after:bg-[hsl(var(--background))] after:content-['']`;
 
 function getIdentityLabel(user: { name?: string | null; email: string | null; roles?: Array<{ name: string }> } | null): string {
   return user?.name || user?.email || 'Utilizador';
@@ -265,7 +231,6 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
       relatorios: filteredItems.filter((item) => item.section === 'relatorios'),
       controle: filteredItems.filter((item) => item.section === 'controle'),
       configuracoes: filteredItems.filter((item) => item.section === 'configuracoes'),
-      admin: filteredItems.filter((item) => item.section === 'admin'),
     };
   }, [filteredItems]);
 
@@ -275,6 +240,8 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
     const itemClassName = cn(
       isActive ? activeItem : normalItem,
       isCollapsed ? 'justify-center px-2.5' : '',
+      isActive && !isCollapsed ? '-mr-3 pr-6' : '',
+      isActive && isCollapsed ? 'rounded-2xl after:hidden' : '',
     );
     const labelClassName = cn(
       'truncate transition-transform duration-300 ease-out',
@@ -367,7 +334,6 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
           </div>
         ) : null}
         {renderSection('configuracoes')}
-        {renderSection('admin')}
       </nav>
 
       <div className="mt-3 border-t border-[hsl(var(--sidebar-section-label)/0.2)] pt-3">
