@@ -240,7 +240,7 @@ export function Sidebar({ isVisible }: { isVisible: boolean }) {
     const itemClassName = cn(
       isActive ? activeItem : normalItem,
       isCollapsed ? 'justify-center px-2.5' : '',
-      isActive && !isCollapsed ? '-mr-3 pr-6' : '',
+      isActive && !isCollapsed ? 'pr-6' : '',
       isActive && isCollapsed ? 'rounded-2xl after:hidden' : '',
     );
     const labelClassName = cn(
