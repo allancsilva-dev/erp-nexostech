@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [isSidebarVisible]);
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--bg-app)' }}>
+    <div className="flex h-screen" style={{ background: 'var(--bg-app)' }}>
       <Sidebar isVisible={isSidebarVisible} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
